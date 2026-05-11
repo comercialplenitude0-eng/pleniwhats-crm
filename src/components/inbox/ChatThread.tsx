@@ -146,6 +146,7 @@ export function ChatThread({ conversation }: Props) {
   }
 
   function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (pickerOpen) return; // picker handles Enter/Tab/Esc/arrows
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       void send();
