@@ -436,6 +436,16 @@ export function ChatThread({ conversation }: Props) {
           </div>
         )}
       </div>
+      <TemplateVarsDialog
+        template={pendingTemplate}
+        contactName={conversation?.contact_name}
+        onClose={() => setPendingTemplate(null)}
+        onConfirm={(filled) => {
+          setPendingTemplate(null);
+          setText(filled);
+          requestAnimationFrame(() => textareaRef.current?.focus());
+        }}
+      />
     </div>
   );
 }
