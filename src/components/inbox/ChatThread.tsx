@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Send, Phone, Check, CheckCheck, Loader2, Paperclip, Mic, Square, FileText, X } from "lucide-react";
+import { Send, Phone, Check, CheckCheck, Loader2, Paperclip, Mic, FileText, X } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
