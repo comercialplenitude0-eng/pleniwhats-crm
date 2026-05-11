@@ -32,6 +32,56 @@ export function ChatThread({ conversation }: Props) {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const recChunksRef = useRef<Blob[]>([]);
   const recTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [templates, setTemplates] = useState<MessageTemplate[]>([]);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerQuery, setPickerQuery] = useState("");
+  const [pendingTemplate, setPendingTemplate] = useState<MessageTemplate | null>(null);
+
+  // Load templates once per user
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("message_templates")
+      .select("*")
+      .order("shortcut", { ascending: true })
+      .then(({ data }) => setTemplates((data ?? []) as MessageTemplate[]));
+    const ch = supabase
+      .channel("message_templates:all")
+      .on("postgres_changes", { event: "*", schema: "public", table: "message_templates" }, () => {
+        supabase.from("message_templates").select("*").order("shortcut").then(({ data }) =>
+          setTemplates((data ?? []) as MessageTemplate[]),
+        );
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [user?.id]);
+
+  // Detect leading "/word" in textarea to drive picker
+  const slashMatch = useMemo(() => /^\/(\S*)$/.exec(text), [text]);
+  useEffect(() => {
+    if (slashMatch) {
+      setPickerQuery(slashMatch[1]);
+      setPickerOpen(true);
+    } else {
+      setPickerOpen(false);
+    }
+  }, [slashMatch]);
+
+  function applyTemplate(t: MessageTemplate) {
+    setPickerOpen(false);
+    setText("");
+    if (extractVars(t.content).length === 0) {
+      const filled = applyTemplateVars(t.content, {
+        nome: (conversation?.contact_name ?? "").split(" ")[0] ?? "",
+      });
+      setText(filled);
+      requestAnimationFrame(() => textareaRef.current?.focus());
+    } else {
+      setPendingTemplate(t);
+    }
+  }
+
 
   useEffect(() => {
     if (!conversation) {
