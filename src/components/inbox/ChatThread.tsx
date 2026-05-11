@@ -305,6 +305,32 @@ export function ChatThread({ conversation }: Props) {
             >
               <FileText className="size-4" />
             </Button>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-10 shrink-0"
+                  disabled={uploading}
+                  aria-label="Inserir emoji"
+                  title="Inserir emoji"
+                >
+                  <Smile className="size-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent side="top" align="start" className="p-0 border-0 bg-transparent shadow-none w-auto">
+                <EmojiPicker
+                  onEmojiClick={(d) => setText((t) => t + d.emoji)}
+                  emojiStyle={EmojiStyle.NATIVE}
+                  theme={Theme.AUTO}
+                  width={320}
+                  height={380}
+                  searchPlaceHolder="Buscar emoji"
+                  previewConfig={{ showPreview: false }}
+                  lazyLoadEmojis
+                />
+              </PopoverContent>
+            </Popover>
             <Textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
