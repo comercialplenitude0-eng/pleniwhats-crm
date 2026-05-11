@@ -408,10 +408,11 @@ export function ChatThread({ conversation }: Props) {
               </PopoverContent>
             </Popover>
             <Textarea
+              ref={textareaRef}
               value={text}
               onChange={(e) => setText(e.target.value)}
               onKeyDown={onKeyDown}
-              placeholder={uploading ? "Enviando arquivo..." : "Digite uma mensagem..."}
+              placeholder={uploading ? "Enviando arquivo..." : "Digite uma mensagem... (use / para respostas rápidas)"}
               rows={1}
               disabled={uploading}
               className="resize-none min-h-10 max-h-32 bg-background"
