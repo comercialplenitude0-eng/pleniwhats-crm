@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { Send, Phone, Check, CheckCheck, Loader2, Paperclip, Mic, FileText, X, Smile } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Send, Phone, Check, CheckCheck, Loader2, Paperclip, Mic, FileText, X, Smile, Zap } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -11,6 +11,9 @@ import { useAuth } from "@/lib/auth";
 import { initials, type Conversation, type Message } from "@/lib/inbox-types";
 import { toast } from "sonner";
 import EmojiPicker, { EmojiStyle, Theme } from "emoji-picker-react";
+import { TemplatePicker } from "./TemplatePicker";
+import { TemplateVarsDialog } from "./TemplateVarsDialog";
+import { applyTemplateVars, extractVars, type MessageTemplate } from "@/lib/templates";
 
 type Props = { conversation: Conversation | null };
 
@@ -29,6 +32,56 @@ export function ChatThread({ conversation }: Props) {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const recChunksRef = useRef<Blob[]>([]);
   const recTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [templates, setTemplates] = useState<MessageTemplate[]>([]);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerQuery, setPickerQuery] = useState("");
+  const [pendingTemplate, setPendingTemplate] = useState<MessageTemplate | null>(null);
+
+  // Load templates once per user
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("message_templates")
+      .select("*")
+      .order("shortcut", { ascending: true })
+      .then(({ data }) => setTemplates((data ?? []) as MessageTemplate[]));
+    const ch = supabase
+      .channel("message_templates:all")
+      .on("postgres_changes", { event: "*", schema: "public", table: "message_templates" }, () => {
+        supabase.from("message_templates").select("*").order("shortcut").then(({ data }) =>
+          setTemplates((data ?? []) as MessageTemplate[]),
+        );
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [user?.id]);
+
+  // Detect leading "/word" in textarea to drive picker
+  const slashMatch = useMemo(() => /^\/(\S*)$/.exec(text), [text]);
+  useEffect(() => {
+    if (slashMatch) {
+      setPickerQuery(slashMatch[1]);
+      setPickerOpen(true);
+    } else {
+      setPickerOpen(false);
+    }
+  }, [slashMatch]);
+
+  function applyTemplate(t: MessageTemplate) {
+    setPickerOpen(false);
+    setText("");
+    if (extractVars(t.content).length === 0) {
+      const filled = applyTemplateVars(t.content, {
+        nome: (conversation?.contact_name ?? "").split(" ")[0] ?? "",
+      });
+      setText(filled);
+      requestAnimationFrame(() => textareaRef.current?.focus());
+    } else {
+      setPendingTemplate(t);
+    }
+  }
+
 
   useEffect(() => {
     if (!conversation) {
@@ -93,6 +146,7 @@ export function ChatThread({ conversation }: Props) {
   }
 
   function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (pickerOpen) return; // picker handles Enter/Tab/Esc/arrows
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       void send();
@@ -305,6 +359,29 @@ export function ChatThread({ conversation }: Props) {
             >
               <FileText className="size-4" />
             </Button>
+            <TemplatePicker
+              open={pickerOpen}
+              templates={templates}
+              query={pickerQuery}
+              onSelect={applyTemplate}
+              onOpenChange={setPickerOpen}
+              anchor={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-10 shrink-0"
+                  disabled={uploading}
+                  aria-label="Respostas rápidas"
+                  title="Respostas rápidas (digite /)"
+                  onClick={() => {
+                    setPickerQuery("");
+                    setPickerOpen((o) => !o);
+                  }}
+                >
+                  <Zap className="size-4" />
+                </Button>
+              }
+            />
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -332,10 +409,11 @@ export function ChatThread({ conversation }: Props) {
               </PopoverContent>
             </Popover>
             <Textarea
+              ref={textareaRef}
               value={text}
               onChange={(e) => setText(e.target.value)}
               onKeyDown={onKeyDown}
-              placeholder={uploading ? "Enviando arquivo..." : "Digite uma mensagem..."}
+              placeholder={uploading ? "Enviando arquivo..." : "Digite uma mensagem... (use / para respostas rápidas)"}
               rows={1}
               disabled={uploading}
               className="resize-none min-h-10 max-h-32 bg-background"
@@ -359,6 +437,16 @@ export function ChatThread({ conversation }: Props) {
           </div>
         )}
       </div>
+      <TemplateVarsDialog
+        template={pendingTemplate}
+        contactName={conversation?.contact_name}
+        onClose={() => setPendingTemplate(null)}
+        onConfirm={(filled) => {
+          setPendingTemplate(null);
+          setText(filled);
+          requestAnimationFrame(() => textareaRef.current?.focus());
+        }}
+      />
     </div>
   );
 }
