@@ -50,7 +50,7 @@ function InboxPage() {
   }, [selected?.id]);
 
   return (
-    <div className="h-screen flex bg-background">
+    <div className="flex-1 flex bg-background min-w-0">
       <ConversationList
         conversations={conversations}
         selectedId={selectedId}
