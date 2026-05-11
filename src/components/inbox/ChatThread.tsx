@@ -1,14 +1,16 @@
 import { useEffect, useRef, useState } from "react";
-import { Send, Phone, Check, CheckCheck, Loader2, Paperclip, Mic, FileText, X } from "lucide-react";
+import { Send, Phone, Check, CheckCheck, Loader2, Paperclip, Mic, FileText, X, Smile } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { initials, type Conversation, type Message } from "@/lib/inbox-types";
 import { toast } from "sonner";
+import EmojiPicker, { EmojiStyle, Theme } from "emoji-picker-react";
 
 type Props = { conversation: Conversation | null };
 
