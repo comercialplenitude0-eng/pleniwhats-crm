@@ -358,6 +358,29 @@ export function ChatThread({ conversation }: Props) {
             >
               <FileText className="size-4" />
             </Button>
+            <TemplatePicker
+              open={pickerOpen}
+              templates={templates}
+              query={pickerQuery}
+              onSelect={applyTemplate}
+              onOpenChange={setPickerOpen}
+              anchor={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-10 shrink-0"
+                  disabled={uploading}
+                  aria-label="Respostas rápidas"
+                  title="Respostas rápidas (digite /)"
+                  onClick={() => {
+                    setPickerQuery("");
+                    setPickerOpen((o) => !o);
+                  }}
+                >
+                  <Zap className="size-4" />
+                </Button>
+              }
+            />
             <Popover>
               <PopoverTrigger asChild>
                 <Button
