@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Send, Phone, Check, CheckCheck, Loader2 } from "lucide-react";
+import { Send, Phone, Check, CheckCheck, Loader2, Paperclip, Mic, FileText, X } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -18,9 +18,16 @@ export function ChatThread({ conversation }: Props) {
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [recElapsed, setRecElapsed] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const recChunksRef = useRef<Blob[]>([]);
+  const recTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // load + realtime
   useEffect(() => {
     if (!conversation) {
       setMessages([]);
@@ -58,7 +65,6 @@ export function ChatThread({ conversation }: Props) {
     };
   }, [conversation?.id]);
 
-  // autoscroll on new message
   useEffect(() => {
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
@@ -91,6 +97,78 @@ export function ChatThread({ conversation }: Props) {
     }
   }
 
+  async function uploadAndSend(file: Blob, kind: "image" | "audio" | "document", filename: string) {
+    if (!conversation || !user) return;
+    setUploading(true);
+    try {
+      const ext = filename.includes(".") ? filename.split(".").pop() : "bin";
+      const path = `${conversation.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("chat-media").upload(path, file, {
+        contentType: (file as File).type || undefined,
+        upsert: false,
+      });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("chat-media").getPublicUrl(path);
+      const { error } = await supabase.from("messages").insert({
+        conversation_id: conversation.id,
+        direction: "outbound",
+        type: kind,
+        content: kind === "document" ? filename : null,
+        media_url: pub.publicUrl,
+        sender_id: user.id,
+        status: "sent",
+      });
+      if (error) throw error;
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function onPickFile(e: React.ChangeEvent<HTMLInputElement>, kind: "image" | "document") {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (!f) return;
+    if (f.size > 20 * 1024 * 1024) return toast.error("Arquivo maior que 20MB");
+    await uploadAndSend(f, kind, f.name);
+  }
+
+  async function startRecording() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream);
+      recChunksRef.current = [];
+      mr.ondataavailable = (e) => e.data.size && recChunksRef.current.push(e.data);
+      mr.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const blob = new Blob(recChunksRef.current, { type: "audio/webm" });
+        if (blob.size > 0) await uploadAndSend(blob, "audio", `voz-${Date.now()}.webm`);
+      };
+      mr.start();
+      recorderRef.current = mr;
+      setRecording(true);
+      setRecElapsed(0);
+      recTimerRef.current = setInterval(() => setRecElapsed((s) => s + 1), 1000);
+    } catch {
+      toast.error("Não foi possível acessar o microfone");
+    }
+  }
+
+  function stopRecording(cancel = false) {
+    const mr = recorderRef.current;
+    if (recTimerRef.current) clearInterval(recTimerRef.current);
+    recTimerRef.current = null;
+    setRecording(false);
+    if (!mr) return;
+    if (cancel) {
+      mr.ondataavailable = null;
+      mr.onstop = () => mr.stream.getTracks().forEach((t) => t.stop());
+    }
+    mr.stop();
+    recorderRef.current = null;
+  }
+
   if (!conversation) {
     return (
       <div className="flex-1 grid place-items-center bg-[var(--color-chat-bg)]">
@@ -103,7 +181,6 @@ export function ChatThread({ conversation }: Props) {
 
   return (
     <div className="flex-1 flex flex-col bg-[var(--color-chat-bg)] min-w-0">
-      {/* Header */}
       <header className="flex items-center gap-3 px-4 py-3 border-b bg-[var(--color-chat-panel)]">
         <Avatar className="size-10">
           <AvatarFallback className="bg-secondary text-secondary-foreground">
@@ -118,7 +195,6 @@ export function ChatThread({ conversation }: Props) {
         </div>
       </header>
 
-      {/* Messages */}
       <ScrollArea className="flex-1" ref={scrollRef as never}>
         <div className="px-4 sm:px-8 py-6 space-y-2 max-w-3xl mx-auto">
           {loading && (
@@ -138,8 +214,29 @@ export function ChatThread({ conversation }: Props) {
                       : "bg-[var(--color-bubble-in)] text-[var(--color-bubble-in-foreground)] rounded-bl-md"
                   )}
                 >
-                  <div className="whitespace-pre-wrap break-words">{m.content}</div>
-                  <div className={cn("mt-1 flex items-center justify-end gap-1 text-[10px] opacity-70")}>
+                  {m.type === "image" && m.media_url && (
+                    <a href={m.media_url} target="_blank" rel="noreferrer" className="block -mx-1 -mt-1 mb-1">
+                      <img src={m.media_url} alt="" className="rounded-lg max-h-72 object-cover" />
+                    </a>
+                  )}
+                  {m.type === "audio" && m.media_url && (
+                    <audio controls src={m.media_url} className="max-w-full" />
+                  )}
+                  {m.type === "document" && m.media_url && (
+                    <a
+                      href={m.media_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-2 underline underline-offset-2"
+                    >
+                      <FileText className="size-4 shrink-0" />
+                      <span className="truncate">{m.content ?? "Documento"}</span>
+                    </a>
+                  )}
+                  {m.type === "text" && m.content && (
+                    <div className="whitespace-pre-wrap break-words">{m.content}</div>
+                  )}
+                  <div className="mt-1 flex items-center justify-end gap-1 text-[10px] opacity-70">
                     <span>{new Date(m.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
                     {out && (m.status === "read"
                       ? <CheckCheck className="size-3 text-primary" />
@@ -154,21 +251,85 @@ export function ChatThread({ conversation }: Props) {
         </div>
       </ScrollArea>
 
-      {/* Composer */}
       <div className="p-3 border-t bg-[var(--color-chat-panel)]">
-        <div className="flex items-end gap-2 max-w-3xl mx-auto">
-          <Textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={onKeyDown}
-            placeholder="Digite uma mensagem..."
-            rows={1}
-            className="resize-none min-h-10 max-h-32 bg-background"
-          />
-          <Button onClick={send} disabled={sending || !text.trim()} size="icon" className="size-10 shrink-0">
-            {sending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
-          </Button>
-        </div>
+        <input
+          ref={imageInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => onPickFile(e, "image")}
+        />
+        <input
+          ref={fileInputRef}
+          type="file"
+          className="hidden"
+          onChange={(e) => onPickFile(e, "document")}
+        />
+
+        {recording ? (
+          <div className="flex items-center gap-3 max-w-3xl mx-auto">
+            <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-md bg-destructive/10 text-destructive">
+              <span className="size-2 rounded-full bg-destructive animate-pulse" />
+              <span className="text-sm font-medium">Gravando… {String(Math.floor(recElapsed / 60)).padStart(2, "0")}:{String(recElapsed % 60).padStart(2, "0")}</span>
+            </div>
+            <Button variant="ghost" size="icon" className="size-10" onClick={() => stopRecording(true)} aria-label="Cancelar">
+              <X className="size-4" />
+            </Button>
+            <Button size="icon" className="size-10" onClick={() => stopRecording(false)} aria-label="Enviar áudio">
+              <Send className="size-4" />
+            </Button>
+          </div>
+        ) : (
+          <div className="flex items-end gap-2 max-w-3xl mx-auto">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-10 shrink-0"
+              onClick={() => imageInputRef.current?.click()}
+              disabled={uploading}
+              aria-label="Enviar imagem"
+              title="Enviar imagem"
+            >
+              <Paperclip className="size-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-10 shrink-0"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              aria-label="Enviar arquivo"
+              title="Enviar arquivo"
+            >
+              <FileText className="size-4" />
+            </Button>
+            <Textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={onKeyDown}
+              placeholder={uploading ? "Enviando arquivo..." : "Digite uma mensagem..."}
+              rows={1}
+              disabled={uploading}
+              className="resize-none min-h-10 max-h-32 bg-background"
+            />
+            {text.trim() ? (
+              <Button onClick={send} disabled={sending} size="icon" className="size-10 shrink-0">
+                {sending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+              </Button>
+            ) : (
+              <Button
+                onClick={startRecording}
+                disabled={uploading}
+                size="icon"
+                className="size-10 shrink-0"
+                aria-label="Gravar áudio"
+                title="Gravar áudio"
+              >
+                {uploading ? <Loader2 className="size-4 animate-spin" /> : <Mic className="size-4" />}
+              </Button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
