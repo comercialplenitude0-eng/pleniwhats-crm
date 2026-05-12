@@ -412,7 +412,7 @@ function CampaignDialog({
     setSaving(true);
     const total =
       source === "csv" ? recipients.length :
-      source === "rd_station" ? 0 : // será preenchido pelo worker ao buscar o segmento
+      source === "rd_station" ? recipients.length : // 0 se ainda não pré-carregou; worker pode buscar
       (estimate ?? 0);
 
     const payload = {
@@ -422,7 +422,7 @@ function CampaignDialog({
       source,
       filter_label: source === "filter" ? ((labelF || null) as ConvLabel | null) : null,
       filter_status: source === "filter" ? ((statusF || null) as ConvStatus | null) : null,
-      recipients: source === "csv" ? recipients : [],
+      recipients: source === "csv" || source === "rd_station" ? recipients : [],
       rd_segment_id: source === "rd_station" ? rdSegmentId.trim() : null,
       rd_segment_name: source === "rd_station" ? (rdSegmentName.trim() || null) : null,
       scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : null,
