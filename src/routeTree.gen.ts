@@ -18,6 +18,7 @@ import { Route as AuthenticatedInboxRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedContactsRouteImport } from './routes/_authenticated/contacts'
 import { Route as AuthenticatedTeamUserIdRouteImport } from './routes/_authenticated/team.$userId'
+import { Route as AuthenticatedContactsPhoneRouteImport } from './routes/_authenticated/contacts.$phone'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -63,25 +64,33 @@ const AuthenticatedTeamUserIdRoute = AuthenticatedTeamUserIdRouteImport.update({
   path: '/$userId',
   getParentRoute: () => AuthenticatedTeamRoute,
 } as any)
+const AuthenticatedContactsPhoneRoute =
+  AuthenticatedContactsPhoneRouteImport.update({
+    id: '/$phone',
+    path: '/$phone',
+    getParentRoute: () => AuthenticatedContactsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/contacts': typeof AuthenticatedContactsRoute
+  '/contacts': typeof AuthenticatedContactsRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/inbox': typeof AuthenticatedInboxRoute
   '/team': typeof AuthenticatedTeamRouteWithChildren
   '/templates': typeof AuthenticatedTemplatesRoute
+  '/contacts/$phone': typeof AuthenticatedContactsPhoneRoute
   '/team/$userId': typeof AuthenticatedTeamUserIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/contacts': typeof AuthenticatedContactsRoute
+  '/contacts': typeof AuthenticatedContactsRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/inbox': typeof AuthenticatedInboxRoute
   '/team': typeof AuthenticatedTeamRouteWithChildren
   '/templates': typeof AuthenticatedTemplatesRoute
+  '/contacts/$phone': typeof AuthenticatedContactsPhoneRoute
   '/team/$userId': typeof AuthenticatedTeamUserIdRoute
 }
 export interface FileRoutesById {
@@ -89,11 +98,12 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
-  '/_authenticated/contacts': typeof AuthenticatedContactsRoute
+  '/_authenticated/contacts': typeof AuthenticatedContactsRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/inbox': typeof AuthenticatedInboxRoute
   '/_authenticated/team': typeof AuthenticatedTeamRouteWithChildren
   '/_authenticated/templates': typeof AuthenticatedTemplatesRoute
+  '/_authenticated/contacts/$phone': typeof AuthenticatedContactsPhoneRoute
   '/_authenticated/team/$userId': typeof AuthenticatedTeamUserIdRoute
 }
 export interface FileRouteTypes {
@@ -106,6 +116,7 @@ export interface FileRouteTypes {
     | '/inbox'
     | '/team'
     | '/templates'
+    | '/contacts/$phone'
     | '/team/$userId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -116,6 +127,7 @@ export interface FileRouteTypes {
     | '/inbox'
     | '/team'
     | '/templates'
+    | '/contacts/$phone'
     | '/team/$userId'
   id:
     | '__root__'
@@ -127,6 +139,7 @@ export interface FileRouteTypes {
     | '/_authenticated/inbox'
     | '/_authenticated/team'
     | '/_authenticated/templates'
+    | '/_authenticated/contacts/$phone'
     | '/_authenticated/team/$userId'
   fileRoutesById: FileRoutesById
 }
@@ -201,8 +214,28 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTeamUserIdRouteImport
       parentRoute: typeof AuthenticatedTeamRoute
     }
+    '/_authenticated/contacts/$phone': {
+      id: '/_authenticated/contacts/$phone'
+      path: '/$phone'
+      fullPath: '/contacts/$phone'
+      preLoaderRoute: typeof AuthenticatedContactsPhoneRouteImport
+      parentRoute: typeof AuthenticatedContactsRoute
+    }
   }
 }
+
+interface AuthenticatedContactsRouteChildren {
+  AuthenticatedContactsPhoneRoute: typeof AuthenticatedContactsPhoneRoute
+}
+
+const AuthenticatedContactsRouteChildren: AuthenticatedContactsRouteChildren = {
+  AuthenticatedContactsPhoneRoute: AuthenticatedContactsPhoneRoute,
+}
+
+const AuthenticatedContactsRouteWithChildren =
+  AuthenticatedContactsRoute._addFileChildren(
+    AuthenticatedContactsRouteChildren,
+  )
 
 interface AuthenticatedTeamRouteChildren {
   AuthenticatedTeamUserIdRoute: typeof AuthenticatedTeamUserIdRoute
@@ -216,7 +249,7 @@ const AuthenticatedTeamRouteWithChildren =
   AuthenticatedTeamRoute._addFileChildren(AuthenticatedTeamRouteChildren)
 
 interface AuthenticatedRouteChildren {
-  AuthenticatedContactsRoute: typeof AuthenticatedContactsRoute
+  AuthenticatedContactsRoute: typeof AuthenticatedContactsRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedInboxRoute: typeof AuthenticatedInboxRoute
   AuthenticatedTeamRoute: typeof AuthenticatedTeamRouteWithChildren
@@ -224,7 +257,7 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedContactsRoute: AuthenticatedContactsRoute,
+  AuthenticatedContactsRoute: AuthenticatedContactsRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedInboxRoute: AuthenticatedInboxRoute,
   AuthenticatedTeamRoute: AuthenticatedTeamRouteWithChildren,
@@ -243,3 +276,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
