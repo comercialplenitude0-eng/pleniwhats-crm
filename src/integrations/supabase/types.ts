@@ -89,6 +89,54 @@ export type Database = {
         }
         Relationships: []
       }
+      campaigns: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string | null
+          filter_label: Database["public"]["Enums"]["conv_label"] | null
+          filter_status: Database["public"]["Enums"]["conv_status"] | null
+          id: string
+          name: string
+          scheduled_at: string | null
+          sent_count: number
+          status: Database["public"]["Enums"]["campaign_status"]
+          template_id: string | null
+          total_recipients: number
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by?: string | null
+          filter_label?: Database["public"]["Enums"]["conv_label"] | null
+          filter_status?: Database["public"]["Enums"]["conv_status"] | null
+          id?: string
+          name: string
+          scheduled_at?: string | null
+          sent_count?: number
+          status?: Database["public"]["Enums"]["campaign_status"]
+          template_id?: string | null
+          total_recipients?: number
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          filter_label?: Database["public"]["Enums"]["conv_label"] | null
+          filter_status?: Database["public"]["Enums"]["conv_status"] | null
+          id?: string
+          name?: string
+          scheduled_at?: string | null
+          sent_count?: number
+          status?: Database["public"]["Enums"]["campaign_status"]
+          template_id?: string | null
+          total_recipients?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       conversation_activity: {
         Row: {
           conversation_id: string
@@ -395,6 +443,12 @@ export type Database = {
         | "set_status"
         | "send_template"
       automation_trigger: "no_reply" | "keyword_inbound" | "new_conversation"
+      campaign_status:
+        | "draft"
+        | "scheduled"
+        | "sending"
+        | "completed"
+        | "failed"
       conv_label: "hot" | "warm" | "cold" | "new" | "closed"
       conv_status: "aguardando" | "em_atendimento" | "encerrada"
       msg_direction: "inbound" | "outbound"
@@ -536,6 +590,7 @@ export const Constants = {
         "send_template",
       ],
       automation_trigger: ["no_reply", "keyword_inbound", "new_conversation"],
+      campaign_status: ["draft", "scheduled", "sending", "completed", "failed"],
       conv_label: ["hot", "warm", "cold", "new", "closed"],
       conv_status: ["aguardando", "em_atendimento", "encerrada"],
       msg_direction: ["inbound", "outbound"],
