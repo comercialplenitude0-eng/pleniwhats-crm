@@ -535,18 +535,52 @@ function CampaignDialog({
 
               <TabsContent value="rd_station" className="pt-3 space-y-3">
                 <div className="space-y-1.5">
-                  <Label className="text-xs">ID do segmento</Label>
-                  <Input value={rdSegmentId} onChange={(e) => setRdSegmentId(e.target.value)}
-                    placeholder="Ex.: 5f8a2b3c-..." />
+                  <Label className="text-xs flex items-center justify-between">
+                    Segmento
+                    <button type="button" className="text-[10px] text-primary hover:underline inline-flex items-center gap-1"
+                      onClick={() => {
+                        setRdSegments([]); setLoadingSegments(true);
+                        listSegmentsFn()
+                          .then((r) => setRdSegments(r.segments))
+                          .catch((e) => toast.error((e as Error).message))
+                          .finally(() => setLoadingSegments(false));
+                      }}>
+                      <RefreshCw className="size-3" /> Recarregar
+                    </button>
+                  </Label>
+                  {loadingSegments ? (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground p-2 border rounded-md">
+                      <Loader2 className="size-3.5 animate-spin" /> Carregando segmentos...
+                    </div>
+                  ) : rdSegments.length > 0 ? (
+                    <Select value={rdSegmentId} onValueChange={(v) => {
+                      setRdSegmentId(v);
+                      const s = rdSegments.find((x) => x.id === v);
+                      if (s) setRdSegmentName(s.name);
+                      setRecipients([]);
+                    }}>
+                      <SelectTrigger><SelectValue placeholder="Selecione um segmento" /></SelectTrigger>
+                      <SelectContent>
+                        {rdSegments.map((s) => (
+                          <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input value={rdSegmentId} onChange={(e) => setRdSegmentId(e.target.value)}
+                      placeholder="ID do segmento (manual)" />
+                  )}
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Nome (opcional, p/ exibição)</Label>
-                  <Input value={rdSegmentName} onChange={(e) => setRdSegmentName(e.target.value)}
-                    placeholder="Ex.: Leads quentes - Novembro" />
-                </div>
+                <Button type="button" variant="outline" size="sm" className="w-full"
+                  onClick={previewRdContacts} disabled={previewingRd || !rdSegmentId}>
+                  {previewingRd ? <Loader2 className="size-3.5 animate-spin mr-1" /> : <Users className="size-3.5 mr-1" />}
+                  {recipients.length > 0
+                    ? `${recipients.length} contatos prontos · atualizar`
+                    : "Buscar contatos do segmento"}
+                </Button>
                 <p className="text-[10px] text-muted-foreground">
-                  O worker buscará os contatos do segmento no RD Station no momento do envio.
-                  É necessário configurar a integração em <strong>Configurações → Integrações</strong>.
+                  Os contatos são buscados via API do RD Station no momento do envio.
+                  Use "Buscar contatos" para validar antes de agendar.
                 </p>
               </TabsContent>
             </Tabs>
