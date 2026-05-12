@@ -330,7 +330,6 @@ export const updateRdDeal = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const dealBody: Record<string, unknown> = {};
-    type CFValue = string | number | boolean | null | string[];
     if (data.stageId) dealBody.deal_stage_id = data.stageId;
     if (data.customFields) {
       dealBody.deal_custom_fields = Object.entries(data.customFields).map(([custom_field_id, value]) => ({
