@@ -268,6 +268,7 @@ export const findRdDealByPhone = createServerFn({ method: "POST" })
     }
   });
 
+export type RdFieldValue = string | number | boolean | null | string[];
 export type RdDealMirror = {
   id: string;
   name: string;
@@ -275,7 +276,7 @@ export type RdDealMirror = {
   stageName: string;
   pipelineId: string;
   pipelineName: string;
-  customFields: Record<string, unknown>; // custom_field_id -> value
+  customFields: Record<string, RdFieldValue>; // custom_field_id -> value
 };
 
 /** Busca um deal completo (com custom fields) para espelhar na UI. */
@@ -285,10 +286,21 @@ export const getRdDeal = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const json = (await rdCrm(`/deals/${encodeURIComponent(data.dealId)}`)) as RdDeal;
     if (!json) throw new Error("Deal não encontrado");
-    const customFields: Record<string, unknown> = {};
+    const customFields: Record<string, RdFieldValue> = {};
+    const toFieldValue = (v: unknown): RdFieldValue => {
+      if (v === null || v === undefined) return null;
+      if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") return v;
+      if (Array.isArray(v)) return v.map((x) => String(x));
+      if (typeof v === "object") {
+        const o = v as Record<string, unknown>;
+        if (typeof o.label === "string") return o.label;
+        if (typeof o.value === "string" || typeof o.value === "number") return o.value as RdFieldValue;
+      }
+      return String(v);
+    };
     for (const f of json.deal_custom_fields ?? []) {
       const cfId = String(f.custom_field_id ?? f.custom_field?._id ?? f.custom_field?.id ?? "");
-      if (cfId) customFields[cfId] = f.value;
+      if (cfId) customFields[cfId] = toFieldValue(f.value);
     }
     const stage = json.deal_stage;
     const mirror: RdDealMirror = {
@@ -310,11 +322,15 @@ export const updateRdDeal = createServerFn({ method: "POST" })
     z.object({
       dealId: z.string().min(1),
       stageId: z.string().optional(),
-      customFields: z.record(z.string(), z.unknown()).optional(),
+      customFields: z.record(
+        z.string(),
+        z.union([z.string(), z.number(), z.boolean(), z.null(), z.array(z.string())]),
+      ).optional(),
     }).parse(d),
   )
   .handler(async ({ data }) => {
     const dealBody: Record<string, unknown> = {};
+    type CFValue = string | number | boolean | null | string[];
     if (data.stageId) dealBody.deal_stage_id = data.stageId;
     if (data.customFields) {
       dealBody.deal_custom_fields = Object.entries(data.customFields).map(([custom_field_id, value]) => ({
