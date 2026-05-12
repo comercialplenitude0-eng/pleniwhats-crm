@@ -386,9 +386,18 @@ function CampaignDialog({
 
   function loadPipelines() {
     setLoadingPipelines(true);
+    setRdError(null);
     listPipelinesFn()
-      .then((r) => setRdPipelines(r?.pipelines ?? []))
-      .catch((e: unknown) => toast.error(`RD CRM: ${(e as Error).message}`))
+      .then((r) => {
+        const list = r?.pipelines ?? [];
+        setRdPipelines(list);
+        if (list.length === 0) setRdError("Nenhum funil retornado pela API do RD CRM.");
+      })
+      .catch((e: unknown) => {
+        const msg = (e as Error).message;
+        setRdError(msg);
+        toast.error(`RD CRM: ${msg}`);
+      })
       .finally(() => setLoadingPipelines(false));
   }
 
