@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { MessageCircle, BarChart3, Crown, Zap, Users, Contact, Settings, Workflow } from "lucide-react";
+import { MessageCircle, BarChart3, Crown, Zap, Users, Contact, Settings, Workflow, Activity, Megaphone } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
@@ -72,6 +72,8 @@ export function AppRail() {
     { to: "/dashboard", icon: BarChart3, label: "Dashboard", show: role === "gestor" },
     { to: "/team", icon: Users, label: "Equipe", show: role === "gestor" },
     { to: "/automations", icon: Workflow, label: "Automações", show: role === "gestor" },
+    { to: "/campaigns", icon: Megaphone, label: "Campanhas", show: role === "gestor" },
+    { to: "/audit", icon: Activity, label: "Auditoria", show: role === "gestor" },
     { to: "/settings", icon: Settings, label: "Configurações", show: role === "gestor" },
   ].filter((i) => i.show);
 
