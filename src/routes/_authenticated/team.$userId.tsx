@@ -323,6 +323,33 @@ function SellerDetailsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
+              {selected.size > 0 && (
+                <div className="flex items-center justify-between gap-3 px-4 py-2 border-b bg-accent/30 flex-wrap">
+                  <div className="flex items-center gap-2 text-sm">
+                    <ArrowRightLeft className="size-4 text-primary" />
+                    <span className="font-medium">{selected.size} selecionada(s)</span>
+                    <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => setSelected(new Set())}>
+                      <X className="size-3.5 mr-1" /> limpar
+                    </Button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Select value={bulkTarget} onValueChange={setBulkTarget}>
+                      <SelectTrigger className="h-8 w-[200px]">
+                        <SelectValue placeholder="Transferir todas para..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none">Sem responsável</SelectItem>
+                        {others.map((o) => (
+                          <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button size="sm" onClick={bulkTransfer} disabled={!bulkTarget || bulkRunning}>
+                      {bulkRunning ? <Loader2 className="size-4 animate-spin" /> : "Transferir"}
+                    </Button>
+                  </div>
+                </div>
+              )}
               {conversations.length === 0 ? (
                 <div className="p-6 text-center text-sm text-muted-foreground">
                   Sem conversas atribuídas.
@@ -331,6 +358,13 @@ function SellerDetailsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-[40px]">
+                        <Checkbox
+                          checked={selected.size > 0 && selected.size === conversations.length}
+                          onCheckedChange={(v) => toggleAll(v === true)}
+                          aria-label="Selecionar todas"
+                        />
+                      </TableHead>
                       <TableHead>Contato</TableHead>
                       <TableHead>Etiqueta</TableHead>
                       <TableHead>Status</TableHead>
