@@ -33,6 +33,7 @@ import {
   initials,
 } from "@/lib/inbox-types";
 import { seedDemoConversationsForCurrentUser } from "@/lib/seed";
+import { NewConversationDialog } from "./NewConversationDialog";
 import { toast } from "sonner";
 
 type Props = {
