@@ -18,7 +18,9 @@ import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedInboxRouteImport } from './routes/_authenticated/inbox'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedContactsRouteImport } from './routes/_authenticated/contacts'
+import { Route as AuthenticatedCampaignsRouteImport } from './routes/_authenticated/campaigns'
 import { Route as AuthenticatedAutomationsRouteImport } from './routes/_authenticated/automations'
+import { Route as AuthenticatedAuditRouteImport } from './routes/_authenticated/audit'
 import { Route as AuthenticatedTeamUserIdRouteImport } from './routes/_authenticated/team.$userId'
 import { Route as AuthenticatedContactsPhoneRouteImport } from './routes/_authenticated/contacts.$phone'
 
@@ -66,12 +68,22 @@ const AuthenticatedContactsRoute = AuthenticatedContactsRouteImport.update({
   path: '/contacts',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedCampaignsRoute = AuthenticatedCampaignsRouteImport.update({
+  id: '/campaigns',
+  path: '/campaigns',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedAutomationsRoute =
   AuthenticatedAutomationsRouteImport.update({
     id: '/automations',
     path: '/automations',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedAuditRoute = AuthenticatedAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedTeamUserIdRoute = AuthenticatedTeamUserIdRouteImport.update({
   id: '/$userId',
   path: '/$userId',
@@ -87,7 +99,9 @@ const AuthenticatedContactsPhoneRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/audit': typeof AuthenticatedAuditRoute
   '/automations': typeof AuthenticatedAutomationsRoute
+  '/campaigns': typeof AuthenticatedCampaignsRoute
   '/contacts': typeof AuthenticatedContactsRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/inbox': typeof AuthenticatedInboxRoute
@@ -100,7 +114,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/audit': typeof AuthenticatedAuditRoute
   '/automations': typeof AuthenticatedAutomationsRoute
+  '/campaigns': typeof AuthenticatedCampaignsRoute
   '/contacts': typeof AuthenticatedContactsRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/inbox': typeof AuthenticatedInboxRoute
@@ -115,7 +131,9 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
+  '/_authenticated/audit': typeof AuthenticatedAuditRoute
   '/_authenticated/automations': typeof AuthenticatedAutomationsRoute
+  '/_authenticated/campaigns': typeof AuthenticatedCampaignsRoute
   '/_authenticated/contacts': typeof AuthenticatedContactsRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/inbox': typeof AuthenticatedInboxRoute
@@ -130,7 +148,9 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/audit'
     | '/automations'
+    | '/campaigns'
     | '/contacts'
     | '/dashboard'
     | '/inbox'
@@ -143,7 +163,9 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/audit'
     | '/automations'
+    | '/campaigns'
     | '/contacts'
     | '/dashboard'
     | '/inbox'
@@ -157,7 +179,9 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/login'
+    | '/_authenticated/audit'
     | '/_authenticated/automations'
+    | '/_authenticated/campaigns'
     | '/_authenticated/contacts'
     | '/_authenticated/dashboard'
     | '/_authenticated/inbox'
@@ -239,11 +263,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedContactsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/campaigns': {
+      id: '/_authenticated/campaigns'
+      path: '/campaigns'
+      fullPath: '/campaigns'
+      preLoaderRoute: typeof AuthenticatedCampaignsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/automations': {
       id: '/_authenticated/automations'
       path: '/automations'
       fullPath: '/automations'
       preLoaderRoute: typeof AuthenticatedAutomationsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/audit': {
+      id: '/_authenticated/audit'
+      path: '/audit'
+      fullPath: '/audit'
+      preLoaderRoute: typeof AuthenticatedAuditRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/team/$userId': {
@@ -288,7 +326,9 @@ const AuthenticatedTeamRouteWithChildren =
   AuthenticatedTeamRoute._addFileChildren(AuthenticatedTeamRouteChildren)
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedAuditRoute: typeof AuthenticatedAuditRoute
   AuthenticatedAutomationsRoute: typeof AuthenticatedAutomationsRoute
+  AuthenticatedCampaignsRoute: typeof AuthenticatedCampaignsRoute
   AuthenticatedContactsRoute: typeof AuthenticatedContactsRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedInboxRoute: typeof AuthenticatedInboxRoute
@@ -298,7 +338,9 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAuditRoute: AuthenticatedAuditRoute,
   AuthenticatedAutomationsRoute: AuthenticatedAutomationsRoute,
+  AuthenticatedCampaignsRoute: AuthenticatedCampaignsRoute,
   AuthenticatedContactsRoute: AuthenticatedContactsRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedInboxRoute: AuthenticatedInboxRoute,
