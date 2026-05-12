@@ -363,7 +363,7 @@ function CampaignDialog({
     if (!open || source !== "rd_station" || rdSegments.length > 0 || loadingSegments) return;
     setLoadingSegments(true);
     listSegmentsFn()
-      .then((r) => setRdSegments(r.segments))
+      .then((r) => setRdSegments(r?.segments ?? []))
       .catch((e) => toast.error(`RD Station: ${(e as Error).message}`))
       .finally(() => setLoadingSegments(false));
   }, [open, source]);
@@ -373,8 +373,9 @@ function CampaignDialog({
     setPreviewingRd(true);
     try {
       const r = await fetchContactsFn({ data: { segmentId: rdSegmentId } });
-      setRecipients(r.recipients);
-      toast.success(`${r.recipients.length} contatos com telefone (${r.totalRaw} no segmento)`);
+      const list = r?.recipients ?? [];
+      setRecipients(list);
+      toast.success(`${list.length} contatos com telefone (${r?.totalRaw ?? 0} no segmento)`);
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
