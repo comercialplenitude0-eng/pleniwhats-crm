@@ -323,6 +323,7 @@ function CampaignDialog({
 
   // RD CRM
   type RdPipeline = { id: string; name: string; stages: Array<{ id: string; name: string }> };
+  const [rdError, setRdError] = useState<string | null>(null);
   const [rdPipelines, setRdPipelines] = useState<RdPipeline[]>([]);
   const [loadingPipelines, setLoadingPipelines] = useState(false);
   const [rdPipelineId, setRdPipelineId] = useState("");
