@@ -542,7 +542,7 @@ function CampaignDialog({
                       onClick={() => {
                         setRdSegments([]); setLoadingSegments(true);
                         listSegmentsFn()
-                          .then((r) => setRdSegments(r.segments))
+                          .then((r) => setRdSegments(r?.segments ?? []))
                           .catch((e) => toast.error((e as Error).message))
                           .finally(() => setLoadingSegments(false));
                       }}>
