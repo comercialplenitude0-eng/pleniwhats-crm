@@ -313,6 +313,11 @@ function CampaignDialog({
   const [scheduledAt, setScheduledAt] = useState<string>("");
   const [estimate, setEstimate] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
+  const [rdSegments, setRdSegments] = useState<Array<{ id: string; name: string }>>([]);
+  const [loadingSegments, setLoadingSegments] = useState(false);
+  const [previewingRd, setPreviewingRd] = useState(false);
+  const listSegmentsFn = useServerFn(listRdSegments);
+  const fetchContactsFn = useServerFn(fetchRdSegmentContacts);
 
   useEffect(() => {
     if (editing) {
