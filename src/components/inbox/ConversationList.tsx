@@ -33,6 +33,7 @@ import {
   initials,
 } from "@/lib/inbox-types";
 import { seedDemoConversationsForCurrentUser } from "@/lib/seed";
+import { NewConversationDialog } from "./NewConversationDialog";
 import { toast } from "sonner";
 
 type Props = {
@@ -198,6 +199,7 @@ export function ConversationList({
           <div className="text-sm font-medium truncate">{profile?.name ?? "—"}</div>
           <div className="text-xs text-muted-foreground capitalize">{role}</div>
         </div>
+        <NewConversationDialog onCreated={(id) => { onSeeded(); onSelect(id); }} />
         <Button variant="ghost" size="icon" onClick={signOut} title="Sair">
           <LogOut className="size-4" />
         </Button>
