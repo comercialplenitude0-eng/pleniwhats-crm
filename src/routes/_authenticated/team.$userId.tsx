@@ -12,13 +12,14 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import {
   ArrowLeft, Loader2, MessageSquare, Timer, Target, CheckCircle2,
-  Flame, Inbox, Send, Clock, ArrowRightLeft, X,
+  Flame, Inbox, Send, Clock, ArrowRightLeft, X, Search,
 } from "lucide-react";
 import {
   initials, formatTime, LABEL_META, STATUS_LABEL,
-  type Conversation, type Message,
+  type Conversation, type Message, type ConvLabel, type ConvStatus,
 } from "@/lib/inbox-types";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
