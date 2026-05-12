@@ -103,8 +103,8 @@ function SellerDetailsPage() {
       return n;
     });
   }
-  function toggleAll(on: boolean) {
-    setSelected(on ? new Set(conversations.map((c) => c.id)) : new Set());
+  function toggleAll(on: boolean, ids: string[]) {
+    setSelected(on ? new Set(ids) : new Set());
   }
 
   async function bulkTransfer() {
