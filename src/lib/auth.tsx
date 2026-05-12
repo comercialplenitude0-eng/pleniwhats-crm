@@ -8,11 +8,12 @@ export type AuthState = {
   loading: boolean;
   user: User | null;
   session: Session | null;
-  profile: { id: string; name: string; email: string; avatar_url: string | null } | null;
+  profile: { id: string; name: string; email: string; avatar_url: string | null; status: string | null } | null;
   role: AppRole | null;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signUp: (email: string, password: string, name: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
+  refresh: () => void;
 };
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
