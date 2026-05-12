@@ -239,6 +239,16 @@ function DashboardPage() {
             <Kpi icon={Target} label="Conversão" value={metrics.conversionRate} suffix="%" accent="primary" />
           </section>
 
+          <AlertsPanel
+            isGestor={role === "gestor"}
+            ctx={{
+              avgResponseMin: metrics.avgResponseMin,
+              conversionRate: metrics.conversionRate,
+              waiting,
+              sellers: sellers.map((s) => ({ id: s.id, name: s.name, unread: s.unread })),
+            }}
+          />
+
           {/* Volume chart */}
           <Card>
             <CardHeader className="pb-3">
