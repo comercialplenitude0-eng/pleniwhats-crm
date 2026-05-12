@@ -237,9 +237,9 @@ function RuleDialog({
     const payload = {
       name: name.trim(),
       trigger,
-      trigger_config: tConfig,
+      trigger_config: tConfig as never,
       action,
-      action_config: aConfig,
+      action_config: aConfig as never,
     };
     const res = editing
       ? await supabase.from("automation_rules").update(payload).eq("id", editing.id)
