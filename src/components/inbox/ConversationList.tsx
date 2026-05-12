@@ -199,6 +199,7 @@ export function ConversationList({
           <div className="text-sm font-medium truncate">{profile?.name ?? "—"}</div>
           <div className="text-xs text-muted-foreground capitalize">{role}</div>
         </div>
+        <NewConversationDialog onCreated={(id) => { onSeeded(); onSelect(id); }} />
         <Button variant="ghost" size="icon" onClick={signOut} title="Sair">
           <LogOut className="size-4" />
         </Button>
