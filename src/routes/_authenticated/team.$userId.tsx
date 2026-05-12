@@ -83,6 +83,20 @@ function SellerDetailsPage() {
     setLoading(false);
   }, [userId]);
 
+  async function logTransfer(convIds: string[], toUserId: string | null) {
+    const { data: auth } = await supabase.auth.getUser();
+    const actorId = auth.user?.id ?? null;
+    const toName = toUserId ? (others.find((o) => o.id === toUserId)?.name ?? "outro vendedor") : null;
+    const fromName = profile?.name ?? "vendedor";
+    const rows = convIds.map((cid) => ({
+      conversation_id: cid,
+      user_id: actorId,
+      kind: "transfer",
+      payload: { from_user_id: userId, from_name: fromName, to_user_id: toUserId, to_name: toName },
+    }));
+    await supabase.from("conversation_activity").insert(rows);
+  }
+
   async function transfer(convId: string, toUserId: string | null) {
     setTransferring(convId);
     const { error } = await supabase
@@ -91,6 +105,7 @@ function SellerDetailsPage() {
       .eq("id", convId);
     setTransferring(null);
     if (error) return toast.error(error.message);
+    void logTransfer([convId], toUserId);
     setConversations((prev) => prev.filter((c) => c.id !== convId));
     setSelected((prev) => { const n = new Set(prev); n.delete(convId); return n; });
     toast.success(toUserId ? "Conversa transferida" : "Conversa sem responsável");
@@ -118,6 +133,7 @@ function SellerDetailsPage() {
       .in("id", ids);
     setBulkRunning(false);
     if (error) return toast.error(error.message);
+    void logTransfer(ids, toUserId);
     setConversations((prev) => prev.filter((c) => !selected.has(c.id)));
     setSelected(new Set());
     setBulkTarget("");
