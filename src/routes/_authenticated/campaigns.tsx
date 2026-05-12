@@ -437,13 +437,15 @@ function CampaignDialog({
     if (!content.trim()) return toast.error("Conteúdo obrigatório");
     if (source === "csv" && recipients.length === 0)
       return toast.error("Importe um CSV com contatos");
-    if (source === "rd_station" && !rdSegmentId.trim())
-      return toast.error("Informe o ID do segmento RD Station");
+    if (source === "rd_station" && !rdStageId.trim())
+      return toast.error("Selecione a etapa do funil no RD CRM");
+    if (source === "rd_station" && rdMoveOnSend && !rdNextStageId.trim())
+      return toast.error("Selecione a próxima etapa para mover os cards");
 
     setSaving(true);
     const total =
       source === "csv" ? recipients.length :
-      source === "rd_station" ? recipients.length : // 0 se ainda não pré-carregou; worker pode buscar
+      source === "rd_station" ? recipients.length :
       (estimate ?? 0);
 
     const payload = {
@@ -454,8 +456,16 @@ function CampaignDialog({
       filter_label: source === "filter" ? ((labelF || null) as ConvLabel | null) : null,
       filter_status: source === "filter" ? ((statusF || null) as ConvStatus | null) : null,
       recipients: source === "csv" || source === "rd_station" ? recipients : [],
-      rd_segment_id: source === "rd_station" ? rdSegmentId.trim() : null,
-      rd_segment_name: source === "rd_station" ? (rdSegmentName.trim() || null) : null,
+      // Mantém rd_segment_* para compatibilidade visual com filas antigas
+      rd_segment_id: source === "rd_station" ? rdStageId.trim() : null,
+      rd_segment_name: source === "rd_station" ? (currentStageName || null) : null,
+      rd_pipeline_id: source === "rd_station" ? (rdPipelineId || null) : null,
+      rd_pipeline_name: source === "rd_station" ? (currentPipeline?.name ?? null) : null,
+      rd_stage_id: source === "rd_station" ? (rdStageId || null) : null,
+      rd_stage_name: source === "rd_station" ? (currentStageName || null) : null,
+      rd_next_stage_id: source === "rd_station" && rdMoveOnSend ? (rdNextStageId || null) : null,
+      rd_next_stage_name: source === "rd_station" && rdMoveOnSend ? (nextStageName || null) : null,
+      rd_move_on_send: source === "rd_station" ? rdMoveOnSend : false,
       scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : null,
       total_recipients: total,
     };
