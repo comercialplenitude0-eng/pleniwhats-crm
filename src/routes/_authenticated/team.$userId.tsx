@@ -71,7 +71,7 @@ function SellerDetailsPage() {
 
   useEffect(() => { void load(); }, [load]);
 
-  const days = RANGE_DAYS[range];
+  const days = RANGE_DAYS[range as RangeKey];
 
   const metrics = useMemo(() => {
     const since = Date.now() - days * 86400_000;
