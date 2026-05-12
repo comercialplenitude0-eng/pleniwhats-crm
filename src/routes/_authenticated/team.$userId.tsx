@@ -302,6 +302,7 @@ function SellerDetailsPage() {
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Não lidas</TableHead>
                       <TableHead className="text-right">Última msg</TableHead>
+                      <TableHead className="text-right w-[180px]">Transferir</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -328,6 +329,26 @@ function SellerDetailsPage() {
                         </TableCell>
                         <TableCell className="text-right text-xs text-muted-foreground tabular-nums">
                           {formatTime(c.last_message_at)}
+                        </TableCell>
+                        <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                          {transferring === c.id ? (
+                            <Loader2 className="size-4 animate-spin text-muted-foreground ml-auto" />
+                          ) : (
+                            <Select
+                              value=""
+                              onValueChange={(v) => transfer(c.id, v === "__none" ? null : v)}
+                            >
+                              <SelectTrigger className="h-8 w-[170px]">
+                                <SelectValue placeholder="Transferir para..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="__none">Sem responsável</SelectItem>
+                                {others.map((o) => (
+                                  <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
