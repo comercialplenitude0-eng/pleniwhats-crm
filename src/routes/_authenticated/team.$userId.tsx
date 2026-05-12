@@ -330,11 +330,51 @@ function SellerDetailsPage() {
 
           {/* Conversations list */}
           <Card>
-            <CardHeader className="pb-3">
+            <CardHeader className="pb-3 space-y-3">
               <CardTitle className="text-sm flex items-center justify-between">
                 <span>Conversas atribuídas</span>
-                <Badge variant="secondary">{conversations.length}</Badge>
+                <Badge variant="secondary">
+                  {filtered.length}
+                  {filtered.length !== conversations.length && ` / ${conversations.length}`}
+                </Badge>
               </CardTitle>
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="relative flex-1 min-w-[180px]">
+                  <Search className="size-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Buscar contato ou telefone..."
+                    className="h-8 pl-8"
+                  />
+                </div>
+                <Select value={labelFilter} onValueChange={(v) => setLabelFilter(v as ConvLabel | "all")}>
+                  <SelectTrigger className="h-8 w-[140px]"><SelectValue placeholder="Etiqueta" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas etiquetas</SelectItem>
+                    {(Object.keys(LABEL_META) as ConvLabel[]).map((k) => (
+                      <SelectItem key={k} value={k}>{LABEL_META[k].emoji} {LABEL_META[k].name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as ConvStatus | "all")}>
+                  <SelectTrigger className="h-8 w-[160px]"><SelectValue placeholder="Status" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos status</SelectItem>
+                    {(Object.keys(STATUS_LABEL) as ConvStatus[]).map((k) => (
+                      <SelectItem key={k} value={k}>{STATUS_LABEL[k]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {(search || labelFilter !== "all" || statusFilter !== "all") && (
+                  <Button
+                    variant="ghost" size="sm" className="h-8 px-2"
+                    onClick={() => { setSearch(""); setLabelFilter("all"); setStatusFilter("all"); }}
+                  >
+                    <X className="size-3.5 mr-1" /> limpar
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent className="p-0">
               {selected.size > 0 && (
@@ -364,9 +404,9 @@ function SellerDetailsPage() {
                   </div>
                 </div>
               )}
-              {conversations.length === 0 ? (
+              {filtered.length === 0 ? (
                 <div className="p-6 text-center text-sm text-muted-foreground">
-                  Sem conversas atribuídas.
+                  {conversations.length === 0 ? "Sem conversas atribuídas." : "Nenhuma conversa corresponde aos filtros."}
                 </div>
               ) : (
                 <Table>
@@ -374,8 +414,8 @@ function SellerDetailsPage() {
                     <TableRow>
                       <TableHead className="w-[40px]">
                         <Checkbox
-                          checked={selected.size > 0 && selected.size === conversations.length}
-                          onCheckedChange={(v) => toggleAll(v === true)}
+                          checked={filtered.length > 0 && filtered.every((c) => selected.has(c.id))}
+                          onCheckedChange={(v) => toggleAll(v === true, filtered.map((c) => c.id))}
                           aria-label="Selecionar todas"
                         />
                       </TableHead>
@@ -388,7 +428,7 @@ function SellerDetailsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {conversations.map((c) => (
+                    {filtered.map((c) => (
                       <TableRow
                         key={c.id}
                         data-state={selected.has(c.id) ? "selected" : undefined}
