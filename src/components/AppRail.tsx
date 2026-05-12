@@ -20,6 +20,7 @@ export function AppRail() {
 
   const items = [
     { to: "/inbox", icon: MessageCircle, label: "Inbox", show: true },
+    { to: "/contacts", icon: Contact, label: "Contatos", show: true },
     { to: "/templates", icon: Zap, label: "Respostas rápidas", show: true },
     { to: "/dashboard", icon: BarChart3, label: "Dashboard", show: role === "gestor" },
     { to: "/team", icon: Users, label: "Equipe", show: role === "gestor" },
