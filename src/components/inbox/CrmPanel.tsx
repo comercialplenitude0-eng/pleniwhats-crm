@@ -26,6 +26,7 @@ import {
   type ConvStatus,
 } from "@/lib/inbox-types";
 import { toast } from "sonner";
+import { RdCrmSection } from "./RdCrmSection";
 
 type Props = {
   conversation: Conversation | null;
@@ -211,12 +212,13 @@ export function CrmPanel({ conversation, onUpdated }: Props) {
       </div>
 
       <Tabs defaultValue="lead" className="flex-1 flex flex-col min-h-0">
-        <TabsList className="mx-3 mt-3 grid grid-cols-3">
+        <TabsList className="mx-3 mt-3 grid grid-cols-4">
           <TabsTrigger value="lead">Lead</TabsTrigger>
+          <TabsTrigger value="rd">RD CRM</TabsTrigger>
           <TabsTrigger value="notes">
             Notas{notes.length > 0 && <span className="ml-1 opacity-60">({notes.length})</span>}
           </TabsTrigger>
-          <TabsTrigger value="activity">Histórico</TabsTrigger>
+          <TabsTrigger value="activity">Hist.</TabsTrigger>
         </TabsList>
 
         {/* LEAD TAB */}
