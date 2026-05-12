@@ -81,7 +81,7 @@ const STATUS_META: Record<CampaignStatus, { label: string; className: string }> 
 const SOURCE_META: Record<CampaignSource, { label: string; icon: typeof Filter }> = {
   filter: { label: "Filtro de conversas", icon: Filter },
   csv: { label: "Planilha CSV", icon: FileSpreadsheet },
-  rd_station: { label: "Segmento RD Station", icon: DatabaseIcon },
+  rd_station: { label: "Etapa do funil (RD CRM)", icon: DatabaseIcon },
 };
 
 function CampaignsPage() {
