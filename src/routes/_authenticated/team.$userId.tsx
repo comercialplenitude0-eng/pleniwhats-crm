@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   ArrowLeft, Loader2, MessageSquare, Timer, Target, CheckCircle2,
   Flame, Inbox, Send, Clock,
@@ -21,6 +22,7 @@ import {
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
 } from "recharts";
+import { toast } from "sonner";
 
 type RangeKey = "7d" | "14d" | "30d";
 const RANGE_DAYS: Record<RangeKey, number> = { "7d": 7, "14d": 14, "30d": 30 };
@@ -46,12 +48,14 @@ function SellerDetailsPage() {
   const [isManager, setIsManager] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Pick<Message, "id" | "conversation_id" | "direction" | "created_at" | "sender_id">[]>([]);
+  const [others, setOthers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [transferring, setTransferring] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     const sinceIso = new Date(Date.now() - 30 * 86400_000).toISOString();
-    const [p, r, c, m] = await Promise.all([
+    const [p, r, c, m, others] = await Promise.all([
       supabase.from("profiles").select("id,name,email").eq("id", userId).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", userId),
       supabase.from("conversations").select("*").eq("assigned_to", userId)
@@ -61,13 +65,27 @@ function SellerDetailsPage() {
         .gte("created_at", sinceIso)
         .order("created_at", { ascending: true })
         .limit(5000),
+      supabase.from("profiles").select("id,name,email").neq("id", userId).order("name"),
     ]);
     setProfile((p.data ?? null) as Profile | null);
     setIsManager(((r.data ?? []) as { role: string }[]).some((x) => x.role === "gestor"));
     setConversations((c.data ?? []) as Conversation[]);
     setMessages(m.data ?? []);
+    setOthers((others.data ?? []) as Profile[]);
     setLoading(false);
   }, [userId]);
+
+  async function transfer(convId: string, toUserId: string | null) {
+    setTransferring(convId);
+    const { error } = await supabase
+      .from("conversations")
+      .update({ assigned_to: toUserId })
+      .eq("id", convId);
+    setTransferring(null);
+    if (error) return toast.error(error.message);
+    setConversations((prev) => prev.filter((c) => c.id !== convId));
+    toast.success(toUserId ? "Conversa transferida" : "Conversa sem responsável");
+  }
 
   useEffect(() => { void load(); }, [load]);
 
@@ -285,6 +303,7 @@ function SellerDetailsPage() {
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Não lidas</TableHead>
                       <TableHead className="text-right">Última msg</TableHead>
+                      <TableHead className="text-right w-[180px]">Transferir</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -311,6 +330,26 @@ function SellerDetailsPage() {
                         </TableCell>
                         <TableCell className="text-right text-xs text-muted-foreground tabular-nums">
                           {formatTime(c.last_message_at)}
+                        </TableCell>
+                        <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                          {transferring === c.id ? (
+                            <Loader2 className="size-4 animate-spin text-muted-foreground ml-auto" />
+                          ) : (
+                            <Select
+                              value=""
+                              onValueChange={(v) => transfer(c.id, v === "__none" ? null : v)}
+                            >
+                              <SelectTrigger className="h-8 w-[170px]">
+                                <SelectValue placeholder="Transferir para..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="__none">Sem responsável</SelectItem>
+                                {others.map((o) => (
+                                  <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
