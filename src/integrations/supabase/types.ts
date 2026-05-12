@@ -98,8 +98,12 @@ export type Database = {
           filter_status: Database["public"]["Enums"]["conv_status"] | null
           id: string
           name: string
+          rd_segment_id: string | null
+          rd_segment_name: string | null
+          recipients: Json
           scheduled_at: string | null
           sent_count: number
+          source: Database["public"]["Enums"]["campaign_source"]
           status: Database["public"]["Enums"]["campaign_status"]
           template_id: string | null
           total_recipients: number
@@ -113,8 +117,12 @@ export type Database = {
           filter_status?: Database["public"]["Enums"]["conv_status"] | null
           id?: string
           name: string
+          rd_segment_id?: string | null
+          rd_segment_name?: string | null
+          recipients?: Json
           scheduled_at?: string | null
           sent_count?: number
+          source?: Database["public"]["Enums"]["campaign_source"]
           status?: Database["public"]["Enums"]["campaign_status"]
           template_id?: string | null
           total_recipients?: number
@@ -128,8 +136,12 @@ export type Database = {
           filter_status?: Database["public"]["Enums"]["conv_status"] | null
           id?: string
           name?: string
+          rd_segment_id?: string | null
+          rd_segment_name?: string | null
+          recipients?: Json
           scheduled_at?: string | null
           sent_count?: number
+          source?: Database["public"]["Enums"]["campaign_source"]
           status?: Database["public"]["Enums"]["campaign_status"]
           template_id?: string | null
           total_recipients?: number
@@ -443,6 +455,7 @@ export type Database = {
         | "set_status"
         | "send_template"
       automation_trigger: "no_reply" | "keyword_inbound" | "new_conversation"
+      campaign_source: "filter" | "csv" | "rd_station"
       campaign_status:
         | "draft"
         | "scheduled"
@@ -590,6 +603,7 @@ export const Constants = {
         "send_template",
       ],
       automation_trigger: ["no_reply", "keyword_inbound", "new_conversation"],
+      campaign_source: ["filter", "csv", "rd_station"],
       campaign_status: ["draft", "scheduled", "sending", "completed", "failed"],
       conv_label: ["hot", "warm", "cold", "new", "closed"],
       conv_status: ["aguardando", "em_atendimento", "encerrada"],
