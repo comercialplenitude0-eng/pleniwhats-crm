@@ -236,6 +236,7 @@ export type Database = {
           label: Database["public"]["Enums"]["conv_label"]
           last_message: string | null
           last_message_at: string
+          rd_deal_id: string | null
           status: Database["public"]["Enums"]["conv_status"]
           unread_count: number
           wa_contact_id: string | null
@@ -251,6 +252,7 @@ export type Database = {
           label?: Database["public"]["Enums"]["conv_label"]
           last_message?: string | null
           last_message_at?: string
+          rd_deal_id?: string | null
           status?: Database["public"]["Enums"]["conv_status"]
           unread_count?: number
           wa_contact_id?: string | null
@@ -266,6 +268,7 @@ export type Database = {
           label?: Database["public"]["Enums"]["conv_label"]
           last_message?: string | null
           last_message_at?: string
+          rd_deal_id?: string | null
           status?: Database["public"]["Enums"]["conv_status"]
           unread_count?: number
           wa_contact_id?: string | null
