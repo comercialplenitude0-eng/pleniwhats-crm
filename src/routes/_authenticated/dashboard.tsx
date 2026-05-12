@@ -452,7 +452,7 @@ function DashboardPage() {
                       <TableCell className="text-right">
                         <Button
                           variant="ghost" size="sm"
-                          onClick={() => toggleRole(s.id, s.role)}
+                          onClick={(e) => { e.stopPropagation(); toggleRole(s.id, s.role); }}
                           disabled={s.id === profile?.id}
                           title={s.id === profile?.id ? "Não é possível alterar seu próprio perfil" : ""}
                         >
