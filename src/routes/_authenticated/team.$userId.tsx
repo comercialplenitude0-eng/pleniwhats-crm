@@ -128,6 +128,16 @@ function SellerDetailsPage() {
 
   const days = RANGE_DAYS[range as RangeKey];
 
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return conversations.filter((c) => {
+      if (labelFilter !== "all" && c.label !== labelFilter) return false;
+      if (statusFilter !== "all" && c.status !== statusFilter) return false;
+      if (q && !(c.contact_name.toLowerCase().includes(q) || (c.contact_phone ?? "").toLowerCase().includes(q))) return false;
+      return true;
+    });
+  }, [conversations, search, labelFilter, statusFilter]);
+
   const metrics = useMemo(() => {
     const since = Date.now() - days * 86400_000;
     const convIds = new Set(conversations.map((c) => c.id));
