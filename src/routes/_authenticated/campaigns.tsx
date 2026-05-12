@@ -26,7 +26,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { listRdSegments, fetchRdSegmentContacts } from "@/lib/rd-station.functions";
+import { listRdPipelines, fetchRdStageDeals } from "@/lib/rd-crm.functions";
+import { Switch } from "@/components/ui/switch";
 import {
   LABEL_META, STATUS_LABEL, formatTime,
   type ConvLabel, type ConvStatus,
@@ -49,6 +50,13 @@ type Campaign = {
   recipients: Recipient[];
   rd_segment_id: string | null;
   rd_segment_name: string | null;
+  rd_pipeline_id: string | null;
+  rd_pipeline_name: string | null;
+  rd_stage_id: string | null;
+  rd_stage_name: string | null;
+  rd_next_stage_id: string | null;
+  rd_next_stage_name: string | null;
+  rd_move_on_send: boolean;
   status: CampaignStatus;
   scheduled_at: string | null;
   total_recipients: number;
@@ -73,7 +81,7 @@ const STATUS_META: Record<CampaignStatus, { label: string; className: string }> 
 const SOURCE_META: Record<CampaignSource, { label: string; icon: typeof Filter }> = {
   filter: { label: "Filtro de conversas", icon: Filter },
   csv: { label: "Planilha CSV", icon: FileSpreadsheet },
-  rd_station: { label: "Segmento RD Station", icon: DatabaseIcon },
+  rd_station: { label: "Etapa do funil (RD CRM)", icon: DatabaseIcon },
 };
 
 function CampaignsPage() {
@@ -187,8 +195,12 @@ function CampaignsPage() {
                                 {c.filter_status && <>· {STATUS_LABEL[c.filter_status]}</>}
                               </div>
                             )}
-                            {c.source === "rd_station" && c.rd_segment_name && (
-                              <div className="text-[10px] text-muted-foreground mt-0.5">{c.rd_segment_name}</div>
+                            {c.source === "rd_station" && (c.rd_stage_name || c.rd_segment_name) && (
+                              <div className="text-[10px] text-muted-foreground mt-0.5">
+                                {c.rd_pipeline_name ? `${c.rd_pipeline_name} · ` : ""}
+                                {c.rd_stage_name ?? c.rd_segment_name}
+                                {c.rd_next_stage_name ? ` → ${c.rd_next_stage_name}` : ""}
+                              </div>
                             )}
                           </TableCell>
                           <TableCell>
@@ -308,16 +320,26 @@ function CampaignDialog({
   const [statusF, setStatusF] = useState<ConvStatus | "">("");
   const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [csvName, setCsvName] = useState<string>("");
-  const [rdSegmentId, setRdSegmentId] = useState("");
-  const [rdSegmentName, setRdSegmentName] = useState("");
+
+  // RD CRM
+  type RdPipeline = { id: string; name: string; stages: Array<{ id: string; name: string }> };
+  const [rdPipelines, setRdPipelines] = useState<RdPipeline[]>([]);
+  const [loadingPipelines, setLoadingPipelines] = useState(false);
+  const [rdPipelineId, setRdPipelineId] = useState("");
+  const [rdStageId, setRdStageId] = useState("");
+  const [rdNextStageId, setRdNextStageId] = useState("");
+  const [rdMoveOnSend, setRdMoveOnSend] = useState(true);
+  const [previewingRd, setPreviewingRd] = useState(false);
+  const listPipelinesFn = useServerFn(listRdPipelines);
+  const fetchStageDealsFn = useServerFn(fetchRdStageDeals);
+
   const [scheduledAt, setScheduledAt] = useState<string>("");
   const [estimate, setEstimate] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
-  const [rdSegments, setRdSegments] = useState<Array<{ id: string; name: string }>>([]);
-  const [loadingSegments, setLoadingSegments] = useState(false);
-  const [previewingRd, setPreviewingRd] = useState(false);
-  const listSegmentsFn = useServerFn(listRdSegments);
-  const fetchContactsFn = useServerFn(fetchRdSegmentContacts);
+
+  const currentPipeline = rdPipelines.find((p) => p.id === rdPipelineId);
+  const currentStageName = currentPipeline?.stages.find((s) => s.id === rdStageId)?.name ?? "";
+  const nextStageName = currentPipeline?.stages.find((s) => s.id === rdNextStageId)?.name ?? "";
 
   useEffect(() => {
     if (editing) {
@@ -329,24 +351,27 @@ function CampaignDialog({
       setStatusF(editing.filter_status ?? "");
       setRecipients(editing.recipients ?? []);
       setCsvName("");
-      setRdSegmentId(editing.rd_segment_id ?? "");
-      setRdSegmentName(editing.rd_segment_name ?? "");
+      setRdPipelineId(editing.rd_pipeline_id ?? "");
+      setRdStageId(editing.rd_stage_id ?? editing.rd_segment_id ?? "");
+      setRdNextStageId(editing.rd_next_stage_id ?? "");
+      setRdMoveOnSend(editing.rd_move_on_send ?? true);
       setScheduledAt(editing.scheduled_at ? editing.scheduled_at.slice(0, 16) : "");
     } else {
       setName(""); setContent(""); setTemplateId("");
       setSource("filter");
       setLabelF(""); setStatusF("");
       setRecipients([]); setCsvName("");
-      setRdSegmentId(""); setRdSegmentName("");
+      setRdPipelineId(""); setRdStageId(""); setRdNextStageId("");
+      setRdMoveOnSend(true);
       setScheduledAt("");
     }
   }, [editing, open]);
 
-  // Estimate recipients per source
+  // Estimativa por origem
   useEffect(() => {
     if (!open) return;
     if (source === "csv") { setEstimate(recipients.length); return; }
-    if (source === "rd_station") { setEstimate(recipients.length || (rdSegmentId ? null : 0)); return; }
+    if (source === "rd_station") { setEstimate(recipients.length || (rdStageId ? null : 0)); return; }
     let cancelled = false;
     (async () => {
       let q = supabase.from("conversations").select("contact_phone", { count: "exact", head: true });
@@ -356,26 +381,31 @@ function CampaignDialog({
       if (!cancelled) setEstimate(count ?? 0);
     })();
     return () => { cancelled = true; };
-  }, [open, source, labelF, statusF, recipients.length, rdSegmentId]);
+  }, [open, source, labelF, statusF, recipients.length, rdStageId]);
 
-  // Carrega segmentos do RD Station ao abrir a aba
+  function loadPipelines() {
+    setLoadingPipelines(true);
+    listPipelinesFn()
+      .then((r) => setRdPipelines(r?.pipelines ?? []))
+      .catch((e: unknown) => toast.error(`RD CRM: ${(e as Error).message}`))
+      .finally(() => setLoadingPipelines(false));
+  }
+
+  // Carrega funis ao abrir a aba RD
   useEffect(() => {
-    if (!open || source !== "rd_station" || rdSegments.length > 0 || loadingSegments) return;
-    setLoadingSegments(true);
-    listSegmentsFn()
-      .then((r) => setRdSegments(r?.segments ?? []))
-      .catch((e) => toast.error(`RD Station: ${(e as Error).message}`))
-      .finally(() => setLoadingSegments(false));
+    if (!open || source !== "rd_station" || rdPipelines.length > 0 || loadingPipelines) return;
+    loadPipelines();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, source]);
 
   async function previewRdContacts() {
-    if (!rdSegmentId) return toast.error("Selecione um segmento");
+    if (!rdStageId) return toast.error("Selecione uma etapa do funil");
     setPreviewingRd(true);
     try {
-      const r = await fetchContactsFn({ data: { segmentId: rdSegmentId } });
+      const r = await fetchStageDealsFn({ data: { stageId: rdStageId } });
       const list = r?.recipients ?? [];
       setRecipients(list);
-      toast.success(`${list.length} contatos com telefone (${r?.totalRaw ?? 0} no segmento)`);
+      toast.success(`${list.length} contatos com telefone (${r?.totalRaw ?? 0} negociações na etapa)`);
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -407,13 +437,15 @@ function CampaignDialog({
     if (!content.trim()) return toast.error("Conteúdo obrigatório");
     if (source === "csv" && recipients.length === 0)
       return toast.error("Importe um CSV com contatos");
-    if (source === "rd_station" && !rdSegmentId.trim())
-      return toast.error("Informe o ID do segmento RD Station");
+    if (source === "rd_station" && !rdStageId.trim())
+      return toast.error("Selecione a etapa do funil no RD CRM");
+    if (source === "rd_station" && rdMoveOnSend && !rdNextStageId.trim())
+      return toast.error("Selecione a próxima etapa para mover os cards");
 
     setSaving(true);
     const total =
       source === "csv" ? recipients.length :
-      source === "rd_station" ? recipients.length : // 0 se ainda não pré-carregou; worker pode buscar
+      source === "rd_station" ? recipients.length :
       (estimate ?? 0);
 
     const payload = {
@@ -424,8 +456,16 @@ function CampaignDialog({
       filter_label: source === "filter" ? ((labelF || null) as ConvLabel | null) : null,
       filter_status: source === "filter" ? ((statusF || null) as ConvStatus | null) : null,
       recipients: source === "csv" || source === "rd_station" ? recipients : [],
-      rd_segment_id: source === "rd_station" ? rdSegmentId.trim() : null,
-      rd_segment_name: source === "rd_station" ? (rdSegmentName.trim() || null) : null,
+      // Mantém rd_segment_* para compatibilidade visual com filas antigas
+      rd_segment_id: source === "rd_station" ? rdStageId.trim() : null,
+      rd_segment_name: source === "rd_station" ? (currentStageName || null) : null,
+      rd_pipeline_id: source === "rd_station" ? (rdPipelineId || null) : null,
+      rd_pipeline_name: source === "rd_station" ? (currentPipeline?.name ?? null) : null,
+      rd_stage_id: source === "rd_station" ? (rdStageId || null) : null,
+      rd_stage_name: source === "rd_station" ? (currentStageName || null) : null,
+      rd_next_stage_id: source === "rd_station" && rdMoveOnSend ? (rdNextStageId || null) : null,
+      rd_next_stage_name: source === "rd_station" && rdMoveOnSend ? (nextStageName || null) : null,
+      rd_move_on_send: source === "rd_station" ? rdMoveOnSend : false,
       scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : null,
       total_recipients: total,
     };
@@ -537,51 +577,79 @@ function CampaignDialog({
               <TabsContent value="rd_station" className="pt-3 space-y-3">
                 <div className="space-y-1.5">
                   <Label className="text-xs flex items-center justify-between">
-                    Segmento
+                    Funil
                     <button type="button" className="text-[10px] text-primary hover:underline inline-flex items-center gap-1"
-                      onClick={() => {
-                        setRdSegments([]); setLoadingSegments(true);
-                        listSegmentsFn()
-                          .then((r) => setRdSegments(r?.segments ?? []))
-                          .catch((e) => toast.error((e as Error).message))
-                          .finally(() => setLoadingSegments(false));
-                      }}>
+                      onClick={loadPipelines}>
                       <RefreshCw className="size-3" /> Recarregar
                     </button>
                   </Label>
-                  {loadingSegments ? (
+                  {loadingPipelines ? (
                     <div className="flex items-center gap-2 text-xs text-muted-foreground p-2 border rounded-md">
-                      <Loader2 className="size-3.5 animate-spin" /> Carregando segmentos...
+                      <Loader2 className="size-3.5 animate-spin" /> Carregando funis...
                     </div>
-                  ) : rdSegments.length > 0 ? (
-                    <Select value={rdSegmentId} onValueChange={(v) => {
-                      setRdSegmentId(v);
-                      const s = rdSegments.find((x) => x.id === v);
-                      if (s) setRdSegmentName(s.name);
-                      setRecipients([]);
+                  ) : (
+                    <Select value={rdPipelineId} onValueChange={(v) => {
+                      setRdPipelineId(v); setRdStageId(""); setRdNextStageId(""); setRecipients([]);
                     }}>
-                      <SelectTrigger><SelectValue placeholder="Selecione um segmento" /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder="Selecione um funil" /></SelectTrigger>
                       <SelectContent>
-                        {rdSegments.map((s) => (
-                          <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                        {rdPipelines.map((p) => (
+                          <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-                  ) : (
-                    <Input value={rdSegmentId} onChange={(e) => setRdSegmentId(e.target.value)}
-                      placeholder="ID do segmento (manual)" />
                   )}
                 </div>
+
+                {currentPipeline && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Etapa atual</Label>
+                      <Select value={rdStageId} onValueChange={(v) => { setRdStageId(v); setRecipients([]); }}>
+                        <SelectTrigger><SelectValue placeholder="Etapa de origem" /></SelectTrigger>
+                        <SelectContent>
+                          {currentPipeline.stages.map((s) => (
+                            <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Mover para</Label>
+                      <Select value={rdNextStageId} onValueChange={setRdNextStageId} disabled={!rdMoveOnSend}>
+                        <SelectTrigger><SelectValue placeholder="Próxima etapa" /></SelectTrigger>
+                        <SelectContent>
+                          {currentPipeline.stages
+                            .filter((s) => s.id !== rdStageId)
+                            .map((s) => (
+                              <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between rounded-md border px-3 py-2">
+                  <div className="space-y-0.5">
+                    <Label className="text-xs">Mover cards após o envio</Label>
+                    <p className="text-[10px] text-muted-foreground">
+                      Cada deal será movido para "{nextStageName || "a próxima etapa"}" assim que a mensagem sair.
+                    </p>
+                  </div>
+                  <Switch checked={rdMoveOnSend} onCheckedChange={setRdMoveOnSend} />
+                </div>
+
                 <Button type="button" variant="outline" size="sm" className="w-full"
-                  onClick={previewRdContacts} disabled={previewingRd || !rdSegmentId}>
+                  onClick={previewRdContacts} disabled={previewingRd || !rdStageId}>
                   {previewingRd ? <Loader2 className="size-3.5 animate-spin mr-1" /> : <Users className="size-3.5 mr-1" />}
                   {recipients.length > 0
                     ? `${recipients.length} contatos prontos · atualizar`
-                    : "Buscar contatos do segmento"}
+                    : "Buscar contatos da etapa"}
                 </Button>
                 <p className="text-[10px] text-muted-foreground">
-                  Os contatos são buscados via API do RD Station no momento do envio.
-                  Use "Buscar contatos" para validar antes de agendar.
+                  Os deals da etapa selecionada são buscados via API do RD CRM. Use "Buscar contatos"
+                  para validar antes de agendar.
                 </p>
               </TabsContent>
             </Tabs>

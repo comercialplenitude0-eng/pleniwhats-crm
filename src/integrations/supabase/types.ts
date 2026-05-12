@@ -98,8 +98,15 @@ export type Database = {
           filter_status: Database["public"]["Enums"]["conv_status"] | null
           id: string
           name: string
+          rd_move_on_send: boolean
+          rd_next_stage_id: string | null
+          rd_next_stage_name: string | null
+          rd_pipeline_id: string | null
+          rd_pipeline_name: string | null
           rd_segment_id: string | null
           rd_segment_name: string | null
+          rd_stage_id: string | null
+          rd_stage_name: string | null
           recipients: Json
           scheduled_at: string | null
           sent_count: number
@@ -117,8 +124,15 @@ export type Database = {
           filter_status?: Database["public"]["Enums"]["conv_status"] | null
           id?: string
           name: string
+          rd_move_on_send?: boolean
+          rd_next_stage_id?: string | null
+          rd_next_stage_name?: string | null
+          rd_pipeline_id?: string | null
+          rd_pipeline_name?: string | null
           rd_segment_id?: string | null
           rd_segment_name?: string | null
+          rd_stage_id?: string | null
+          rd_stage_name?: string | null
           recipients?: Json
           scheduled_at?: string | null
           sent_count?: number
@@ -136,8 +150,15 @@ export type Database = {
           filter_status?: Database["public"]["Enums"]["conv_status"] | null
           id?: string
           name?: string
+          rd_move_on_send?: boolean
+          rd_next_stage_id?: string | null
+          rd_next_stage_name?: string | null
+          rd_pipeline_id?: string | null
+          rd_pipeline_name?: string | null
           rd_segment_id?: string | null
           rd_segment_name?: string | null
+          rd_stage_id?: string | null
+          rd_stage_name?: string | null
           recipients?: Json
           scheduled_at?: string | null
           sent_count?: number
