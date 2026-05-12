@@ -137,13 +137,6 @@ export const fetchRdStageDeals = createServerFn({ method: "POST" })
     return { recipients: out, totalRaw, pagesFetched: page };
   });
 
-      if (list.length < 200) break;
-      page += 1;
-    }
-
-    return { recipients: out, totalRaw, pagesFetched: page };
-  });
-
 /** Move um deal para outra etapa (chamada após o disparo). */
 export const moveRdDeal = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
