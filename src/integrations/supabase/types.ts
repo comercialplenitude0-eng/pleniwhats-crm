@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      conversation_activity: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          id: string
+          kind: string
+          payload: Json
+          user_id: string | null
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          id?: string
+          kind: string
+          payload?: Json
+          user_id?: string | null
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          payload?: Json
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      conversation_notes: {
+        Row: {
+          body: string
+          conversation_id: string
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
           assigned_to: string | null
