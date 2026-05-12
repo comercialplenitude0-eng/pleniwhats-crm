@@ -195,8 +195,12 @@ function CampaignsPage() {
                                 {c.filter_status && <>· {STATUS_LABEL[c.filter_status]}</>}
                               </div>
                             )}
-                            {c.source === "rd_station" && c.rd_segment_name && (
-                              <div className="text-[10px] text-muted-foreground mt-0.5">{c.rd_segment_name}</div>
+                            {c.source === "rd_station" && (c.rd_stage_name || c.rd_segment_name) && (
+                              <div className="text-[10px] text-muted-foreground mt-0.5">
+                                {c.rd_pipeline_name ? `${c.rd_pipeline_name} · ` : ""}
+                                {c.rd_stage_name ?? c.rd_segment_name}
+                                {c.rd_next_stage_name ? ` → ${c.rd_next_stage_name}` : ""}
+                              </div>
                             )}
                           </TableCell>
                           <TableCell>
