@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -34,6 +34,7 @@ const RANGE_DAYS: Record<RangeKey, number> = { "7d": 7, "14d": 14, "30d": 30 };
 
 function DashboardPage() {
   const { role, profile, signOut } = useAuth();
+  const navigate = useNavigate();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [roles, setRoles] = useState<RoleRow[]>([]);
@@ -415,7 +416,11 @@ function DashboardPage() {
                 </TableHeader>
                 <TableBody>
                   {ranking.map((s, idx) => (
-                    <TableRow key={s.id}>
+                    <TableRow
+                      key={s.id}
+                      className="cursor-pointer hover:bg-accent/40"
+                      onClick={() => navigate({ to: "/team/$userId", params: { userId: s.id }, search: { range } })}
+                    >
                       <TableCell>
                         <div className="flex items-center gap-2">
                           {idx < 3 && (
@@ -447,7 +452,7 @@ function DashboardPage() {
                       <TableCell className="text-right">
                         <Button
                           variant="ghost" size="sm"
-                          onClick={() => toggleRole(s.id, s.role)}
+                          onClick={(e) => { e.stopPropagation(); toggleRole(s.id, s.role); }}
                           disabled={s.id === profile?.id}
                           title={s.id === profile?.id ? "Não é possível alterar seu próprio perfil" : ""}
                         >
