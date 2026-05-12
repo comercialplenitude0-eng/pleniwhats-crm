@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      alert_settings: {
+        Row: {
+          enabled: boolean
+          id: string
+          max_response_time_min: number
+          max_unread_per_seller: number
+          max_waiting: number
+          min_conversion_rate: number
+          singleton: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          enabled?: boolean
+          id?: string
+          max_response_time_min?: number
+          max_unread_per_seller?: number
+          max_waiting?: number
+          min_conversion_rate?: number
+          singleton?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          enabled?: boolean
+          id?: string
+          max_response_time_min?: number
+          max_unread_per_seller?: number
+          max_waiting?: number
+          min_conversion_rate?: number
+          singleton?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       conversation_activity: {
         Row: {
           conversation_id: string
