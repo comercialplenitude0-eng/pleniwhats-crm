@@ -332,6 +332,18 @@ export function CrmPanel({ conversation, onUpdated }: Props) {
         </TabsContent>
 
         {/* NOTES TAB */}
+        {/* RD CRM TAB */}
+        <TabsContent value="rd" className="flex-1 min-h-0 m-0">
+          <ScrollArea className="h-full">
+            <div className="p-4">
+              <RdCrmSection
+                conversation={conversation}
+                onLinked={(dealId) => onUpdated({ ...conversation, rd_deal_id: dealId })}
+              />
+            </div>
+          </ScrollArea>
+        </TabsContent>
+
         <TabsContent value="notes" className="flex-1 min-h-0 m-0 flex flex-col">
           <ScrollArea className="flex-1">
             <div className="p-4 space-y-3">
