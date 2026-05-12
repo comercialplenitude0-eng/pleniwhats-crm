@@ -577,51 +577,79 @@ function CampaignDialog({
               <TabsContent value="rd_station" className="pt-3 space-y-3">
                 <div className="space-y-1.5">
                   <Label className="text-xs flex items-center justify-between">
-                    Segmento
+                    Funil
                     <button type="button" className="text-[10px] text-primary hover:underline inline-flex items-center gap-1"
-                      onClick={() => {
-                        setRdSegments([]); setLoadingSegments(true);
-                        listSegmentsFn()
-                          .then((r) => setRdSegments(r?.segments ?? []))
-                          .catch((e) => toast.error((e as Error).message))
-                          .finally(() => setLoadingSegments(false));
-                      }}>
+                      onClick={loadPipelines}>
                       <RefreshCw className="size-3" /> Recarregar
                     </button>
                   </Label>
-                  {loadingSegments ? (
+                  {loadingPipelines ? (
                     <div className="flex items-center gap-2 text-xs text-muted-foreground p-2 border rounded-md">
-                      <Loader2 className="size-3.5 animate-spin" /> Carregando segmentos...
+                      <Loader2 className="size-3.5 animate-spin" /> Carregando funis...
                     </div>
-                  ) : rdSegments.length > 0 ? (
-                    <Select value={rdSegmentId} onValueChange={(v) => {
-                      setRdSegmentId(v);
-                      const s = rdSegments.find((x) => x.id === v);
-                      if (s) setRdSegmentName(s.name);
-                      setRecipients([]);
+                  ) : (
+                    <Select value={rdPipelineId} onValueChange={(v) => {
+                      setRdPipelineId(v); setRdStageId(""); setRdNextStageId(""); setRecipients([]);
                     }}>
-                      <SelectTrigger><SelectValue placeholder="Selecione um segmento" /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder="Selecione um funil" /></SelectTrigger>
                       <SelectContent>
-                        {rdSegments.map((s) => (
-                          <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                        {rdPipelines.map((p) => (
+                          <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-                  ) : (
-                    <Input value={rdSegmentId} onChange={(e) => setRdSegmentId(e.target.value)}
-                      placeholder="ID do segmento (manual)" />
                   )}
                 </div>
+
+                {currentPipeline && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Etapa atual</Label>
+                      <Select value={rdStageId} onValueChange={(v) => { setRdStageId(v); setRecipients([]); }}>
+                        <SelectTrigger><SelectValue placeholder="Etapa de origem" /></SelectTrigger>
+                        <SelectContent>
+                          {currentPipeline.stages.map((s) => (
+                            <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Mover para</Label>
+                      <Select value={rdNextStageId} onValueChange={setRdNextStageId} disabled={!rdMoveOnSend}>
+                        <SelectTrigger><SelectValue placeholder="Próxima etapa" /></SelectTrigger>
+                        <SelectContent>
+                          {currentPipeline.stages
+                            .filter((s) => s.id !== rdStageId)
+                            .map((s) => (
+                              <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between rounded-md border px-3 py-2">
+                  <div className="space-y-0.5">
+                    <Label className="text-xs">Mover cards após o envio</Label>
+                    <p className="text-[10px] text-muted-foreground">
+                      Cada deal será movido para "{nextStageName || "a próxima etapa"}" assim que a mensagem sair.
+                    </p>
+                  </div>
+                  <Switch checked={rdMoveOnSend} onCheckedChange={setRdMoveOnSend} />
+                </div>
+
                 <Button type="button" variant="outline" size="sm" className="w-full"
-                  onClick={previewRdContacts} disabled={previewingRd || !rdSegmentId}>
+                  onClick={previewRdContacts} disabled={previewingRd || !rdStageId}>
                   {previewingRd ? <Loader2 className="size-3.5 animate-spin mr-1" /> : <Users className="size-3.5 mr-1" />}
                   {recipients.length > 0
                     ? `${recipients.length} contatos prontos · atualizar`
-                    : "Buscar contatos do segmento"}
+                    : "Buscar contatos da etapa"}
                 </Button>
                 <p className="text-[10px] text-muted-foreground">
-                  Os contatos são buscados via API do RD Station no momento do envio.
-                  Use "Buscar contatos" para validar antes de agendar.
+                  Os deals da etapa selecionada são buscados via API do RD CRM. Use "Buscar contatos"
+                  para validar antes de agendar.
                 </p>
               </TabsContent>
             </Tabs>
