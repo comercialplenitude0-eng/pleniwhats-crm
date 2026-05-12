@@ -323,6 +323,7 @@ function CampaignDialog({
 
   // RD CRM
   type RdPipeline = { id: string; name: string; stages: Array<{ id: string; name: string }> };
+  const [rdError, setRdError] = useState<string | null>(null);
   const [rdPipelines, setRdPipelines] = useState<RdPipeline[]>([]);
   const [loadingPipelines, setLoadingPipelines] = useState(false);
   const [rdPipelineId, setRdPipelineId] = useState("");
@@ -385,9 +386,18 @@ function CampaignDialog({
 
   function loadPipelines() {
     setLoadingPipelines(true);
+    setRdError(null);
     listPipelinesFn()
-      .then((r) => setRdPipelines(r?.pipelines ?? []))
-      .catch((e: unknown) => toast.error(`RD CRM: ${(e as Error).message}`))
+      .then((r) => {
+        const list = r?.pipelines ?? [];
+        setRdPipelines(list);
+        if (list.length === 0) setRdError("Nenhum funil retornado pela API do RD CRM.");
+      })
+      .catch((e: unknown) => {
+        const msg = (e as Error).message;
+        setRdError(msg);
+        toast.error(`RD CRM: ${msg}`);
+      })
       .finally(() => setLoadingPipelines(false));
   }
 
@@ -598,6 +608,17 @@ function CampaignDialog({
                         ))}
                       </SelectContent>
                     </Select>
+                  )}
+                  {rdError && (
+                    <div className="text-[11px] text-destructive bg-destructive/10 border border-destructive/30 rounded-md p-2 leading-snug">
+                      {rdError}
+                      <div className="text-muted-foreground mt-1">
+                        O RD CRM usa um <strong>token de instância</strong> diferente do RD Marketing.
+                        Pegue em <em>Configurações → Integrações → API</em> dentro do RD Station CRM e
+                        atualize o secret <code>RD_CRM_TOKEN</code> (ou substitua o
+                        <code> RD_STATION_API_TOKEN</code>).
+                      </div>
+                    </div>
                   )}
                 </div>
 
