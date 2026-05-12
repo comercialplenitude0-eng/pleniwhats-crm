@@ -23,7 +23,8 @@ export function NewConversationDialog({
 }: {
   onCreated: (id: string) => void;
 }) {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
+  const accessToken = session?.access_token ?? null;
   const lookupDeal = useServerFn(getRdDealContact);
   const findByPhone = useServerFn(findRdDealByPhone);
   const [open, setOpen] = useState(false);
@@ -41,9 +42,13 @@ export function NewConversationDialog({
 
   async function loadFromCrm() {
     if (!dealId.trim()) return;
+    if (!accessToken) return toast.error("Sessão expirada. Faça login novamente para carregar o card.");
     setLoadingCrm(true);
     try {
-      const r = await lookupDeal({ data: { dealId: dealId.trim() } });
+      const r = await lookupDeal({
+        data: { dealId: dealId.trim() },
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
       if (r.contactName && !name) setName(r.contactName);
       if (r.contactPhone && !phone) setPhone(r.contactPhone);
       toast.success(`Card "${r.dealName || r.dealId}" carregado`);
@@ -56,9 +61,13 @@ export function NewConversationDialog({
 
   async function findCardByPhone() {
     if (!phone.trim()) return;
+    if (!accessToken) return toast.error("Sessão expirada. Faça login novamente para buscar o card.");
     setLoadingCrm(true);
     try {
-      const r = await findByPhone({ data: { phone: phone.trim() } });
+      const r = await findByPhone({
+        data: { phone: phone.trim() },
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
       if (r.dealId) {
         setDealId(r.dealId);
         toast.success("Card encontrado e vinculado");
