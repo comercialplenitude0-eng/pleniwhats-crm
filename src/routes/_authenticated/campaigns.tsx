@@ -409,10 +409,10 @@ function CampaignDialog({
 
   // Carrega funis ao abrir a aba RD
   useEffect(() => {
-    if (!open || source !== "rd_station" || rdPipelines.length > 0 || loadingPipelines) return;
+    if (!open || source !== "rd_station" || !accessToken || rdPipelines.length > 0 || loadingPipelines) return;
     loadPipelines();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, source]);
+  }, [open, source, accessToken]);
 
   async function previewRdContacts() {
     if (!rdStageId) return toast.error("Selecione uma etapa do funil");
