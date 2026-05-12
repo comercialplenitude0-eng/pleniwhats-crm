@@ -45,19 +45,35 @@ async function rdCrm(
   return res.json();
 }
 
-type RdStage = { _id?: string; id?: string; name: string; deal_pipeline_id?: string; nickname?: string };
-type RdPipeline = { _id?: string; id?: string; name: string; deal_stages?: RdStage[] };
+type RdStage = {
+  _id?: string;
+  id?: string;
+  name: string;
+  order?: number;
+  deal_pipeline_id?: string;
+  nickname?: string;
+  deal_pipeline?: { _id?: string; id?: string; name?: string; order?: number };
+};
+type RdPipeline = { _id?: string; id?: string; name: string; order?: number; deal_stages?: RdStage[] };
+
+const rdId = (item?: { _id?: string; id?: string } | null) => String(item?._id ?? item?.id ?? "");
+const normalizeStages = (stages: RdStage[]) =>
+  stages
+    .map((s) => ({ id: rdId(s), name: s.name, order: s.order ?? 0 }))
+    .filter((s) => s.id && s.name)
+    .sort((a, b) => a.order - b.order)
+    .map(({ id, name }) => ({ id, name }));
 
 /** Lista funis (pipelines) e suas etapas. */
 export const listRdPipelines = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
     const data = await rdCrm("/deal_pipelines");
-    const pipelines = (Array.isArray(data) ? data : data?.deal_pipelines ?? []) as RdPipeline[];
+    const pipelines = (Array.isArray(data) ? data : data?.deal_pipelines ?? data?.items ?? []) as RdPipeline[];
 
     const enriched = await Promise.all(
       pipelines.map(async (p) => {
-        const pid = String(p._id ?? p.id ?? "");
+        const pid = rdId(p);
         let stages = p.deal_stages ?? [];
         if (stages.length === 0 && pid) {
           try {
@@ -70,11 +86,31 @@ export const listRdPipelines = createServerFn({ method: "GET" })
         return {
           id: pid,
           name: p.name,
-          stages: stages.map((s) => ({ id: String(s._id ?? s.id ?? ""), name: s.name })),
+          order: p.order ?? 0,
+          stages: normalizeStages(stages),
         };
       }),
     );
-    return { pipelines: enriched };
+
+    if (enriched.length > 0) {
+      return { pipelines: enriched.sort((a, b) => a.order - b.order).map(({ id, name, stages }) => ({ id, name, stages })) };
+    }
+
+    const stageData = await rdCrm("/deal_stages");
+    const stages = (Array.isArray(stageData) ? stageData : stageData?.deal_stages ?? []) as RdStage[];
+    const grouped = new Map<string, { id: string; name: string; order: number; stages: RdStage[] }>();
+    for (const stage of stages) {
+      const pipeline = stage.deal_pipeline;
+      const pid = rdId(pipeline) || stage.deal_pipeline_id || "default";
+      if (!grouped.has(pid)) grouped.set(pid, { id: pid, name: pipeline?.name ?? "Funil padrão", order: pipeline?.order ?? 0, stages: [] });
+      grouped.get(pid)!.stages.push(stage);
+    }
+
+    return {
+      pipelines: Array.from(grouped.values())
+        .sort((a, b) => a.order - b.order)
+        .map((p) => ({ id: p.id, name: p.name, stages: normalizeStages(p.stages) })),
+    };
   });
 
 type RdContact = { _id?: string; name?: string; phones?: Array<{ phone?: string; type?: string }>; emails?: Array<{ email?: string }> };
