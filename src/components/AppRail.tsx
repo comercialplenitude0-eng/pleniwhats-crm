@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { MessageCircle, BarChart3, Crown, Zap, Users, Contact, Settings, Workflow, Activity, Megaphone, FileBarChart } from "lucide-react";
+import { MessageCircle, BarChart3, Crown, Zap, Users, Contact, Settings, Workflow, Activity, Megaphone, FileBarChart, UserCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
