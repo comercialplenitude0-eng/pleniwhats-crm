@@ -22,9 +22,11 @@ import {
 } from "@/components/ui/table";
 import {
   Loader2, Megaphone, Plus, Trash2, Pencil, Send, Users, Calendar,
-  Upload, Filter, Database as DatabaseIcon, FileSpreadsheet,
+  Upload, Filter, Database as DatabaseIcon, FileSpreadsheet, RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { listRdSegments, fetchRdSegmentContacts } from "@/lib/rd-station.functions";
 import {
   LABEL_META, STATUS_LABEL, formatTime,
   type ConvLabel, type ConvStatus,
@@ -311,6 +313,11 @@ function CampaignDialog({
   const [scheduledAt, setScheduledAt] = useState<string>("");
   const [estimate, setEstimate] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
+  const [rdSegments, setRdSegments] = useState<Array<{ id: string; name: string }>>([]);
+  const [loadingSegments, setLoadingSegments] = useState(false);
+  const [previewingRd, setPreviewingRd] = useState(false);
+  const listSegmentsFn = useServerFn(listRdSegments);
+  const fetchContactsFn = useServerFn(fetchRdSegmentContacts);
 
   useEffect(() => {
     if (editing) {
@@ -339,7 +346,7 @@ function CampaignDialog({
   useEffect(() => {
     if (!open) return;
     if (source === "csv") { setEstimate(recipients.length); return; }
-    if (source === "rd_station") { setEstimate(rdSegmentId ? null : 0); return; }
+    if (source === "rd_station") { setEstimate(recipients.length || (rdSegmentId ? null : 0)); return; }
     let cancelled = false;
     (async () => {
       let q = supabase.from("conversations").select("contact_phone", { count: "exact", head: true });
@@ -350,6 +357,30 @@ function CampaignDialog({
     })();
     return () => { cancelled = true; };
   }, [open, source, labelF, statusF, recipients.length, rdSegmentId]);
+
+  // Carrega segmentos do RD Station ao abrir a aba
+  useEffect(() => {
+    if (!open || source !== "rd_station" || rdSegments.length > 0 || loadingSegments) return;
+    setLoadingSegments(true);
+    listSegmentsFn()
+      .then((r) => setRdSegments(r.segments))
+      .catch((e) => toast.error(`RD Station: ${(e as Error).message}`))
+      .finally(() => setLoadingSegments(false));
+  }, [open, source]);
+
+  async function previewRdContacts() {
+    if (!rdSegmentId) return toast.error("Selecione um segmento");
+    setPreviewingRd(true);
+    try {
+      const r = await fetchContactsFn({ data: { segmentId: rdSegmentId } });
+      setRecipients(r.recipients);
+      toast.success(`${r.recipients.length} contatos com telefone (${r.totalRaw} no segmento)`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setPreviewingRd(false);
+    }
+  }
 
   function applyTemplate(id: string) {
     setTemplateId(id);
@@ -381,7 +412,7 @@ function CampaignDialog({
     setSaving(true);
     const total =
       source === "csv" ? recipients.length :
-      source === "rd_station" ? 0 : // será preenchido pelo worker ao buscar o segmento
+      source === "rd_station" ? recipients.length : // 0 se ainda não pré-carregou; worker pode buscar
       (estimate ?? 0);
 
     const payload = {
@@ -391,7 +422,7 @@ function CampaignDialog({
       source,
       filter_label: source === "filter" ? ((labelF || null) as ConvLabel | null) : null,
       filter_status: source === "filter" ? ((statusF || null) as ConvStatus | null) : null,
-      recipients: source === "csv" ? recipients : [],
+      recipients: source === "csv" || source === "rd_station" ? recipients : [],
       rd_segment_id: source === "rd_station" ? rdSegmentId.trim() : null,
       rd_segment_name: source === "rd_station" ? (rdSegmentName.trim() || null) : null,
       scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : null,
@@ -504,18 +535,52 @@ function CampaignDialog({
 
               <TabsContent value="rd_station" className="pt-3 space-y-3">
                 <div className="space-y-1.5">
-                  <Label className="text-xs">ID do segmento</Label>
-                  <Input value={rdSegmentId} onChange={(e) => setRdSegmentId(e.target.value)}
-                    placeholder="Ex.: 5f8a2b3c-..." />
+                  <Label className="text-xs flex items-center justify-between">
+                    Segmento
+                    <button type="button" className="text-[10px] text-primary hover:underline inline-flex items-center gap-1"
+                      onClick={() => {
+                        setRdSegments([]); setLoadingSegments(true);
+                        listSegmentsFn()
+                          .then((r) => setRdSegments(r.segments))
+                          .catch((e) => toast.error((e as Error).message))
+                          .finally(() => setLoadingSegments(false));
+                      }}>
+                      <RefreshCw className="size-3" /> Recarregar
+                    </button>
+                  </Label>
+                  {loadingSegments ? (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground p-2 border rounded-md">
+                      <Loader2 className="size-3.5 animate-spin" /> Carregando segmentos...
+                    </div>
+                  ) : rdSegments.length > 0 ? (
+                    <Select value={rdSegmentId} onValueChange={(v) => {
+                      setRdSegmentId(v);
+                      const s = rdSegments.find((x) => x.id === v);
+                      if (s) setRdSegmentName(s.name);
+                      setRecipients([]);
+                    }}>
+                      <SelectTrigger><SelectValue placeholder="Selecione um segmento" /></SelectTrigger>
+                      <SelectContent>
+                        {rdSegments.map((s) => (
+                          <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input value={rdSegmentId} onChange={(e) => setRdSegmentId(e.target.value)}
+                      placeholder="ID do segmento (manual)" />
+                  )}
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Nome (opcional, p/ exibição)</Label>
-                  <Input value={rdSegmentName} onChange={(e) => setRdSegmentName(e.target.value)}
-                    placeholder="Ex.: Leads quentes - Novembro" />
-                </div>
+                <Button type="button" variant="outline" size="sm" className="w-full"
+                  onClick={previewRdContacts} disabled={previewingRd || !rdSegmentId}>
+                  {previewingRd ? <Loader2 className="size-3.5 animate-spin mr-1" /> : <Users className="size-3.5 mr-1" />}
+                  {recipients.length > 0
+                    ? `${recipients.length} contatos prontos · atualizar`
+                    : "Buscar contatos do segmento"}
+                </Button>
                 <p className="text-[10px] text-muted-foreground">
-                  O worker buscará os contatos do segmento no RD Station no momento do envio.
-                  É necessário configurar a integração em <strong>Configurações → Integrações</strong>.
+                  Os contatos são buscados via API do RD Station no momento do envio.
+                  Use "Buscar contatos" para validar antes de agendar.
                 </p>
               </TabsContent>
             </Tabs>
