@@ -14,6 +14,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import {
   listRdPipelines,
@@ -49,6 +50,8 @@ export function RdCrmSection({
   conversation: Conversation;
   onLinked?: (dealId: string | null) => void;
 }) {
+  const { session } = useAuth();
+  const accessToken = session?.access_token ?? null;
   const findDeal = useServerFn(findRdDealByPhone);
   const getDeal = useServerFn(getRdDeal);
   const listFields = useServerFn(listRdDealCustomFields);
@@ -77,22 +80,34 @@ export function RdCrmSection({
 
   // load static metadata once
   useEffect(() => {
+    if (!accessToken) return;
     void (async () => {
       try {
-        const [f, p] = await Promise.all([listFields(), listPipes()]);
+        const headers = { Authorization: `Bearer ${accessToken}` };
+        const [f, p] = await Promise.all([
+          listFields({ headers }),
+          listPipes({ headers }),
+        ]);
         setFields(f.fields);
         setPipelines(p.pipelines);
       } catch (e) {
         console.error("[RD CRM] metadata", e);
       }
     })();
-  }, [listFields, listPipes]);
+  }, [accessToken, listFields, listPipes]);
 
   const loadDeal = useCallback(
     async (id: string) => {
+      if (!accessToken) {
+        toast.error("Sessão expirada. Faça login novamente para carregar o card.");
+        return;
+      }
       setLoading(true);
       try {
-        const { deal: d } = await getDeal({ data: { dealId: id } });
+        const { deal: d } = await getDeal({
+          data: { dealId: id },
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
         setDeal(d);
         setEditValues({ ...d.customFields });
         setEditStageId(d.stageId);
@@ -103,7 +118,7 @@ export function RdCrmSection({
         setLoading(false);
       }
     },
-    [getDeal],
+    [accessToken, getDeal],
   );
 
   useEffect(() => {
@@ -117,9 +132,13 @@ export function RdCrmSection({
   }
 
   async function autoLink() {
+    if (!accessToken) return toast.error("Sessão expirada. Faça login novamente para buscar o card.");
     setLinking(true);
     try {
-      const { dealId: found } = await findDeal({ data: { phone: conversation.contact_phone } });
+      const { dealId: found } = await findDeal({
+        data: { phone: conversation.contact_phone },
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
       if (!found) {
         toast.error("Nenhum card encontrado no RD CRM para este telefone");
         return;
@@ -146,6 +165,7 @@ export function RdCrmSection({
 
   async function saveAll() {
     if (!deal) return;
+    if (!accessToken) return toast.error("Sessão expirada. Faça login novamente para salvar no RD CRM.");
     setSaving(true);
     try {
       // diff: só envia campos alterados
@@ -165,6 +185,7 @@ export function RdCrmSection({
           ...(stageChanged ? { stageId: stageChanged } : {}),
           ...(Object.keys(changed).length ? { customFields: changed } : {}),
         },
+        headers: { Authorization: `Bearer ${accessToken}` },
       });
       toast.success("RD CRM atualizado");
       await loadDeal(deal.id);
