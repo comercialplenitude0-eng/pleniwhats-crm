@@ -118,7 +118,7 @@ export function AppRail() {
           </Link>
         );
       })}
-      <div className="mt-auto">
+      <div className="mt-auto flex flex-col items-center gap-1">
         {role !== "gestor" && !hasGestor && (
           <Button
             size="icon"
@@ -130,6 +130,16 @@ export function AppRail() {
             <Crown className="size-5" />
           </Button>
         )}
+        <Link
+          to="/profile"
+          title="Meu perfil"
+          className={cn(
+            "size-10 grid place-items-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-colors",
+            path.startsWith("/profile") && "bg-accent text-primary"
+          )}
+        >
+          <UserCircle className="size-5" />
+        </Link>
       </div>
     </nav>
   );
