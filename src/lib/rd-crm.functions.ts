@@ -45,33 +45,32 @@ async function rdCrm(
   return res.json();
 }
 
-type RdStage = { _id: string; name: string; deal_pipeline_id?: string; nickname?: string };
-type RdPipeline = { _id: string; name: string; deal_stages?: RdStage[] };
+type RdStage = { _id?: string; id?: string; name: string; deal_pipeline_id?: string; nickname?: string };
+type RdPipeline = { _id?: string; id?: string; name: string; deal_stages?: RdStage[] };
 
 /** Lista funis (pipelines) e suas etapas. */
 export const listRdPipelines = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
-    // /deal_pipelines retorna pipelines; pedimos as stages embutidas quando suportado
     const data = await rdCrm("/deal_pipelines");
-    const pipelines = (data?.deal_pipelines ?? data ?? []) as RdPipeline[];
+    const pipelines = (Array.isArray(data) ? data : data?.deal_pipelines ?? []) as RdPipeline[];
 
-    // Para cada pipeline, garante que temos as stages — busca se não vieram embutidas.
     const enriched = await Promise.all(
       pipelines.map(async (p) => {
+        const pid = String(p._id ?? p.id ?? "");
         let stages = p.deal_stages ?? [];
-        if (stages.length === 0) {
+        if (stages.length === 0 && pid) {
           try {
-            const sd = await rdCrm("/deal_stages", { query: { deal_pipeline_id: p._id } });
-            stages = (sd?.deal_stages ?? sd ?? []) as RdStage[];
+            const sd = await rdCrm("/deal_stages", { query: { deal_pipeline_id: pid } });
+            stages = (Array.isArray(sd) ? sd : sd?.deal_stages ?? []) as RdStage[];
           } catch {
             stages = [];
           }
         }
         return {
-          id: String(p._id),
+          id: pid,
           name: p.name,
-          stages: stages.map((s) => ({ id: String(s._id), name: s.name })),
+          stages: stages.map((s) => ({ id: String(s._id ?? s.id ?? ""), name: s.name })),
         };
       }),
     );
