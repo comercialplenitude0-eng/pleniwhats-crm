@@ -416,7 +416,11 @@ function DashboardPage() {
                 </TableHeader>
                 <TableBody>
                   {ranking.map((s, idx) => (
-                    <TableRow key={s.id}>
+                    <TableRow
+                      key={s.id}
+                      className="cursor-pointer hover:bg-accent/40"
+                      onClick={() => navigate({ to: "/team/$userId", params: { userId: s.id }, search: { range } })}
+                    >
                       <TableCell>
                         <div className="flex items-center gap-2">
                           {idx < 3 && (
