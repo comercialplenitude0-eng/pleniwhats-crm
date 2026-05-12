@@ -14,10 +14,13 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedTemplatesRouteImport } from './routes/_authenticated/templates'
 import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedInboxRouteImport } from './routes/_authenticated/inbox'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedContactsRouteImport } from './routes/_authenticated/contacts'
+import { Route as AuthenticatedAutomationsRouteImport } from './routes/_authenticated/automations'
 import { Route as AuthenticatedTeamUserIdRouteImport } from './routes/_authenticated/team.$userId'
+import { Route as AuthenticatedContactsPhoneRouteImport } from './routes/_authenticated/contacts.$phone'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -43,6 +46,11 @@ const AuthenticatedTeamRoute = AuthenticatedTeamRouteImport.update({
   path: '/team',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedInboxRoute = AuthenticatedInboxRouteImport.update({
   id: '/inbox',
   path: '/inbox',
@@ -58,30 +66,48 @@ const AuthenticatedContactsRoute = AuthenticatedContactsRouteImport.update({
   path: '/contacts',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAutomationsRoute =
+  AuthenticatedAutomationsRouteImport.update({
+    id: '/automations',
+    path: '/automations',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedTeamUserIdRoute = AuthenticatedTeamUserIdRouteImport.update({
   id: '/$userId',
   path: '/$userId',
   getParentRoute: () => AuthenticatedTeamRoute,
 } as any)
+const AuthenticatedContactsPhoneRoute =
+  AuthenticatedContactsPhoneRouteImport.update({
+    id: '/$phone',
+    path: '/$phone',
+    getParentRoute: () => AuthenticatedContactsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/contacts': typeof AuthenticatedContactsRoute
+  '/automations': typeof AuthenticatedAutomationsRoute
+  '/contacts': typeof AuthenticatedContactsRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/inbox': typeof AuthenticatedInboxRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/team': typeof AuthenticatedTeamRouteWithChildren
   '/templates': typeof AuthenticatedTemplatesRoute
+  '/contacts/$phone': typeof AuthenticatedContactsPhoneRoute
   '/team/$userId': typeof AuthenticatedTeamUserIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/contacts': typeof AuthenticatedContactsRoute
+  '/automations': typeof AuthenticatedAutomationsRoute
+  '/contacts': typeof AuthenticatedContactsRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/inbox': typeof AuthenticatedInboxRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/team': typeof AuthenticatedTeamRouteWithChildren
   '/templates': typeof AuthenticatedTemplatesRoute
+  '/contacts/$phone': typeof AuthenticatedContactsPhoneRoute
   '/team/$userId': typeof AuthenticatedTeamUserIdRoute
 }
 export interface FileRoutesById {
@@ -89,11 +115,14 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
-  '/_authenticated/contacts': typeof AuthenticatedContactsRoute
+  '/_authenticated/automations': typeof AuthenticatedAutomationsRoute
+  '/_authenticated/contacts': typeof AuthenticatedContactsRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/inbox': typeof AuthenticatedInboxRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/team': typeof AuthenticatedTeamRouteWithChildren
   '/_authenticated/templates': typeof AuthenticatedTemplatesRoute
+  '/_authenticated/contacts/$phone': typeof AuthenticatedContactsPhoneRoute
   '/_authenticated/team/$userId': typeof AuthenticatedTeamUserIdRoute
 }
 export interface FileRouteTypes {
@@ -101,32 +130,41 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/automations'
     | '/contacts'
     | '/dashboard'
     | '/inbox'
+    | '/settings'
     | '/team'
     | '/templates'
+    | '/contacts/$phone'
     | '/team/$userId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
+    | '/automations'
     | '/contacts'
     | '/dashboard'
     | '/inbox'
+    | '/settings'
     | '/team'
     | '/templates'
+    | '/contacts/$phone'
     | '/team/$userId'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/login'
+    | '/_authenticated/automations'
     | '/_authenticated/contacts'
     | '/_authenticated/dashboard'
     | '/_authenticated/inbox'
+    | '/_authenticated/settings'
     | '/_authenticated/team'
     | '/_authenticated/templates'
+    | '/_authenticated/contacts/$phone'
     | '/_authenticated/team/$userId'
   fileRoutesById: FileRoutesById
 }
@@ -173,6 +211,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTeamRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/inbox': {
       id: '/_authenticated/inbox'
       path: '/inbox'
@@ -194,6 +239,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedContactsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/automations': {
+      id: '/_authenticated/automations'
+      path: '/automations'
+      fullPath: '/automations'
+      preLoaderRoute: typeof AuthenticatedAutomationsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/team/$userId': {
       id: '/_authenticated/team/$userId'
       path: '/$userId'
@@ -201,8 +253,28 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTeamUserIdRouteImport
       parentRoute: typeof AuthenticatedTeamRoute
     }
+    '/_authenticated/contacts/$phone': {
+      id: '/_authenticated/contacts/$phone'
+      path: '/$phone'
+      fullPath: '/contacts/$phone'
+      preLoaderRoute: typeof AuthenticatedContactsPhoneRouteImport
+      parentRoute: typeof AuthenticatedContactsRoute
+    }
   }
 }
+
+interface AuthenticatedContactsRouteChildren {
+  AuthenticatedContactsPhoneRoute: typeof AuthenticatedContactsPhoneRoute
+}
+
+const AuthenticatedContactsRouteChildren: AuthenticatedContactsRouteChildren = {
+  AuthenticatedContactsPhoneRoute: AuthenticatedContactsPhoneRoute,
+}
+
+const AuthenticatedContactsRouteWithChildren =
+  AuthenticatedContactsRoute._addFileChildren(
+    AuthenticatedContactsRouteChildren,
+  )
 
 interface AuthenticatedTeamRouteChildren {
   AuthenticatedTeamUserIdRoute: typeof AuthenticatedTeamUserIdRoute
@@ -216,17 +288,21 @@ const AuthenticatedTeamRouteWithChildren =
   AuthenticatedTeamRoute._addFileChildren(AuthenticatedTeamRouteChildren)
 
 interface AuthenticatedRouteChildren {
-  AuthenticatedContactsRoute: typeof AuthenticatedContactsRoute
+  AuthenticatedAutomationsRoute: typeof AuthenticatedAutomationsRoute
+  AuthenticatedContactsRoute: typeof AuthenticatedContactsRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedInboxRoute: typeof AuthenticatedInboxRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedTeamRoute: typeof AuthenticatedTeamRouteWithChildren
   AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedContactsRoute: AuthenticatedContactsRoute,
+  AuthenticatedAutomationsRoute: AuthenticatedAutomationsRoute,
+  AuthenticatedContactsRoute: AuthenticatedContactsRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedInboxRoute: AuthenticatedInboxRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedTeamRoute: AuthenticatedTeamRouteWithChildren,
   AuthenticatedTemplatesRoute: AuthenticatedTemplatesRoute,
 }

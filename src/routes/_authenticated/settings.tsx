@@ -1,0 +1,259 @@
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
+import { Loader2, Settings as SettingsIcon, Clock, Users, Crown, Save } from "lucide-react";
+import { toast } from "sonner";
+
+export const Route = createFileRoute("/_authenticated/settings")({
+  component: SettingsPage,
+});
+
+type Settings = {
+  id: string;
+  business_hours_start: string;
+  business_hours_end: string;
+  business_days: number[];
+  timezone: string;
+  away_message: string;
+  away_message_enabled: boolean;
+};
+
+type Member = { id: string; name: string; email: string; isGestor: boolean };
+
+const DAYS = [
+  { v: 0, label: "Dom" }, { v: 1, label: "Seg" }, { v: 2, label: "Ter" },
+  { v: 3, label: "Qua" }, { v: 4, label: "Qui" }, { v: 5, label: "Sex" },
+  { v: 6, label: "Sáb" },
+];
+
+function SettingsPage() {
+  const { role, user } = useAuth();
+  const navigate = useNavigate();
+  const [settings, setSettings] = useState<Settings | null>(null);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (role && role !== "gestor") navigate({ to: "/inbox" });
+  }, [role, navigate]);
+
+  async function load() {
+    const [s, p, r] = await Promise.all([
+      supabase.from("workspace_settings")
+        .select("id,business_hours_start,business_hours_end,business_days,timezone,away_message,away_message_enabled")
+        .limit(1).maybeSingle(),
+      supabase.from("profiles").select("id,name,email").order("name"),
+      supabase.from("user_roles").select("user_id,role"),
+    ]);
+    if (s.data) {
+      setSettings({
+        ...(s.data as Settings),
+        business_hours_start: (s.data.business_hours_start as string).slice(0, 5),
+        business_hours_end: (s.data.business_hours_end as string).slice(0, 5),
+      });
+    }
+    const gestorIds = new Set(((r.data ?? []) as { user_id: string; role: string }[])
+      .filter((x) => x.role === "gestor").map((x) => x.user_id));
+    setMembers(((p.data ?? []) as { id: string; name: string; email: string }[])
+      .map((m) => ({ ...m, isGestor: gestorIds.has(m.id) })));
+    setLoading(false);
+  }
+
+  useEffect(() => { void load(); }, []);
+
+  async function saveSettings() {
+    if (!settings) return;
+    setSaving(true);
+    const { error } = await supabase
+      .from("workspace_settings")
+      .update({
+        business_hours_start: settings.business_hours_start,
+        business_hours_end: settings.business_hours_end,
+        business_days: settings.business_days,
+        timezone: settings.timezone,
+        away_message: settings.away_message,
+        away_message_enabled: settings.away_message_enabled,
+        updated_by: user?.id ?? null,
+      })
+      .eq("id", settings.id);
+    setSaving(false);
+    if (error) toast.error(error.message);
+    else toast.success("Configurações salvas");
+  }
+
+  async function toggleGestor(m: Member) {
+    if (m.id === user?.id && m.isGestor) {
+      const otherGestors = members.filter((x) => x.isGestor && x.id !== m.id).length;
+      if (otherGestors === 0) return toast.error("Não é possível remover o último gestor");
+    }
+    if (m.isGestor) {
+      const { error } = await supabase.from("user_roles")
+        .delete().eq("user_id", m.id).eq("role", "gestor");
+      if (error) return toast.error(error.message);
+    } else {
+      const { error } = await supabase.from("user_roles")
+        .insert({ user_id: m.id, role: "gestor" });
+      if (error) return toast.error(error.message);
+    }
+    toast.success(`${m.name} ${m.isGestor ? "rebaixado a vendedor" : "promovido a gestor"}`);
+    void load();
+  }
+
+  function toggleDay(d: number) {
+    if (!settings) return;
+    const set = new Set(settings.business_days);
+    if (set.has(d)) set.delete(d); else set.add(d);
+    setSettings({ ...settings, business_days: Array.from(set).sort() });
+  }
+
+  if (loading || !settings) {
+    return (
+      <div className="flex-1 grid place-items-center">
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex-1 min-w-0 flex flex-col">
+      <header className="px-6 py-4 border-b bg-card">
+        <h1 className="text-xl font-semibold flex items-center gap-2">
+          <SettingsIcon className="size-5 text-primary" /> Configurações do workspace
+        </h1>
+      </header>
+
+      <ScrollArea className="flex-1">
+        <div className="p-6 space-y-6 max-w-4xl mx-auto">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Clock className="size-4" /> Horário de atendimento
+              </CardTitle>
+              <CardDescription>Define quando o time está disponível.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label>Início</Label>
+                  <Input type="time" value={settings.business_hours_start}
+                    onChange={(e) => setSettings({ ...settings, business_hours_start: e.target.value })} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Fim</Label>
+                  <Input type="time" value={settings.business_hours_end}
+                    onChange={(e) => setSettings({ ...settings, business_hours_end: e.target.value })} />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Dias úteis</Label>
+                <div className="flex flex-wrap gap-2">
+                  {DAYS.map((d) => {
+                    const active = settings.business_days.includes(d.v);
+                    return (
+                      <Button
+                        key={d.v}
+                        type="button"
+                        size="sm"
+                        variant={active ? "default" : "outline"}
+                        onClick={() => toggleDay(d.v)}
+                      >
+                        {d.label}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Fuso horário</Label>
+                <Input value={settings.timezone}
+                  onChange={(e) => setSettings({ ...settings, timezone: e.target.value })}
+                  placeholder="America/Sao_Paulo" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Mensagem fora do horário</CardTitle>
+              <CardDescription>
+                Resposta automática enviada fora do horário de atendimento.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label>Ativada</Label>
+                <Switch checked={settings.away_message_enabled}
+                  onCheckedChange={(v) => setSettings({ ...settings, away_message_enabled: v })} />
+              </div>
+              <Textarea rows={4} value={settings.away_message}
+                onChange={(e) => setSettings({ ...settings, away_message: e.target.value })} />
+            </CardContent>
+          </Card>
+
+          <div className="flex justify-end">
+            <Button onClick={saveSettings} disabled={saving}>
+              {saving ? <Loader2 className="size-4 mr-2 animate-spin" /> : <Save className="size-4 mr-2" />}
+              Salvar configurações
+            </Button>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Users className="size-4" /> Membros e papéis
+              </CardTitle>
+              <CardDescription>Promova ou rebaixe gestores do workspace.</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>E-mail</TableHead>
+                    <TableHead>Papel</TableHead>
+                    <TableHead className="text-right">Ação</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {members.map((m) => (
+                    <TableRow key={m.id}>
+                      <TableCell className="font-medium text-sm">{m.name}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{m.email}</TableCell>
+                      <TableCell>
+                        {m.isGestor ? (
+                          <Badge className="bg-amber-500/15 text-amber-600 border-amber-500/30" variant="outline">
+                            <Crown className="size-3 mr-1" /> Gestor
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary">Vendedor</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button size="sm" variant="outline" onClick={() => toggleGestor(m)}>
+                          {m.isGestor ? "Rebaixar" : "Promover"}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
+      </ScrollArea>
+    </div>
+  );
+}

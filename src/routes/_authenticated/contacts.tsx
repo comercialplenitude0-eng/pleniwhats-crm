@@ -237,7 +237,7 @@ function ContactsPage() {
                       <TableRow
                         key={c.phone}
                         className="cursor-pointer hover:bg-accent/40"
-                        onClick={() => navigate({ to: "/inbox", search: { c: c.latestConvId } as never })}
+                        onClick={() => navigate({ to: "/contacts/$phone", params: { phone: encodeURIComponent(c.phone) } })}
                       >
                         <TableCell>
                           <div className="flex items-center gap-2 min-w-0">
