@@ -79,10 +79,11 @@ export const listRdPipelines = createServerFn({ method: "GET" })
 
 type RdContact = { _id?: string; name?: string; phones?: Array<{ phone?: string; type?: string }>; emails?: Array<{ email?: string }> };
 type RdDeal = {
-  _id: string;
+  _id?: string;
+  id?: string;
   name?: string;
   contacts?: RdContact[];
-  deal_stage?: { _id?: string; name?: string };
+  deal_stage?: { _id?: string; id?: string; name?: string };
 };
 
 /** Busca todos os deals de uma etapa (paginado) e devolve como recipients. */
@@ -105,7 +106,7 @@ export const fetchRdStageDeals = createServerFn({ method: "POST" })
       const json = await rdCrm("/deals", {
         query: { deal_stage_id: data.stageId, page, limit: 200 },
       });
-      const list = (json?.deals ?? json?.items ?? []) as RdDeal[];
+      const list = (Array.isArray(json) ? json : json?.deals ?? json?.items ?? []) as RdDeal[];
       if (list.length === 0) break;
       totalRaw += list.length;
 
@@ -117,16 +118,24 @@ export const fetchRdStageDeals = createServerFn({ method: "POST" })
         if (!phone || seen.has(phone)) continue;
         seen.add(phone);
         const email = c?.emails?.find((e) => e.email)?.email;
+        const dealId = String(deal._id ?? deal.id ?? "");
         out.push({
           phone,
           name: c?.name ?? deal.name,
           vars: {
-            deal_id: deal._id,
+            ...(dealId ? { deal_id: dealId } : {}),
             ...(email ? { email } : {}),
             ...(deal.name ? { negocio: deal.name } : {}),
           },
         });
       }
+
+      if (list.length < 200) break;
+      page += 1;
+    }
+
+    return { recipients: out, totalRaw, pagesFetched: page };
+  });
 
       if (list.length < 200) break;
       page += 1;
