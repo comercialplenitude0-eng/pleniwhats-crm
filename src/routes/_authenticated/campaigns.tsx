@@ -26,7 +26,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { listRdSegments, fetchRdSegmentContacts } from "@/lib/rd-station.functions";
+import { listRdPipelines, fetchRdStageDeals } from "@/lib/rd-crm.functions";
+import { Switch } from "@/components/ui/switch";
 import {
   LABEL_META, STATUS_LABEL, formatTime,
   type ConvLabel, type ConvStatus,
