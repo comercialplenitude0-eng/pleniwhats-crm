@@ -46,12 +46,14 @@ function SellerDetailsPage() {
   const [isManager, setIsManager] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Pick<Message, "id" | "conversation_id" | "direction" | "created_at" | "sender_id">[]>([]);
+  const [others, setOthers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [transferring, setTransferring] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     const sinceIso = new Date(Date.now() - 30 * 86400_000).toISOString();
-    const [p, r, c, m] = await Promise.all([
+    const [p, r, c, m, others] = await Promise.all([
       supabase.from("profiles").select("id,name,email").eq("id", userId).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", userId),
       supabase.from("conversations").select("*").eq("assigned_to", userId)
@@ -61,13 +63,27 @@ function SellerDetailsPage() {
         .gte("created_at", sinceIso)
         .order("created_at", { ascending: true })
         .limit(5000),
+      supabase.from("profiles").select("id,name,email").neq("id", userId).order("name"),
     ]);
     setProfile((p.data ?? null) as Profile | null);
     setIsManager(((r.data ?? []) as { role: string }[]).some((x) => x.role === "gestor"));
     setConversations((c.data ?? []) as Conversation[]);
     setMessages(m.data ?? []);
+    setOthers((others.data ?? []) as Profile[]);
     setLoading(false);
   }, [userId]);
+
+  async function transfer(convId: string, toUserId: string | null) {
+    setTransferring(convId);
+    const { error } = await supabase
+      .from("conversations")
+      .update({ assigned_to: toUserId })
+      .eq("id", convId);
+    setTransferring(null);
+    if (error) return toast.error(error.message);
+    setConversations((prev) => prev.filter((c) => c.id !== convId));
+    toast.success(toUserId ? "Conversa transferida" : "Conversa sem responsável");
+  }
 
   useEffect(() => { void load(); }, [load]);
 
