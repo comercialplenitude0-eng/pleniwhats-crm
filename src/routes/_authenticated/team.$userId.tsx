@@ -88,7 +88,36 @@ function SellerDetailsPage() {
     setTransferring(null);
     if (error) return toast.error(error.message);
     setConversations((prev) => prev.filter((c) => c.id !== convId));
+    setSelected((prev) => { const n = new Set(prev); n.delete(convId); return n; });
     toast.success(toUserId ? "Conversa transferida" : "Conversa sem responsável");
+  }
+
+  function toggleOne(id: string, on: boolean) {
+    setSelected((prev) => {
+      const n = new Set(prev);
+      if (on) n.add(id); else n.delete(id);
+      return n;
+    });
+  }
+  function toggleAll(on: boolean) {
+    setSelected(on ? new Set(conversations.map((c) => c.id)) : new Set());
+  }
+
+  async function bulkTransfer() {
+    if (selected.size === 0 || !bulkTarget) return;
+    const ids = Array.from(selected);
+    const toUserId = bulkTarget === "__none" ? null : bulkTarget;
+    setBulkRunning(true);
+    const { error } = await supabase
+      .from("conversations")
+      .update({ assigned_to: toUserId })
+      .in("id", ids);
+    setBulkRunning(false);
+    if (error) return toast.error(error.message);
+    setConversations((prev) => prev.filter((c) => !selected.has(c.id)));
+    setSelected(new Set());
+    setBulkTarget("");
+    toast.success(`${ids.length} conversa(s) transferida(s)`);
   }
 
   useEffect(() => { void load(); }, [load]);
