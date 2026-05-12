@@ -346,7 +346,7 @@ function CampaignDialog({
   useEffect(() => {
     if (!open) return;
     if (source === "csv") { setEstimate(recipients.length); return; }
-    if (source === "rd_station") { setEstimate(rdSegmentId ? null : 0); return; }
+    if (source === "rd_station") { setEstimate(recipients.length || (rdSegmentId ? null : 0)); return; }
     let cancelled = false;
     (async () => {
       let q = supabase.from("conversations").select("contact_phone", { count: "exact", head: true });
@@ -357,6 +357,30 @@ function CampaignDialog({
     })();
     return () => { cancelled = true; };
   }, [open, source, labelF, statusF, recipients.length, rdSegmentId]);
+
+  // Carrega segmentos do RD Station ao abrir a aba
+  useEffect(() => {
+    if (!open || source !== "rd_station" || rdSegments.length > 0 || loadingSegments) return;
+    setLoadingSegments(true);
+    listSegmentsFn()
+      .then((r) => setRdSegments(r.segments))
+      .catch((e) => toast.error(`RD Station: ${(e as Error).message}`))
+      .finally(() => setLoadingSegments(false));
+  }, [open, source]);
+
+  async function previewRdContacts() {
+    if (!rdSegmentId) return toast.error("Selecione um segmento");
+    setPreviewingRd(true);
+    try {
+      const r = await fetchContactsFn({ data: { segmentId: rdSegmentId } });
+      setRecipients(r.recipients);
+      toast.success(`${r.recipients.length} contatos com telefone (${r.totalRaw} no segmento)`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setPreviewingRd(false);
+    }
+  }
 
   function applyTemplate(id: string) {
     setTemplateId(id);
