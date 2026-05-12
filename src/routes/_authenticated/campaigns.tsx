@@ -50,6 +50,13 @@ type Campaign = {
   recipients: Recipient[];
   rd_segment_id: string | null;
   rd_segment_name: string | null;
+  rd_pipeline_id: string | null;
+  rd_pipeline_name: string | null;
+  rd_stage_id: string | null;
+  rd_stage_name: string | null;
+  rd_next_stage_id: string | null;
+  rd_next_stage_name: string | null;
+  rd_move_on_send: boolean;
   status: CampaignStatus;
   scheduled_at: string | null;
   total_recipients: number;
