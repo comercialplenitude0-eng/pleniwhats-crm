@@ -377,9 +377,17 @@ function SellerDetailsPage() {
                     {conversations.map((c) => (
                       <TableRow
                         key={c.id}
-                        className="cursor-pointer hover:bg-accent/40"
+                        data-state={selected.has(c.id) ? "selected" : undefined}
+                        className="cursor-pointer hover:bg-accent/40 data-[state=selected]:bg-accent/60"
                         onClick={() => navigate({ to: "/inbox", search: { c: c.id } as never })}
                       >
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <Checkbox
+                            checked={selected.has(c.id)}
+                            onCheckedChange={(v) => toggleOne(c.id, v === true)}
+                            aria-label="Selecionar conversa"
+                          />
+                        </TableCell>
                         <TableCell>
                           <div className="font-medium text-sm">{c.contact_name}</div>
                           <div className="text-xs text-muted-foreground truncate max-w-xs">
