@@ -39,19 +39,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  useEffect(() => {
+  const loadProfile = async () => {
     if (!session?.user) return;
     const uid = session.user.id;
-    (async () => {
-      const [{ data: p }, { data: r }] = await Promise.all([
-        supabase.from("profiles").select("id,name,email,avatar_url").eq("id", uid).maybeSingle(),
-        supabase.from("user_roles").select("role").eq("user_id", uid).order("role", { ascending: false }),
-      ]);
-      setProfile(p ?? null);
-      // gestor wins if both present
-      const roles = (r ?? []).map((x) => x.role as AppRole);
-      setRole(roles.includes("gestor") ? "gestor" : roles[0] ?? "vendedor");
-    })();
+    const [{ data: p }, { data: r }] = await Promise.all([
+      supabase.from("profiles").select("id,name,email,avatar_url,status").eq("id", uid).maybeSingle(),
+      supabase.from("user_roles").select("role").eq("user_id", uid).order("role", { ascending: false }),
+    ]);
+    setProfile(p ?? null);
+    const roles = (r ?? []).map((x) => x.role as AppRole);
+    setRole(roles.includes("gestor") ? "gestor" : roles[0] ?? "vendedor");
+  };
+
+  useEffect(() => {
+    loadProfile();
+     
   }, [session?.user?.id]);
 
   const value: AuthState = {
