@@ -315,6 +315,23 @@ export const getRdDeal = createServerFn({ method: "POST" })
     return { deal: mirror };
   });
 
+/** Busca um deal e devolve dados do contato principal (nome + telefone). */
+export const getRdDealContact = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ dealId: z.string().min(1) }).parse(d))
+  .handler(async ({ data }) => {
+    const json = (await rdCrm(`/deals/${encodeURIComponent(data.dealId)}`)) as RdDeal;
+    if (!json) throw new Error("Deal não encontrado");
+    const c = json.contacts?.[0];
+    const phoneRaw = c?.phones?.find((p) => p.phone)?.phone ?? c?.phones?.[0]?.phone ?? null;
+    return {
+      dealId: String(json._id ?? json.id ?? data.dealId),
+      dealName: json.name ?? "",
+      contactName: c?.name ?? json.name ?? "",
+      contactPhone: normalizePhone(phoneRaw) ?? "",
+    };
+  });
+
 /** Atualiza custom fields e/ou etapa de um deal no RD CRM. */
 export const updateRdDeal = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
