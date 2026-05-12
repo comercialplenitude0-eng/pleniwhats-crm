@@ -50,6 +50,45 @@ export type Database = {
         }
         Relationships: []
       }
+      automation_rules: {
+        Row: {
+          action: Database["public"]["Enums"]["automation_action"]
+          action_config: Json
+          created_at: string
+          created_by: string | null
+          enabled: boolean
+          id: string
+          name: string
+          trigger: Database["public"]["Enums"]["automation_trigger"]
+          trigger_config: Json
+          updated_at: string
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["automation_action"]
+          action_config?: Json
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          id?: string
+          name: string
+          trigger: Database["public"]["Enums"]["automation_trigger"]
+          trigger_config?: Json
+          updated_at?: string
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["automation_action"]
+          action_config?: Json
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          id?: string
+          name?: string
+          trigger?: Database["public"]["Enums"]["automation_trigger"]
+          trigger_config?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       conversation_activity: {
         Row: {
           conversation_id: string
@@ -295,6 +334,45 @@ export type Database = {
         }
         Relationships: []
       }
+      workspace_settings: {
+        Row: {
+          away_message: string
+          away_message_enabled: boolean
+          business_days: number[]
+          business_hours_end: string
+          business_hours_start: string
+          id: string
+          singleton: boolean
+          timezone: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          away_message?: string
+          away_message_enabled?: boolean
+          business_days?: number[]
+          business_hours_end?: string
+          business_hours_start?: string
+          id?: string
+          singleton?: boolean
+          timezone?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          away_message?: string
+          away_message_enabled?: boolean
+          business_days?: number[]
+          business_hours_end?: string
+          business_hours_start?: string
+          id?: string
+          singleton?: boolean
+          timezone?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -311,6 +389,12 @@ export type Database = {
     }
     Enums: {
       app_role: "vendedor" | "gestor"
+      automation_action:
+        | "transfer"
+        | "set_label"
+        | "set_status"
+        | "send_template"
+      automation_trigger: "no_reply" | "keyword_inbound" | "new_conversation"
       conv_label: "hot" | "warm" | "cold" | "new" | "closed"
       conv_status: "aguardando" | "em_atendimento" | "encerrada"
       msg_direction: "inbound" | "outbound"
@@ -445,6 +529,13 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["vendedor", "gestor"],
+      automation_action: [
+        "transfer",
+        "set_label",
+        "set_status",
+        "send_template",
+      ],
+      automation_trigger: ["no_reply", "keyword_inbound", "new_conversation"],
       conv_label: ["hot", "warm", "cold", "new", "closed"],
       conv_status: ["aguardando", "em_atendimento", "encerrada"],
       msg_direction: ["inbound", "outbound"],
