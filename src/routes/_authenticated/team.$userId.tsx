@@ -52,6 +52,9 @@ function SellerDetailsPage() {
   const [others, setOthers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [transferring, setTransferring] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkTarget, setBulkTarget] = useState<string>("");
+  const [bulkRunning, setBulkRunning] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
