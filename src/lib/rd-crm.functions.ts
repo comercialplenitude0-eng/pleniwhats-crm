@@ -39,6 +39,7 @@ async function rdCrm(
   });
   if (!res.ok) {
     const txt = await res.text().catch(() => "");
+    console.error(`[RD CRM] ${init.method ?? "GET"} ${path} -> ${res.status}: ${txt.slice(0, 400)}`);
     throw new Error(`RD CRM ${res.status}: ${txt.slice(0, 250) || res.statusText}`);
   }
   return res.json();
