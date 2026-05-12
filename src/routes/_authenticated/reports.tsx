@@ -118,7 +118,7 @@ function ReportsPage() {
       contato: c.contact_name,
       telefone: c.contact_phone,
       status: STATUS_LABEL[c.status as keyof typeof STATUS_LABEL] ?? c.status,
-      etiqueta: LABEL_META[c.label as keyof typeof LABEL_META]?.label ?? c.label,
+      etiqueta: LABEL_META[c.label as keyof typeof LABEL_META]?.name ?? c.label,
       responsavel: c.assigned_to ? profileMap.get(c.assigned_to)?.name ?? "" : "",
       nao_lidas: c.unread_count,
       ultima_mensagem: c.last_message_at,
