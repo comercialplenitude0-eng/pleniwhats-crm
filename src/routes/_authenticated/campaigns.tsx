@@ -320,16 +320,26 @@ function CampaignDialog({
   const [statusF, setStatusF] = useState<ConvStatus | "">("");
   const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [csvName, setCsvName] = useState<string>("");
-  const [rdSegmentId, setRdSegmentId] = useState("");
-  const [rdSegmentName, setRdSegmentName] = useState("");
+
+  // RD CRM
+  type RdPipeline = { id: string; name: string; stages: Array<{ id: string; name: string }> };
+  const [rdPipelines, setRdPipelines] = useState<RdPipeline[]>([]);
+  const [loadingPipelines, setLoadingPipelines] = useState(false);
+  const [rdPipelineId, setRdPipelineId] = useState("");
+  const [rdStageId, setRdStageId] = useState("");
+  const [rdNextStageId, setRdNextStageId] = useState("");
+  const [rdMoveOnSend, setRdMoveOnSend] = useState(true);
+  const [previewingRd, setPreviewingRd] = useState(false);
+  const listPipelinesFn = useServerFn(listRdPipelines);
+  const fetchStageDealsFn = useServerFn(fetchRdStageDeals);
+
   const [scheduledAt, setScheduledAt] = useState<string>("");
   const [estimate, setEstimate] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
-  const [rdSegments, setRdSegments] = useState<Array<{ id: string; name: string }>>([]);
-  const [loadingSegments, setLoadingSegments] = useState(false);
-  const [previewingRd, setPreviewingRd] = useState(false);
-  const listSegmentsFn = useServerFn(listRdSegments);
-  const fetchContactsFn = useServerFn(fetchRdSegmentContacts);
+
+  const currentPipeline = rdPipelines.find((p) => p.id === rdPipelineId);
+  const currentStageName = currentPipeline?.stages.find((s) => s.id === rdStageId)?.name ?? "";
+  const nextStageName = currentPipeline?.stages.find((s) => s.id === rdNextStageId)?.name ?? "";
 
   useEffect(() => {
     if (editing) {
@@ -341,24 +351,27 @@ function CampaignDialog({
       setStatusF(editing.filter_status ?? "");
       setRecipients(editing.recipients ?? []);
       setCsvName("");
-      setRdSegmentId(editing.rd_segment_id ?? "");
-      setRdSegmentName(editing.rd_segment_name ?? "");
+      setRdPipelineId(editing.rd_pipeline_id ?? "");
+      setRdStageId(editing.rd_stage_id ?? editing.rd_segment_id ?? "");
+      setRdNextStageId(editing.rd_next_stage_id ?? "");
+      setRdMoveOnSend(editing.rd_move_on_send ?? true);
       setScheduledAt(editing.scheduled_at ? editing.scheduled_at.slice(0, 16) : "");
     } else {
       setName(""); setContent(""); setTemplateId("");
       setSource("filter");
       setLabelF(""); setStatusF("");
       setRecipients([]); setCsvName("");
-      setRdSegmentId(""); setRdSegmentName("");
+      setRdPipelineId(""); setRdStageId(""); setRdNextStageId("");
+      setRdMoveOnSend(true);
       setScheduledAt("");
     }
   }, [editing, open]);
 
-  // Estimate recipients per source
+  // Estimativa por origem
   useEffect(() => {
     if (!open) return;
     if (source === "csv") { setEstimate(recipients.length); return; }
-    if (source === "rd_station") { setEstimate(recipients.length || (rdSegmentId ? null : 0)); return; }
+    if (source === "rd_station") { setEstimate(recipients.length || (rdStageId ? null : 0)); return; }
     let cancelled = false;
     (async () => {
       let q = supabase.from("conversations").select("contact_phone", { count: "exact", head: true });
@@ -368,26 +381,31 @@ function CampaignDialog({
       if (!cancelled) setEstimate(count ?? 0);
     })();
     return () => { cancelled = true; };
-  }, [open, source, labelF, statusF, recipients.length, rdSegmentId]);
+  }, [open, source, labelF, statusF, recipients.length, rdStageId]);
 
-  // Carrega segmentos do RD Station ao abrir a aba
+  function loadPipelines() {
+    setLoadingPipelines(true);
+    listPipelinesFn()
+      .then((r) => setRdPipelines(r?.pipelines ?? []))
+      .catch((e: unknown) => toast.error(`RD CRM: ${(e as Error).message}`))
+      .finally(() => setLoadingPipelines(false));
+  }
+
+  // Carrega funis ao abrir a aba RD
   useEffect(() => {
-    if (!open || source !== "rd_station" || rdSegments.length > 0 || loadingSegments) return;
-    setLoadingSegments(true);
-    listSegmentsFn()
-      .then((r) => setRdSegments(r?.segments ?? []))
-      .catch((e) => toast.error(`RD Station: ${(e as Error).message}`))
-      .finally(() => setLoadingSegments(false));
+    if (!open || source !== "rd_station" || rdPipelines.length > 0 || loadingPipelines) return;
+    loadPipelines();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, source]);
 
   async function previewRdContacts() {
-    if (!rdSegmentId) return toast.error("Selecione um segmento");
+    if (!rdStageId) return toast.error("Selecione uma etapa do funil");
     setPreviewingRd(true);
     try {
-      const r = await fetchContactsFn({ data: { segmentId: rdSegmentId } });
+      const r = await fetchStageDealsFn({ data: { stageId: rdStageId } });
       const list = r?.recipients ?? [];
       setRecipients(list);
-      toast.success(`${list.length} contatos com telefone (${r?.totalRaw ?? 0} no segmento)`);
+      toast.success(`${list.length} contatos com telefone (${r?.totalRaw ?? 0} negociações na etapa)`);
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
