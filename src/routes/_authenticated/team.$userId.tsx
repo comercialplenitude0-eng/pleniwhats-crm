@@ -56,6 +56,9 @@ function SellerDetailsPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkTarget, setBulkTarget] = useState<string>("");
   const [bulkRunning, setBulkRunning] = useState(false);
+  const [search, setSearch] = useState("");
+  const [labelFilter, setLabelFilter] = useState<ConvLabel | "all">("all");
+  const [statusFilter, setStatusFilter] = useState<ConvStatus | "all">("all");
 
   const load = useCallback(async () => {
     setLoading(true);
