@@ -85,7 +85,7 @@ const SOURCE_META: Record<CampaignSource, { label: string; icon: typeof Filter }
 };
 
 function CampaignsPage() {
-  const { role, user } = useAuth();
+  const { role, user, session } = useAuth();
   const navigate = useNavigate();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -259,6 +259,7 @@ function CampaignsPage() {
         templates={templates}
         userId={user?.id ?? null}
         onSaved={() => { setOpen(false); void load(); }}
+        accessToken={session?.access_token ?? null}
       />
     </div>
   );
@@ -303,7 +304,7 @@ function parseCSV(text: string): Recipient[] {
 }
 
 function CampaignDialog({
-  open, onOpenChange, editing, templates, userId, onSaved,
+  open, onOpenChange, editing, templates, userId, onSaved, accessToken,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -311,6 +312,7 @@ function CampaignDialog({
   templates: Template[];
   userId: string | null;
   onSaved: () => void;
+  accessToken: string | null;
 }) {
   const [name, setName] = useState("");
   const [content, setContent] = useState("");
@@ -385,9 +387,13 @@ function CampaignDialog({
   }, [open, source, labelF, statusF, recipients.length, rdStageId]);
 
   function loadPipelines() {
+    if (!accessToken) {
+      setRdError("Sessão expirada. Faça login novamente para carregar os funis do RD CRM.");
+      return;
+    }
     setLoadingPipelines(true);
     setRdError(null);
-    listPipelinesFn()
+    listPipelinesFn({ headers: { Authorization: `Bearer ${accessToken}` } })
       .then((r) => {
         const list = r?.pipelines ?? [];
         setRdPipelines(list);
@@ -410,9 +416,10 @@ function CampaignDialog({
 
   async function previewRdContacts() {
     if (!rdStageId) return toast.error("Selecione uma etapa do funil");
+    if (!accessToken) return toast.error("Sessão expirada. Faça login novamente para buscar os contatos.");
     setPreviewingRd(true);
     try {
-      const r = await fetchStageDealsFn({ data: { stageId: rdStageId } });
+      const r = await fetchStageDealsFn({ data: { stageId: rdStageId }, headers: { Authorization: `Bearer ${accessToken}` } });
       const list = r?.recipients ?? [];
       setRecipients(list);
       toast.success(`${list.length} contatos com telefone (${r?.totalRaw ?? 0} negociações na etapa)`);
