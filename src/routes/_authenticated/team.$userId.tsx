@@ -11,9 +11,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   ArrowLeft, Loader2, MessageSquare, Timer, Target, CheckCircle2,
-  Flame, Inbox, Send, Clock,
+  Flame, Inbox, Send, Clock, ArrowRightLeft, X,
 } from "lucide-react";
 import {
   initials, formatTime, LABEL_META, STATUS_LABEL,
@@ -51,6 +52,9 @@ function SellerDetailsPage() {
   const [others, setOthers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [transferring, setTransferring] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkTarget, setBulkTarget] = useState<string>("");
+  const [bulkRunning, setBulkRunning] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -84,7 +88,36 @@ function SellerDetailsPage() {
     setTransferring(null);
     if (error) return toast.error(error.message);
     setConversations((prev) => prev.filter((c) => c.id !== convId));
+    setSelected((prev) => { const n = new Set(prev); n.delete(convId); return n; });
     toast.success(toUserId ? "Conversa transferida" : "Conversa sem responsável");
+  }
+
+  function toggleOne(id: string, on: boolean) {
+    setSelected((prev) => {
+      const n = new Set(prev);
+      if (on) n.add(id); else n.delete(id);
+      return n;
+    });
+  }
+  function toggleAll(on: boolean) {
+    setSelected(on ? new Set(conversations.map((c) => c.id)) : new Set());
+  }
+
+  async function bulkTransfer() {
+    if (selected.size === 0 || !bulkTarget) return;
+    const ids = Array.from(selected);
+    const toUserId = bulkTarget === "__none" ? null : bulkTarget;
+    setBulkRunning(true);
+    const { error } = await supabase
+      .from("conversations")
+      .update({ assigned_to: toUserId })
+      .in("id", ids);
+    setBulkRunning(false);
+    if (error) return toast.error(error.message);
+    setConversations((prev) => prev.filter((c) => !selected.has(c.id)));
+    setSelected(new Set());
+    setBulkTarget("");
+    toast.success(`${ids.length} conversa(s) transferida(s)`);
   }
 
   useEffect(() => { void load(); }, [load]);
@@ -290,6 +323,33 @@ function SellerDetailsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
+              {selected.size > 0 && (
+                <div className="flex items-center justify-between gap-3 px-4 py-2 border-b bg-accent/30 flex-wrap">
+                  <div className="flex items-center gap-2 text-sm">
+                    <ArrowRightLeft className="size-4 text-primary" />
+                    <span className="font-medium">{selected.size} selecionada(s)</span>
+                    <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => setSelected(new Set())}>
+                      <X className="size-3.5 mr-1" /> limpar
+                    </Button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Select value={bulkTarget} onValueChange={setBulkTarget}>
+                      <SelectTrigger className="h-8 w-[200px]">
+                        <SelectValue placeholder="Transferir todas para..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none">Sem responsável</SelectItem>
+                        {others.map((o) => (
+                          <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button size="sm" onClick={bulkTransfer} disabled={!bulkTarget || bulkRunning}>
+                      {bulkRunning ? <Loader2 className="size-4 animate-spin" /> : "Transferir"}
+                    </Button>
+                  </div>
+                </div>
+              )}
               {conversations.length === 0 ? (
                 <div className="p-6 text-center text-sm text-muted-foreground">
                   Sem conversas atribuídas.
@@ -298,6 +358,13 @@ function SellerDetailsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-[40px]">
+                        <Checkbox
+                          checked={selected.size > 0 && selected.size === conversations.length}
+                          onCheckedChange={(v) => toggleAll(v === true)}
+                          aria-label="Selecionar todas"
+                        />
+                      </TableHead>
                       <TableHead>Contato</TableHead>
                       <TableHead>Etiqueta</TableHead>
                       <TableHead>Status</TableHead>
@@ -310,9 +377,17 @@ function SellerDetailsPage() {
                     {conversations.map((c) => (
                       <TableRow
                         key={c.id}
-                        className="cursor-pointer hover:bg-accent/40"
+                        data-state={selected.has(c.id) ? "selected" : undefined}
+                        className="cursor-pointer hover:bg-accent/40 data-[state=selected]:bg-accent/60"
                         onClick={() => navigate({ to: "/inbox", search: { c: c.id } as never })}
                       >
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <Checkbox
+                            checked={selected.has(c.id)}
+                            onCheckedChange={(v) => toggleOne(c.id, v === true)}
+                            aria-label="Selecionar conversa"
+                          />
+                        </TableCell>
                         <TableCell>
                           <div className="font-medium text-sm">{c.contact_name}</div>
                           <div className="text-xs text-muted-foreground truncate max-w-xs">
