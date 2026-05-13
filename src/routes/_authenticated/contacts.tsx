@@ -289,6 +289,21 @@ function ContactsPage() {
                         <TableCell className="text-right text-xs text-muted-foreground tabular-nums">
                           {formatTime(c.lastAt)}
                         </TableCell>
+                        {isManagerRole(role) && (
+                          <TableCell className="text-right">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-7 w-7"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditing({ id: c.id, phone: c.phone, name: c.name });
+                              }}
+                            >
+                              <Pencil className="size-3.5" />
+                            </Button>
+                          </TableCell>
+                        )}
                       </TableRow>
                     ))}
                   </TableBody>
