@@ -54,7 +54,23 @@ export const Route = createFileRoute("/_authenticated/team")({
 });
 
 type Profile = { id: string; name: string; email: string };
-type Role = "vendedor" | "gestor";
+type Role = "admin" | "gestor" | "comercial" | "cs" | "vendedor";
+
+const ROLE_OPTIONS: Array<{ value: Exclude<Role, "vendedor">; label: string }> = [
+  { value: "admin", label: "Admin" },
+  { value: "gestor", label: "Gestor" },
+  { value: "comercial", label: "Comercial" },
+  { value: "cs", label: "CS" },
+];
+
+function roleLabelLocal(r: Role): string {
+  switch (r) {
+    case "admin": return "Admin";
+    case "gestor": return "Gestor";
+    case "cs": return "CS";
+    default: return "Comercial";
+  }
+}
 
 function randomPassword(len = 12) {
   const chars = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%";
