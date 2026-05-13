@@ -119,12 +119,12 @@ export function AppRail() {
         );
       })}
       <div className="mt-auto flex flex-col items-center gap-1">
-        {role !== "gestor" && !hasGestor && (
+        {!isManager && !hasManager && (
           <Button
             size="icon"
             variant="ghost"
             onClick={claimGestor}
-            title="Tornar-me gestor (nenhum gestor existe)"
+            title="Tornar-me gestor (nenhum gerente existe)"
             className="text-amber-500 hover:text-amber-600"
           >
             <Crown className="size-5" />
