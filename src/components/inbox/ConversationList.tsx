@@ -21,7 +21,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/lib/auth";
+import { useAuth, isManagerRole, type AppRole } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import {
   LABEL_META,
