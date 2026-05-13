@@ -46,7 +46,7 @@ export function AppRail() {
             .eq("id", msg.conversation_id)
             .maybeSingle();
           if (!conv) return;
-          if (role !== "gestor" && conv.assigned_to !== user.id) return;
+          if (!isManager && conv.assigned_to !== user.id) return;
 
           if (!window.location.pathname.startsWith("/inbox")) {
             setUnreadInbox((n) => n + 1);
