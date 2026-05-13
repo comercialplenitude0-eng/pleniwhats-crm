@@ -44,6 +44,7 @@ type Props = {
 };
 
 type Profile = { id: string; name: string };
+type AccountOpt = { id: string; display_name: string };
 
 const LABEL_KEYS = Object.keys(LABEL_META) as ConvLabel[];
 const STATUS_KEYS = Object.keys(STATUS_LABEL) as ConvStatus[];
@@ -75,6 +76,8 @@ export function ConversationList({
     "all",
   );
   const [unreadOnly, setUnreadOnly] = useState(false);
+  const [accountIds, setAccountIds] = useState<Set<string>>(new Set());
+  const [accounts, setAccounts] = useState<AccountOpt[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [messageMatchIds, setMessageMatchIds] = useState<Set<string> | null>(
     null,
@@ -90,6 +93,16 @@ export function ConversationList({
       .order("name")
       .then(({ data }) => setProfiles((data ?? []) as Profile[]));
   }, [role]);
+
+  // Load accessible WhatsApp accounts (RLS filters automatically)
+  useEffect(() => {
+    supabase
+      .from("whatsapp_accounts")
+      .select("id,display_name")
+      .eq("enabled", true)
+      .order("display_name")
+      .then(({ data }) => setAccounts((data ?? []) as AccountOpt[]));
+  }, []);
 
   // Search inside message content (debounced)
   useEffect(() => {
@@ -120,6 +133,7 @@ export function ConversationList({
   const activeFilterCount =
     labels.size +
     statuses.size +
+    accountIds.size +
     (assignee !== "all" ? 1 : 0) +
     (unreadOnly ? 1 : 0);
 
@@ -128,6 +142,7 @@ export function ConversationList({
     return conversations.filter((c) => {
       if (labels.size && !labels.has(c.label)) return false;
       if (statuses.size && !statuses.has(c.status)) return false;
+      if (accountIds.size && !(c.account_id && accountIds.has(c.account_id))) return false;
       if (unreadOnly && c.unread_count === 0) return false;
       if (assignee === "me" && c.assigned_to !== profile?.id) return false;
       if (assignee === "unassigned" && c.assigned_to !== null) return false;
@@ -150,6 +165,7 @@ export function ConversationList({
     debouncedQuery,
     labels,
     statuses,
+    accountIds,
     assignee,
     unreadOnly,
     messageMatchIds,
@@ -170,6 +186,7 @@ export function ConversationList({
   function clearFilters() {
     setLabels(new Set());
     setStatuses(new Set());
+    setAccountIds(new Set());
     setAssignee("all");
     setUnreadOnly(false);
   }
@@ -300,6 +317,34 @@ export function ConversationList({
                   })}
                 </div>
               </div>
+
+              {accounts.length > 1 && (
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+                    Conta WhatsApp
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {accounts.map((a) => {
+                      const on = accountIds.has(a.id);
+                      return (
+                        <button
+                          key={a.id}
+                          onClick={() => setAccountIds((s) => toggleSet(s, a.id))}
+                          className={cn(
+                            "inline-flex items-center gap-1 text-xs px-2 py-1 rounded border transition-colors",
+                            on
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "bg-background hover:bg-accent",
+                          )}
+                        >
+                          {on && <Check className="size-3" />}
+                          {a.display_name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {role === "gestor" && (
                 <div>

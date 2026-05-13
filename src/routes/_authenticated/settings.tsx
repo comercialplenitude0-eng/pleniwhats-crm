@@ -1,7 +1,17 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import {
+  listWhatsappAccounts,
+  getAllUserAccess,
+  setUserAccountAccess,
+} from "@/lib/whatsapp-accounts.functions";
+import {
+  Popover, PopoverContent, PopoverTrigger,
+} from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +23,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { Loader2, Settings as SettingsIcon, Clock, Users, Crown, Save, MessageCircle, ChevronRight } from "lucide-react";
+import { Loader2, Settings as SettingsIcon, Clock, Users, Crown, Save, MessageCircle, ChevronRight, Phone } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/settings")({
@@ -38,11 +48,18 @@ const DAYS = [
   { v: 6, label: "Sáb" },
 ];
 
+type AccountLite = { id: string; display_name: string; phone_number: string | null; enabled: boolean };
+
 function SettingsPage() {
   const { role, user } = useAuth();
   const navigate = useNavigate();
+  const fetchAccounts = useServerFn(listWhatsappAccounts);
+  const fetchAccess = useServerFn(getAllUserAccess);
+  const setAccessFn = useServerFn(setUserAccountAccess);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
+  const [accounts, setAccounts] = useState<AccountLite[]>([]);
+  const [accessMap, setAccessMap] = useState<Record<string, Set<string>>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -69,10 +86,38 @@ function SettingsPage() {
       .filter((x) => x.role === "gestor").map((x) => x.user_id));
     setMembers(((p.data ?? []) as { id: string; name: string; email: string }[])
       .map((m) => ({ ...m, isGestor: gestorIds.has(m.id) })));
+
+    try {
+      const [accs, access] = await Promise.all([fetchAccounts(), fetchAccess()]);
+      setAccounts(accs.map((a) => ({
+        id: a.id, display_name: a.display_name, phone_number: a.phone_number, enabled: a.enabled,
+      })));
+      const map: Record<string, Set<string>> = {};
+      for (const row of access) {
+        if (!map[row.user_id]) map[row.user_id] = new Set();
+        map[row.user_id].add(row.account_id);
+      }
+      setAccessMap(map);
+    } catch {
+      // ignore
+    }
     setLoading(false);
   }
 
   useEffect(() => { void load(); }, []);
+
+  async function toggleAccess(userId: string, accountId: string) {
+    const current = new Set(accessMap[userId] ?? new Set<string>());
+    if (current.has(accountId)) current.delete(accountId);
+    else current.add(accountId);
+    setAccessMap((m) => ({ ...m, [userId]: current }));
+    try {
+      await setAccessFn({ data: { user_id: userId, account_ids: Array.from(current) } });
+    } catch (e) {
+      toast.error((e as Error).message);
+      void load();
+    }
+  }
 
   async function saveSettings() {
     if (!settings) return;
@@ -218,15 +263,29 @@ function SettingsPage() {
               </CardTitle>
               <CardDescription>Conecte canais de mensageria e APIs externas.</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-2">
+              <Link
+                to="/settings/whatsapp-accounts"
+                className="flex items-center justify-between rounded-md border p-3 hover:bg-accent transition-colors"
+              >
+                <div>
+                  <p className="text-sm font-medium flex items-center gap-2">
+                    <Phone className="size-3.5" /> Contas WhatsApp (multi-conta)
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Cadastre múltiplos números Meta · {accounts.length} conta(s) ativa(s)
+                  </p>
+                </div>
+                <ChevronRight className="size-4 text-muted-foreground" />
+              </Link>
               <Link
                 to="/settings/whatsapp"
                 className="flex items-center justify-between rounded-md border p-3 hover:bg-accent transition-colors"
               >
                 <div>
-                  <p className="text-sm font-medium">WhatsApp Cloud API (Meta)</p>
+                  <p className="text-sm font-medium">WhatsApp Cloud API (legado)</p>
                   <p className="text-xs text-muted-foreground">
-                    Tokens, phone number, verify token e app secret
+                    Configuração de conta única — em desuso
                   </p>
                 </div>
                 <ChevronRight className="size-4 text-muted-foreground" />
@@ -239,29 +298,40 @@ function SettingsPage() {
               <CardTitle className="text-sm flex items-center gap-2">
                 <Users className="size-4" /> Membros e papéis
               </CardTitle>
-              <CardDescription>Promova ou rebaixe gestores do workspace.</CardDescription>
+              <CardDescription>
+                Promova ou rebaixe gestores e defina a quais contas WhatsApp cada vendedor tem acesso.
+              </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
               {/* Mobile: card list */}
               <div className="md:hidden divide-y">
                 {members.map((m) => (
-                  <div key={m.id} className="p-4 flex items-center gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-medium truncate">{m.name}</span>
-                        {m.isGestor ? (
-                          <Badge className="bg-amber-500/15 text-amber-600 border-amber-500/30" variant="outline">
-                            <Crown className="size-3 mr-1" /> Gestor
-                          </Badge>
-                        ) : (
-                          <Badge variant="secondary">Vendedor</Badge>
-                        )}
+                  <div key={m.id} className="p-4 space-y-2">
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-medium truncate">{m.name}</span>
+                          {m.isGestor ? (
+                            <Badge className="bg-amber-500/15 text-amber-600 border-amber-500/30" variant="outline">
+                              <Crown className="size-3 mr-1" /> Gestor
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary">Vendedor</Badge>
+                          )}
+                        </div>
+                        <div className="text-xs text-muted-foreground truncate">{m.email}</div>
                       </div>
-                      <div className="text-xs text-muted-foreground truncate">{m.email}</div>
+                      <Button size="sm" variant="outline" onClick={() => toggleGestor(m)} className="shrink-0">
+                        {m.isGestor ? "Rebaixar" : "Promover"}
+                      </Button>
                     </div>
-                    <Button size="sm" variant="outline" onClick={() => toggleGestor(m)} className="shrink-0">
-                      {m.isGestor ? "Rebaixar" : "Promover"}
-                    </Button>
+                    {!m.isGestor && accounts.length > 0 && (
+                      <AccountAccessControl
+                        accounts={accounts}
+                        selected={accessMap[m.id] ?? new Set()}
+                        onToggle={(accountId) => toggleAccess(m.id, accountId)}
+                      />
+                    )}
                   </div>
                 ))}
               </div>
@@ -274,6 +344,7 @@ function SettingsPage() {
                       <TableHead>Nome</TableHead>
                       <TableHead>E-mail</TableHead>
                       <TableHead>Papel</TableHead>
+                      <TableHead>Contas WhatsApp</TableHead>
                       <TableHead className="text-right">Ação</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -291,6 +362,19 @@ function SettingsPage() {
                             <Badge variant="secondary">Vendedor</Badge>
                           )}
                         </TableCell>
+                        <TableCell>
+                          {m.isGestor ? (
+                            <span className="text-xs text-muted-foreground">Acesso total</span>
+                          ) : accounts.length === 0 ? (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          ) : (
+                            <AccountAccessControl
+                              accounts={accounts}
+                              selected={accessMap[m.id] ?? new Set()}
+                              onToggle={(accountId) => toggleAccess(m.id, accountId)}
+                            />
+                          )}
+                        </TableCell>
                         <TableCell className="text-right">
                           <Button size="sm" variant="outline" onClick={() => toggleGestor(m)}>
                             {m.isGestor ? "Rebaixar" : "Promover"}
@@ -306,5 +390,56 @@ function SettingsPage() {
         </div>
       </ScrollArea>
     </div>
+  );
+}
+
+function AccountAccessControl({
+  accounts,
+  selected,
+  onToggle,
+}: {
+  accounts: AccountLite[];
+  selected: Set<string>;
+  onToggle: (accountId: string) => void;
+}) {
+  const count = selected.size;
+  const summary =
+    count === 0 ? "Nenhuma conta" : count === accounts.length ? "Todas as contas" : `${count} conta(s)`;
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="sm" className="h-8 gap-2 font-normal">
+          <Phone className="size-3.5" />
+          <span className="text-xs">{summary}</span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-64 p-2">
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground px-2 py-1">
+          Contas WhatsApp permitidas
+        </div>
+        <div className="max-h-64 overflow-y-auto">
+          {accounts.map((a) => {
+            const on = selected.has(a.id);
+            return (
+              <button
+                key={a.id}
+                type="button"
+                onClick={() => onToggle(a.id)}
+                className="w-full flex items-center gap-2 px-2 py-2 rounded hover:bg-accent text-left"
+              >
+                <Checkbox checked={on} className="pointer-events-none" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm truncate">{a.display_name}</div>
+                  <div className="text-[11px] text-muted-foreground truncate">
+                    {a.phone_number ?? "—"}
+                    {!a.enabled && " · desativada"}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
