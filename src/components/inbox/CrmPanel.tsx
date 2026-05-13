@@ -478,6 +478,17 @@ export function CrmPanel({ conversation, onUpdated }: Props) {
           </ScrollArea>
         </TabsContent>
       </Tabs>
+
+      <ContactEditDialog
+        open={editingContact}
+        onOpenChange={setEditingContact}
+        contactPhone={conversation.contact_phone}
+        initialName={conversation.contact_name}
+        onSaved={() => {
+          // The trigger sync_contact_to_conversations updates conversation columns; refresh by re-fetching
+          if (conversation) onUpdated({ ...conversation });
+        }}
+      />
     </aside>
   );
 }
