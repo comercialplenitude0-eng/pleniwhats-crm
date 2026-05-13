@@ -16,7 +16,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, MessageCircle, Save, PlugZap, ArrowLeft, CheckCircle2, XCircle, Copy } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_authenticated/settings/whatsapp")({
+export const Route = createFileRoute("/_authenticated/settings_/whatsapp")({
   component: WhatsappSettingsPage,
 });
 
