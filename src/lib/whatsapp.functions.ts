@@ -96,7 +96,7 @@ export const sendWhatsappMessage = createServerFn({ method: "POST" })
 
     const { data: conv, error: cErr } = await supabaseAdmin
       .from("conversations")
-      .select("id, contact_phone")
+      .select("id, contact_phone, account_id")
       .eq("id", data.conversationId)
       .maybeSingle();
     if (cErr || !conv) throw new Error("Conversa não encontrada");
@@ -133,7 +133,7 @@ export const sendWhatsappMessage = createServerFn({ method: "POST" })
     let status: "sent" | "failed" = "sent";
     let sendError: string | null = null;
     try {
-      wamid = await sendToMeta(payload);
+      wamid = await sendToMeta(payload, conv.account_id ?? null);
     } catch (e) {
       status = "failed";
       sendError = (e as Error).message ?? String(e);
@@ -141,6 +141,7 @@ export const sendWhatsappMessage = createServerFn({ method: "POST" })
 
     const { error: insErr } = await supabaseAdmin.from("messages").insert({
       conversation_id: data.conversationId,
+      account_id: conv.account_id ?? null,
       direction: "outbound",
       type: data.type,
       content: data.content ?? null,
