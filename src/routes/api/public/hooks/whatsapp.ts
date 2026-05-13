@@ -162,25 +162,25 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp")({
               } else if (mtype === "image" && msg.image?.id) {
                 type = "image";
                 content = msg.image?.caption ?? null;
-                const r = await downloadMediaToBucket(msg.image.id, convoId);
+                const r = await downloadMediaToBucket(msg.image.id, convoId, accessToken);
                 mediaUrl = r.url;
               } else if (mtype === "audio" && msg.audio?.id) {
                 type = "audio";
-                const r = await downloadMediaToBucket(msg.audio.id, convoId);
+                const r = await downloadMediaToBucket(msg.audio.id, convoId, accessToken);
                 mediaUrl = r.url;
               } else if (mtype === "voice" && msg.voice?.id) {
                 type = "audio";
-                const r = await downloadMediaToBucket(msg.voice.id, convoId);
+                const r = await downloadMediaToBucket(msg.voice.id, convoId, accessToken);
                 mediaUrl = r.url;
               } else if (mtype === "document" && msg.document?.id) {
                 type = "document";
                 content = msg.document?.filename ?? null;
-                const r = await downloadMediaToBucket(msg.document.id, convoId);
+                const r = await downloadMediaToBucket(msg.document.id, convoId, accessToken);
                 mediaUrl = r.url;
               } else if (mtype === "video" && msg.video?.id) {
                 type = "document";
                 content = "vídeo recebido";
-                const r = await downloadMediaToBucket(msg.video.id, convoId);
+                const r = await downloadMediaToBucket(msg.video.id, convoId, accessToken);
                 mediaUrl = r.url;
               } else if (mtype === "button") {
                 content = msg.button?.text ?? null;
