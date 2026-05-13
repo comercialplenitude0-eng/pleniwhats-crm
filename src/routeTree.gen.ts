@@ -25,6 +25,7 @@ import { Route as AuthenticatedAutomationsRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAuditRouteImport } from './routes/_authenticated/audit'
 import { Route as AuthenticatedTeamUserIdRouteImport } from './routes/_authenticated/team.$userId'
 import { Route as AuthenticatedContactsPhoneRouteImport } from './routes/_authenticated/contacts.$phone'
+import { Route as ApiPublicHooksRdDealCreatedRouteImport } from './routes/api/public/hooks/rd-deal-created'
 import { Route as ApiPublicHooksCrmAutoNotesRouteImport } from './routes/api/public/hooks/crm-auto-notes'
 
 const LoginRoute = LoginRouteImport.update({
@@ -108,6 +109,12 @@ const AuthenticatedContactsPhoneRoute =
     path: '/$phone',
     getParentRoute: () => AuthenticatedContactsRoute,
   } as any)
+const ApiPublicHooksRdDealCreatedRoute =
+  ApiPublicHooksRdDealCreatedRouteImport.update({
+    id: '/api/public/hooks/rd-deal-created',
+    path: '/api/public/hooks/rd-deal-created',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksCrmAutoNotesRoute =
   ApiPublicHooksCrmAutoNotesRouteImport.update({
     id: '/api/public/hooks/crm-auto-notes',
@@ -132,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/contacts/$phone': typeof AuthenticatedContactsPhoneRoute
   '/team/$userId': typeof AuthenticatedTeamUserIdRoute
   '/api/public/hooks/crm-auto-notes': typeof ApiPublicHooksCrmAutoNotesRoute
+  '/api/public/hooks/rd-deal-created': typeof ApiPublicHooksRdDealCreatedRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -150,6 +158,7 @@ export interface FileRoutesByTo {
   '/contacts/$phone': typeof AuthenticatedContactsPhoneRoute
   '/team/$userId': typeof AuthenticatedTeamUserIdRoute
   '/api/public/hooks/crm-auto-notes': typeof ApiPublicHooksCrmAutoNotesRoute
+  '/api/public/hooks/rd-deal-created': typeof ApiPublicHooksRdDealCreatedRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -170,6 +179,7 @@ export interface FileRoutesById {
   '/_authenticated/contacts/$phone': typeof AuthenticatedContactsPhoneRoute
   '/_authenticated/team/$userId': typeof AuthenticatedTeamUserIdRoute
   '/api/public/hooks/crm-auto-notes': typeof ApiPublicHooksCrmAutoNotesRoute
+  '/api/public/hooks/rd-deal-created': typeof ApiPublicHooksRdDealCreatedRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -190,6 +200,7 @@ export interface FileRouteTypes {
     | '/contacts/$phone'
     | '/team/$userId'
     | '/api/public/hooks/crm-auto-notes'
+    | '/api/public/hooks/rd-deal-created'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -208,6 +219,7 @@ export interface FileRouteTypes {
     | '/contacts/$phone'
     | '/team/$userId'
     | '/api/public/hooks/crm-auto-notes'
+    | '/api/public/hooks/rd-deal-created'
   id:
     | '__root__'
     | '/'
@@ -227,6 +239,7 @@ export interface FileRouteTypes {
     | '/_authenticated/contacts/$phone'
     | '/_authenticated/team/$userId'
     | '/api/public/hooks/crm-auto-notes'
+    | '/api/public/hooks/rd-deal-created'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -234,6 +247,7 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
   ApiPublicHooksCrmAutoNotesRoute: typeof ApiPublicHooksCrmAutoNotesRoute
+  ApiPublicHooksRdDealCreatedRoute: typeof ApiPublicHooksRdDealCreatedRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -350,6 +364,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedContactsPhoneRouteImport
       parentRoute: typeof AuthenticatedContactsRoute
     }
+    '/api/public/hooks/rd-deal-created': {
+      id: '/api/public/hooks/rd-deal-created'
+      path: '/api/public/hooks/rd-deal-created'
+      fullPath: '/api/public/hooks/rd-deal-created'
+      preLoaderRoute: typeof ApiPublicHooksRdDealCreatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/crm-auto-notes': {
       id: '/api/public/hooks/crm-auto-notes'
       path: '/api/public/hooks/crm-auto-notes'
@@ -421,17 +442,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
   ApiPublicHooksCrmAutoNotesRoute: ApiPublicHooksCrmAutoNotesRoute,
+  ApiPublicHooksRdDealCreatedRoute: ApiPublicHooksRdDealCreatedRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
