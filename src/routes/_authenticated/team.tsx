@@ -195,7 +195,7 @@ function TeamPage() {
                           className="capitalize"
                         >
                           {isManagerRole(m.role) && <Shield className="size-3 mr-1" />}
-                          {m.role}
+                          {roleLabelLocal(m.role)}
                         </Badge>
                       </div>
                       <div className="text-xs text-muted-foreground truncate">
