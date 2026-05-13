@@ -26,10 +26,13 @@ export const Route = createFileRoute("/_authenticated/contacts")({
 });
 
 type Profile = { id: string; name: string };
+type ContactInfo = { id: string; phone: string; name: string; email: string | null; avatar_url: string | null };
 
 type ContactRow = {
+  id: string | null;
   phone: string;
   name: string;
+  email: string | null;
   conversations: number;
   unread: number;
   lastMessage: string | null;
