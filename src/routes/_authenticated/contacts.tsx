@@ -313,6 +313,15 @@ function ContactsPage() {
           </Card>
         </div>
       </ScrollArea>
+
+      <ContactEditDialog
+        open={!!editing}
+        onOpenChange={(o) => !o && setEditing(null)}
+        contactId={editing?.id ?? null}
+        contactPhone={editing?.phone ?? null}
+        initialName={editing?.name}
+        onSaved={() => void load()}
+      />
     </div>
   );
 }
