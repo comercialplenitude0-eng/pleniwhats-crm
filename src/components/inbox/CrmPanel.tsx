@@ -16,7 +16,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
+import { useAuth, isManagerRole } from "@/lib/auth";
+import { ContactEditDialog } from "@/components/contacts/ContactEditDialog";
 import {
   LABEL_META,
   STATUS_LABEL,
