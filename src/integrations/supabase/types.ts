@@ -173,6 +173,48 @@ export type Database = {
         }
         Relationships: []
       }
+      contacts: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          created_by: string | null
+          custom_fields: Json
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string
+          updated_at: string
+          wa_contact_id: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          custom_fields?: Json
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone: string
+          updated_at?: string
+          wa_contact_id?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          custom_fields?: Json
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string
+          updated_at?: string
+          wa_contact_id?: string | null
+        }
+        Relationships: []
+      }
       conversation_activity: {
         Row: {
           conversation_id: string
@@ -271,6 +313,7 @@ export type Database = {
           account_id: string | null
           assigned_to: string | null
           contact_avatar: string | null
+          contact_id: string | null
           contact_name: string
           contact_phone: string
           course: string | null
@@ -290,6 +333,7 @@ export type Database = {
           account_id?: string | null
           assigned_to?: string | null
           contact_avatar?: string | null
+          contact_id?: string | null
           contact_name: string
           contact_phone: string
           course?: string | null
@@ -309,6 +353,7 @@ export type Database = {
           account_id?: string | null
           assigned_to?: string | null
           contact_avatar?: string | null
+          contact_id?: string | null
           contact_name?: string
           contact_phone?: string
           course?: string | null
@@ -337,6 +382,13 @@ export type Database = {
             columns: ["assigned_to"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
             referencedColumns: ["id"]
           },
         ]
