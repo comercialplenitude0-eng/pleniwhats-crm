@@ -229,6 +229,7 @@ export type Database = {
       }
       conversations: {
         Row: {
+          account_id: string | null
           assigned_to: string | null
           contact_avatar: string | null
           contact_name: string
@@ -247,6 +248,7 @@ export type Database = {
           wa_contact_id: string | null
         }
         Insert: {
+          account_id?: string | null
           assigned_to?: string | null
           contact_avatar?: string | null
           contact_name: string
@@ -265,6 +267,7 @@ export type Database = {
           wa_contact_id?: string | null
         }
         Update: {
+          account_id?: string | null
           assigned_to?: string | null
           contact_avatar?: string | null
           contact_name?: string
@@ -283,6 +286,13 @@ export type Database = {
           wa_contact_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "conversations_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "conversations_assigned_to_fkey"
             columns: ["assigned_to"]
@@ -327,6 +337,7 @@ export type Database = {
       }
       messages: {
         Row: {
+          account_id: string | null
           content: string | null
           conversation_id: string
           created_at: string
@@ -339,6 +350,7 @@ export type Database = {
           wamid: string | null
         }
         Insert: {
+          account_id?: string | null
           content?: string | null
           conversation_id: string
           created_at?: string
@@ -351,6 +363,7 @@ export type Database = {
           wamid?: string | null
         }
         Update: {
+          account_id?: string | null
           content?: string | null
           conversation_id?: string
           created_at?: string
@@ -363,6 +376,13 @@ export type Database = {
           wamid?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "messages_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "messages_conversation_id_fkey"
             columns: ["conversation_id"]
@@ -424,6 +444,80 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_whatsapp_access: {
+        Row: {
+          account_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          account_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_whatsapp_access_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_accounts: {
+        Row: {
+          access_token: string | null
+          app_secret: string | null
+          business_account_id: string | null
+          created_at: string
+          created_by: string | null
+          display_name: string
+          enabled: boolean
+          id: string
+          phone_number: string | null
+          phone_number_id: string
+          updated_at: string
+          verify_token: string | null
+        }
+        Insert: {
+          access_token?: string | null
+          app_secret?: string | null
+          business_account_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          display_name: string
+          enabled?: boolean
+          id?: string
+          phone_number?: string | null
+          phone_number_id: string
+          updated_at?: string
+          verify_token?: string | null
+        }
+        Update: {
+          access_token?: string | null
+          app_secret?: string | null
+          business_account_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          display_name?: string
+          enabled?: boolean
+          id?: string
+          phone_number?: string | null
+          phone_number_id?: string
+          updated_at?: string
+          verify_token?: string | null
         }
         Relationships: []
       }
@@ -504,6 +598,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_account: {
+        Args: { _account_id: string; _user_id: string }
+        Returns: boolean
+      }
       claim_gestor_if_none: { Args: never; Returns: boolean }
       has_role: {
         Args: {
