@@ -458,7 +458,7 @@ function DashboardPage() {
                           disabled={s.id === profile?.id}
                           title={s.id === profile?.id ? "Não é possível alterar seu próprio perfil" : ""}
                         >
-                          {isManagerRole(s.role) ? "Tornar vendedor" : "Promover a gestor"}
+                          {isManagerRole(s.role) ? "Tornar comercial" : "Promover a gestor"}
                         </Button>
                       </TableCell>
                     </TableRow>
