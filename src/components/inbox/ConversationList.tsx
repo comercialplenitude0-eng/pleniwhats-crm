@@ -186,6 +186,7 @@ export function ConversationList({
   function clearFilters() {
     setLabels(new Set());
     setStatuses(new Set());
+    setAccountIds(new Set());
     setAssignee("all");
     setUnreadOnly(false);
   }
