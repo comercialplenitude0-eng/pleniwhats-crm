@@ -2,7 +2,26 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-export type AppRole = "vendedor" | "gestor";
+export type AppRole = "admin" | "gestor" | "comercial" | "cs" | "vendedor";
+
+export const MANAGER_ROLES: AppRole[] = ["admin", "gestor"];
+
+export function isManagerRole(role: AppRole | null | undefined): boolean {
+  return role === "admin" || role === "gestor";
+}
+
+/** Display label PT-BR */
+export function roleLabel(role: AppRole | null | undefined): string {
+  switch (role) {
+    case "admin": return "Admin";
+    case "gestor": return "Gestor";
+    case "cs": return "CS";
+    case "comercial":
+    case "vendedor": // legado
+      return "Comercial";
+    default: return "—";
+  }
+}
 
 export type AuthState = {
   loading: boolean;
