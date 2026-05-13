@@ -285,7 +285,7 @@ function InviteDialog({
   onInvite: (p: {
     email: string;
     name: string;
-    role: Role;
+    role: Exclude<Role, "vendedor">;
     password: string;
   }) => Promise<void>;
 }) {
