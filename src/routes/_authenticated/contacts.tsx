@@ -14,21 +14,25 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Search, X, Users, MessageSquare, Inbox, Flame } from "lucide-react";
+import { Loader2, Search, X, Users, MessageSquare, Inbox, Flame, Pencil, UserPlus } from "lucide-react";
 import {
   initials, formatTime, LABEL_META, STATUS_LABEL,
   type Conversation, type ConvLabel, type ConvStatus,
 } from "@/lib/inbox-types";
+import { ContactEditDialog } from "@/components/contacts/ContactEditDialog";
 
 export const Route = createFileRoute("/_authenticated/contacts")({
   component: ContactsPage,
 });
 
 type Profile = { id: string; name: string };
+type ContactInfo = { id: string; phone: string; name: string; email: string | null; avatar_url: string | null };
 
 type ContactRow = {
+  id: string | null;
   phone: string;
   name: string;
+  email: string | null;
   conversations: number;
   unread: number;
   lastMessage: string | null;
@@ -44,26 +48,29 @@ function ContactsPage() {
   const { role } = useAuth();
   const [convs, setConvs] = useState<Conversation[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [contactInfos, setContactInfos] = useState<ContactInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [labelFilter, setLabelFilter] = useState<ConvLabel | "all">("all");
   const [statusFilter, setStatusFilter] = useState<ConvStatus | "all">("all");
   const [assignedFilter, setAssignedFilter] = useState<string>("all");
+  const [editing, setEditing] = useState<{ id?: string | null; phone?: string | null; name?: string } | null>(null);
+
+  async function load() {
+    setLoading(true);
+    const [c, p, ct] = await Promise.all([
+      supabase.from("conversations").select("*").order("last_message_at", { ascending: false }),
+      supabase.from("profiles").select("id,name").order("name"),
+      supabase.from("contacts").select("id,phone,name,email,avatar_url"),
+    ]);
+    setConvs((c.data ?? []) as Conversation[]);
+    setProfiles((p.data ?? []) as Profile[]);
+    setContactInfos((ct.data ?? []) as ContactInfo[]);
+    setLoading(false);
+  }
 
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      const [c, p] = await Promise.all([
-        supabase.from("conversations").select("*").order("last_message_at", { ascending: false }),
-        supabase.from("profiles").select("id,name").order("name"),
-      ]);
-      if (cancelled) return;
-      setConvs((c.data ?? []) as Conversation[]);
-      setProfiles((p.data ?? []) as Profile[]);
-      setLoading(false);
-    })();
-    return () => { cancelled = true; };
+    void load();
   }, []);
 
   const profileMap = useMemo(
@@ -71,16 +78,23 @@ function ContactsPage() {
     [profiles],
   );
 
+  const contactByPhone = useMemo(
+    () => new Map(contactInfos.map((c) => [c.phone, c])),
+    [contactInfos],
+  );
+
   const contacts = useMemo<ContactRow[]>(() => {
     const map = new Map<string, ContactRow>();
-    // convs are already sorted desc by last_message_at, so first hit per phone is latest
     for (const c of convs) {
       const key = c.contact_phone;
+      const ci = contactByPhone.get(key);
       const existing = map.get(key);
       if (!existing) {
         map.set(key, {
+          id: ci?.id ?? null,
           phone: key,
-          name: c.contact_name,
+          name: ci?.name ?? c.contact_name,
+          email: ci?.email ?? null,
           conversations: 1,
           unread: c.unread_count,
           lastMessage: c.last_message,
@@ -96,7 +110,7 @@ function ContactsPage() {
       }
     }
     return Array.from(map.values());
-  }, [convs]);
+  }, [convs, contactByPhone]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -134,13 +148,20 @@ function ContactsPage() {
 
   return (
     <div className="flex-1 min-w-0 flex flex-col">
-      <header className="px-6 py-4 border-b bg-card">
-        <h1 className="text-xl font-semibold flex items-center gap-2">
-          <Users className="size-5 text-primary" /> Contatos
-        </h1>
-        <p className="text-xs text-muted-foreground mt-1">
-          Diretório agregado de todos os contatos do workspace.
-        </p>
+      <header className="px-6 py-4 border-b bg-card flex items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold flex items-center gap-2">
+            <Users className="size-5 text-primary" /> Contatos
+          </h1>
+          <p className="text-xs text-muted-foreground mt-1">
+            Diretório agregado de todos os contatos do workspace.
+          </p>
+        </div>
+        {isManagerRole(role) && (
+          <Button size="sm" onClick={() => setEditing({ id: null, phone: "", name: "" })}>
+            <UserPlus className="size-4 mr-1" /> Novo contato
+          </Button>
+        )}
       </header>
 
       <ScrollArea className="flex-1">
@@ -230,6 +251,7 @@ function ContactsPage() {
                       <TableHead className="text-right">Conversas</TableHead>
                       <TableHead className="text-right">Não lidas</TableHead>
                       <TableHead className="text-right">Última msg</TableHead>
+                      {isManagerRole(role) && <TableHead className="w-12" />}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -246,7 +268,10 @@ function ContactsPage() {
                             </Avatar>
                             <div className="min-w-0">
                               <div className="font-medium text-sm truncate">{c.name}</div>
-                              <div className="text-xs text-muted-foreground tabular-nums">{c.phone}</div>
+                              <div className="text-xs text-muted-foreground tabular-nums">
+                                {c.phone}
+                                {c.email && <span className="ml-2">· {c.email}</span>}
+                              </div>
                             </div>
                           </div>
                         </TableCell>
@@ -264,6 +289,21 @@ function ContactsPage() {
                         <TableCell className="text-right text-xs text-muted-foreground tabular-nums">
                           {formatTime(c.lastAt)}
                         </TableCell>
+                        {isManagerRole(role) && (
+                          <TableCell className="text-right">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-7 w-7"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditing({ id: c.id, phone: c.phone, name: c.name });
+                              }}
+                            >
+                              <Pencil className="size-3.5" />
+                            </Button>
+                          </TableCell>
+                        )}
                       </TableRow>
                     ))}
                   </TableBody>
@@ -273,6 +313,15 @@ function ContactsPage() {
           </Card>
         </div>
       </ScrollArea>
+
+      <ContactEditDialog
+        open={!!editing}
+        onOpenChange={(o) => !o && setEditing(null)}
+        contactId={editing?.id ?? null}
+        contactPhone={editing?.phone ?? null}
+        initialName={editing?.name}
+        onSaved={() => void load()}
+      />
     </div>
   );
 }

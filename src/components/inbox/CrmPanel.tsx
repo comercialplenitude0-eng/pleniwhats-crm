@@ -16,7 +16,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
+import { useAuth, isManagerRole } from "@/lib/auth";
+import { ContactEditDialog } from "@/components/contacts/ContactEditDialog";
 import {
   LABEL_META,
   STATUS_LABEL,
@@ -54,7 +55,8 @@ type Activity = {
 type ProfileLite = { id: string; name: string };
 
 export function CrmPanel({ conversation, onUpdated }: Props) {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  const [editingContact, setEditingContact] = useState(false);
   const [crm, setCrm] = useState<Record<string, string>>({});
   const [label, setLabel] = useState<ConvLabel>("new");
   const [status, setStatus] = useState<ConvStatus>("aguardando");
@@ -210,6 +212,16 @@ export function CrmPanel({ conversation, onUpdated }: Props) {
         <p className="text-xs text-muted-foreground flex items-center justify-center gap-1.5 mt-0.5">
           <Phone className="size-3" /> {conversation.contact_phone}
         </p>
+        {isManagerRole(role) && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="mt-2 h-7 text-xs"
+            onClick={() => setEditingContact(true)}
+          >
+            Editar contato
+          </Button>
+        )}
       </div>
 
       <Tabs defaultValue="lead" className="flex-1 flex flex-col min-h-0">
@@ -466,6 +478,17 @@ export function CrmPanel({ conversation, onUpdated }: Props) {
           </ScrollArea>
         </TabsContent>
       </Tabs>
+
+      <ContactEditDialog
+        open={editingContact}
+        onOpenChange={setEditingContact}
+        contactPhone={conversation.contact_phone}
+        initialName={conversation.contact_name}
+        onSaved={() => {
+          // The trigger sync_contact_to_conversations updates conversation columns; refresh by re-fetching
+          if (conversation) onUpdated({ ...conversation });
+        }}
+      />
     </aside>
   );
 }
