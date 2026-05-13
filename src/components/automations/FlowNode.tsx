@@ -55,7 +55,12 @@ export const FlowNode = memo(({ data, selected }: NodeProps) => {
       )}
     >
       {!isTrigger && (
-        <Handle type="target" position={Position.Top} className="!w-2 !h-2 !bg-foreground/40 !border-0" />
+        <Handle
+          type="target"
+          position={Position.Top}
+          isConnectable
+          className="!w-4 !h-4 !-top-2 !bg-primary !border-2 !border-background hover:!scale-125 transition-transform"
+        />
       )}
       <div className="px-3 py-2 border-b border-current/20 flex items-center gap-2">
         <span className="text-base leading-none">{meta.emoji}</span>
@@ -76,19 +81,26 @@ export const FlowNode = memo(({ data, selected }: NodeProps) => {
             id="yes"
             type="source"
             position={Position.Bottom}
+            isConnectable
             style={{ left: "25%" }}
-            className="!w-2 !h-2 !bg-emerald-400 !border-0"
+            className="!w-4 !h-4 !-bottom-2 !bg-emerald-400 !border-2 !border-background hover:!scale-125 transition-transform"
           />
           <Handle
             id="no"
             type="source"
             position={Position.Bottom}
+            isConnectable
             style={{ left: "75%" }}
-            className="!w-2 !h-2 !bg-rose-400 !border-0"
+            className="!w-4 !h-4 !-bottom-2 !bg-rose-400 !border-2 !border-background hover:!scale-125 transition-transform"
           />
         </>
       ) : (
-        <Handle type="source" position={Position.Bottom} className="!w-2 !h-2 !bg-foreground/40 !border-0" />
+        <Handle
+          type="source"
+          position={Position.Bottom}
+          isConnectable
+          className="!w-4 !h-4 !-bottom-2 !bg-primary !border-2 !border-background hover:!scale-125 transition-transform"
+        />
       )}
     </div>
   );
