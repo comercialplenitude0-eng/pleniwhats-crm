@@ -57,7 +57,10 @@ function InboxPage() {
         onSelect={setSelectedId}
         onSeeded={load}
       />
-      <ChatThread conversation={selected} />
+      <ChatThread
+        conversation={selected}
+        onBack={() => setSelectedId(null)}
+      />
       <CrmPanel
         conversation={selected}
         onUpdated={(c) => {
