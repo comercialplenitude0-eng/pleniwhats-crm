@@ -48,11 +48,18 @@ const DAYS = [
   { v: 6, label: "Sáb" },
 ];
 
+type AccountLite = { id: string; display_name: string; phone_number: string | null; enabled: boolean };
+
 function SettingsPage() {
   const { role, user } = useAuth();
   const navigate = useNavigate();
+  const fetchAccounts = useServerFn(listWhatsappAccounts);
+  const fetchAccess = useServerFn(getAllUserAccess);
+  const setAccessFn = useServerFn(setUserAccountAccess);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
+  const [accounts, setAccounts] = useState<AccountLite[]>([]);
+  const [accessMap, setAccessMap] = useState<Record<string, Set<string>>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -79,10 +86,38 @@ function SettingsPage() {
       .filter((x) => x.role === "gestor").map((x) => x.user_id));
     setMembers(((p.data ?? []) as { id: string; name: string; email: string }[])
       .map((m) => ({ ...m, isGestor: gestorIds.has(m.id) })));
+
+    try {
+      const [accs, access] = await Promise.all([fetchAccounts(), fetchAccess()]);
+      setAccounts(accs.map((a) => ({
+        id: a.id, display_name: a.display_name, phone_number: a.phone_number, enabled: a.enabled,
+      })));
+      const map: Record<string, Set<string>> = {};
+      for (const row of access) {
+        if (!map[row.user_id]) map[row.user_id] = new Set();
+        map[row.user_id].add(row.account_id);
+      }
+      setAccessMap(map);
+    } catch {
+      // ignore
+    }
     setLoading(false);
   }
 
   useEffect(() => { void load(); }, []);
+
+  async function toggleAccess(userId: string, accountId: string) {
+    const current = new Set(accessMap[userId] ?? new Set<string>());
+    if (current.has(accountId)) current.delete(accountId);
+    else current.add(accountId);
+    setAccessMap((m) => ({ ...m, [userId]: current }));
+    try {
+      await setAccessFn({ data: { user_id: userId, account_ids: Array.from(current) } });
+    } catch (e) {
+      toast.error((e as Error).message);
+      void load();
+    }
+  }
 
   async function saveSettings() {
     if (!settings) return;
