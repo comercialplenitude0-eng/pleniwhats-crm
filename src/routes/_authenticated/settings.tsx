@@ -129,14 +129,15 @@ function SettingsPage() {
 
   return (
     <div className="flex-1 min-w-0 flex flex-col">
-      <header className="px-6 py-4 border-b bg-card">
-        <h1 className="text-xl font-semibold flex items-center gap-2">
-          <SettingsIcon className="size-5 text-primary" /> Configurações do workspace
+      <header className="px-4 sm:px-6 py-4 border-b bg-card">
+        <h1 className="text-lg sm:text-xl font-semibold flex items-center gap-2">
+          <SettingsIcon className="size-5 text-primary shrink-0" />
+          <span className="truncate">Configurações do workspace</span>
         </h1>
       </header>
 
       <ScrollArea className="flex-1">
-        <div className="p-6 space-y-6 max-w-4xl mx-auto">
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 max-w-4xl mx-auto">
           <Card>
             <CardHeader>
               <CardTitle className="text-sm flex items-center gap-2">
