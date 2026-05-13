@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Send, Phone, Check, CheckCheck, Loader2, Paperclip, Mic, FileText, X, Smile, Zap } from "lucide-react";
+import { Send, Phone, Check, CheckCheck, Loader2, Paperclip, Mic, FileText, X, Smile, Zap, ArrowLeft } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -17,9 +17,9 @@ import { applyTemplateVars, extractVars, type MessageTemplate } from "@/lib/temp
 import { useServerFn } from "@tanstack/react-start";
 import { sendWhatsappMessage } from "@/lib/whatsapp.functions";
 
-type Props = { conversation: Conversation | null };
+type Props = { conversation: Conversation | null; onBack?: () => void };
 
-export function ChatThread({ conversation }: Props) {
+export function ChatThread({ conversation, onBack }: Props) {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
@@ -223,7 +223,7 @@ export function ChatThread({ conversation }: Props) {
 
   if (!conversation) {
     return (
-      <div className="flex-1 grid place-items-center bg-[var(--color-chat-bg)]">
+      <div className="flex-1 hidden md:grid place-items-center bg-[var(--color-chat-bg)]">
         <div className="text-center text-muted-foreground">
           <p className="text-lg">Selecione uma conversa para começar</p>
         </div>
@@ -234,6 +234,15 @@ export function ChatThread({ conversation }: Props) {
   return (
     <div className="flex-1 flex flex-col bg-[var(--color-chat-bg)] min-w-0">
       <header className="flex items-center gap-3 px-4 py-3 border-b bg-[var(--color-chat-panel)]">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden -ml-2"
+          aria-label="Voltar"
+          onClick={onBack}
+        >
+          <ArrowLeft className="size-5" />
+        </Button>
         <Avatar className="size-10">
           <AvatarFallback className="bg-secondary text-secondary-foreground">
             {initials(conversation.contact_name)}

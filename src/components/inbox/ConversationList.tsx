@@ -187,7 +187,12 @@ export function ConversationList({
   }
 
   return (
-    <aside className="flex flex-col w-[340px] border-r bg-sidebar shrink-0">
+    <aside
+      className={cn(
+        "flex-col bg-sidebar border-r md:w-[340px] md:shrink-0 md:flex w-full",
+        selectedId ? "hidden" : "flex flex-1"
+      )}
+    >
       {/* User header */}
       <div className="flex items-center gap-3 p-3 border-b">
         <Avatar className="size-9">
