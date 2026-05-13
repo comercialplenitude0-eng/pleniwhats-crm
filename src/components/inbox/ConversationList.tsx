@@ -133,6 +133,7 @@ export function ConversationList({
   const activeFilterCount =
     labels.size +
     statuses.size +
+    accountIds.size +
     (assignee !== "all" ? 1 : 0) +
     (unreadOnly ? 1 : 0);
 
@@ -141,6 +142,7 @@ export function ConversationList({
     return conversations.filter((c) => {
       if (labels.size && !labels.has(c.label)) return false;
       if (statuses.size && !statuses.has(c.status)) return false;
+      if (accountIds.size && !(c.account_id && accountIds.has(c.account_id))) return false;
       if (unreadOnly && c.unread_count === 0) return false;
       if (assignee === "me" && c.assigned_to !== profile?.id) return false;
       if (assignee === "unassigned" && c.assigned_to !== null) return false;
@@ -163,6 +165,7 @@ export function ConversationList({
     debouncedQuery,
     labels,
     statuses,
+    accountIds,
     assignee,
     unreadOnly,
     messageMatchIds,
