@@ -100,6 +100,7 @@ export function NewConversationDialog({
           contact_phone: p,
           assigned_to: user.id,
           rd_deal_id: dealId.trim() || null,
+          course: course.trim() || null,
           last_message: null,
           last_message_at: new Date().toISOString(),
         })
