@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -13,7 +13,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { Loader2, Settings as SettingsIcon, Clock, Users, Crown, Save } from "lucide-react";
+import { Loader2, Settings as SettingsIcon, Clock, Users, Crown, Save, MessageCircle, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/settings")({
@@ -209,6 +209,29 @@ function SettingsPage() {
               Salvar configurações
             </Button>
           </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm flex items-center gap-2">
+                <MessageCircle className="size-4" /> Integrações
+              </CardTitle>
+              <CardDescription>Conecte canais de mensageria e APIs externas.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link
+                to="/settings/whatsapp"
+                className="flex items-center justify-between rounded-md border p-3 hover:bg-accent transition-colors"
+              >
+                <div>
+                  <p className="text-sm font-medium">WhatsApp Cloud API (Meta)</p>
+                  <p className="text-xs text-muted-foreground">
+                    Tokens, phone number, verify token e app secret
+                  </p>
+                </div>
+                <ChevronRight className="size-4 text-muted-foreground" />
+              </Link>
+            </CardContent>
+          </Card>
 
           <Card>
             <CardHeader>
