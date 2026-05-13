@@ -170,7 +170,7 @@ function TemplatesPage() {
           <div className="grid gap-2">
             {items.map((t) => {
               const mine = t.owner_id === user?.id;
-              const canEdit = mine || role === "gestor";
+              const canEdit = mine || isManagerRole(role);
               return (
                 <Card
                   key={t.id}

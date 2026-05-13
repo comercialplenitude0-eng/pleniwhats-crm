@@ -94,7 +94,7 @@ function CampaignsPage() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    if (role && role !== "gestor") navigate({ to: "/inbox" });
+    if (role && !isManagerRole(role)) navigate({ to: "/inbox" });
   }, [role, navigate]);
 
   async function load() {

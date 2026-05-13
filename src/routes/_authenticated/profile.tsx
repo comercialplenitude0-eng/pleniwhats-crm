@@ -113,7 +113,7 @@ function ProfilePage() {
               <div className="font-medium truncate">{profile?.email}</div>
               <div className="flex items-center gap-2 mt-1">
                 <Badge variant="secondary" className="gap-1">
-                  <Shield className="size-3" /> {role === "gestor" ? "Gestor" : "Vendedor"}
+                  <Shield className="size-3" /> {isManagerRole(role) ? "Gestor" : "Vendedor"}
                 </Badge>
                 <Badge variant="outline" className="gap-1.5">
                   <span className={`size-1.5 rounded-full ${STATUS_META[status].dot}`} />

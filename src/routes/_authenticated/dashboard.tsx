@@ -125,7 +125,7 @@ function DashboardPage() {
     return { recentConvs, avgResponseMin, conversionRate, closed, series, responseTimes };
   }, [conversations, messages, days]);
 
-  if (role !== "gestor") {
+  if (!isManagerRole(role)) {
     return (
       <div className="flex-1 grid place-items-center p-8">
         <Card className="max-w-md">
@@ -241,7 +241,7 @@ function DashboardPage() {
           </section>
 
           <AlertsPanel
-            isGestor={role === "gestor"}
+            isGestor={isManagerRole(role)}
             ctx={{
               avgResponseMin: metrics.avgResponseMin,
               conversionRate: metrics.conversionRate,
@@ -436,7 +436,7 @@ function DashboardPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={s.role === "gestor" ? "default" : "secondary"} className="capitalize">{s.role}</Badge>
+                        <Badge variant={s.isManagerRole(role) ? "default" : "secondary"} className="capitalize">{s.role}</Badge>
                       </TableCell>
                       <TableCell className="text-right tabular-nums">{s.total}</TableCell>
                       <TableCell className="text-right tabular-nums">{s.open}</TableCell>
@@ -456,7 +456,7 @@ function DashboardPage() {
                           disabled={s.id === profile?.id}
                           title={s.id === profile?.id ? "Não é possível alterar seu próprio perfil" : ""}
                         >
-                          {s.role === "gestor" ? "Tornar vendedor" : "Promover a gestor"}
+                          {s.isManagerRole(role) ? "Tornar vendedor" : "Promover a gestor"}
                         </Button>
                       </TableCell>
                     </TableRow>

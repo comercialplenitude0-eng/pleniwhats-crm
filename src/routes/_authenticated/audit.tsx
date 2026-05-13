@@ -52,7 +52,7 @@ function AuditPage() {
   const [actorFilter, setActorFilter] = useState<string>("all");
 
   useEffect(() => {
-    if (role && role !== "gestor") navigate({ to: "/inbox" });
+    if (role && !isManagerRole(role)) navigate({ to: "/inbox" });
   }, [role, navigate]);
 
   useEffect(() => {

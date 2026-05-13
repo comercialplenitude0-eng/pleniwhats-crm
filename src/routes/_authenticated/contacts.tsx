@@ -189,7 +189,7 @@ function ContactsPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                {role === "gestor" && (
+                {isManagerRole(role) && (
                   <Select value={assignedFilter} onValueChange={setAssignedFilter}>
                     <SelectTrigger className="h-8 w-[180px]"><SelectValue /></SelectTrigger>
                     <SelectContent>

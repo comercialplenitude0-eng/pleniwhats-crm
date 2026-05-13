@@ -103,7 +103,7 @@ function TeamPage() {
     void load();
   }, [load]);
 
-  if (role !== "gestor") {
+  if (!isManagerRole(role)) {
     return (
       <div className="flex-1 grid place-items-center p-8">
         <Card className="max-w-md">
@@ -173,10 +173,10 @@ function TeamPage() {
                           <Badge variant="outline" className="text-xs">você</Badge>
                         )}
                         <Badge
-                          variant={m.role === "gestor" ? "default" : "secondary"}
+                          variant={m.isManagerRole(role) ? "default" : "secondary"}
                           className="capitalize"
                         >
-                          {m.role === "gestor" && <Shield className="size-3 mr-1" />}
+                          {m.isManagerRole(role) && <Shield className="size-3 mr-1" />}
                           {m.role}
                         </Badge>
                       </div>
@@ -207,7 +207,7 @@ function TeamPage() {
                       onClick={() => toggleRole(m.id, m.role)}
                       disabled={m.id === profile?.id}
                     >
-                      {m.role === "gestor" ? "Tornar vendedor" : "Promover"}
+                      {m.isManagerRole(role) ? "Tornar vendedor" : "Promover"}
                     </Button>
                     {m.id !== profile?.id && (
                       <AlertDialog>

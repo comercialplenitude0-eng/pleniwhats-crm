@@ -76,7 +76,7 @@ function SellerDetailsPage() {
       supabase.from("profiles").select("id,name,email").neq("id", userId).order("name"),
     ]);
     setProfile((p.data ?? null) as Profile | null);
-    setIsManager(((r.data ?? []) as { role: string }[]).some((x) => x.role === "gestor"));
+    setIsManager(((r.data ?? []) as { role: string }[]).some((x) => x.isManagerRole(role)));
     setConversations((c.data ?? []) as Conversation[]);
     setMessages(m.data ?? []);
     setOthers((others.data ?? []) as Profile[]);
@@ -220,7 +220,7 @@ function SellerDetailsPage() {
     };
   }, [conversations, messages, days, userId]);
 
-  if (role !== "gestor") {
+  if (!isManagerRole(role)) {
     return (
       <div className="flex-1 grid place-items-center p-8">
         <Card className="max-w-md">
