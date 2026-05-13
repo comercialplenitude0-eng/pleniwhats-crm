@@ -230,10 +230,12 @@ export type Database = {
           contact_avatar: string | null
           contact_name: string
           contact_phone: string
+          course: string | null
           created_at: string
           crm_data: Json
           id: string
           label: Database["public"]["Enums"]["conv_label"]
+          last_crm_note_at: string | null
           last_message: string | null
           last_message_at: string
           rd_deal_id: string | null
@@ -246,10 +248,12 @@ export type Database = {
           contact_avatar?: string | null
           contact_name: string
           contact_phone: string
+          course?: string | null
           created_at?: string
           crm_data?: Json
           id?: string
           label?: Database["public"]["Enums"]["conv_label"]
+          last_crm_note_at?: string | null
           last_message?: string | null
           last_message_at?: string
           rd_deal_id?: string | null
@@ -262,10 +266,12 @@ export type Database = {
           contact_avatar?: string | null
           contact_name?: string
           contact_phone?: string
+          course?: string | null
           created_at?: string
           crm_data?: Json
           id?: string
           label?: Database["public"]["Enums"]["conv_label"]
+          last_crm_note_at?: string | null
           last_message?: string | null
           last_message_at?: string
           rd_deal_id?: string | null
