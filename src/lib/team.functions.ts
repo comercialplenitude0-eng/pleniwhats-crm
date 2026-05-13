@@ -26,7 +26,7 @@ export const inviteMember = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => InviteSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await assertManager(supabase as never, userId);
+    await assertManager(supabase as unknown as Parameters<typeof assertManager>[0], userId);
 
     // Create the auth user (auto-confirmed)
     const { data: created, error: createErr } =
@@ -59,7 +59,7 @@ export const removeMember = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     if (data.user_id === userId) throw new Error("Você não pode remover a si mesmo");
-    await assertManager(supabase as never, userId);
+    await assertManager(supabase as unknown as Parameters<typeof assertManager>[0], userId);
 
     await supabaseAdmin
       .from("conversations")
@@ -81,7 +81,7 @@ export const reassignAll = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => ReassignAllSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await assertManager(supabase as never, userId);
+    await assertManager(supabase as unknown as Parameters<typeof assertManager>[0], userId);
 
     const { error, count } = await supabaseAdmin
       .from("conversations")
@@ -101,7 +101,7 @@ export const setMemberRole = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => SetRoleSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await assertManager(supabase as never, userId);
+    await assertManager(supabase as unknown as Parameters<typeof assertManager>[0], userId);
 
     // Prevent removing the last manager
     if (data.role !== "admin" && data.role !== "gestor") {
