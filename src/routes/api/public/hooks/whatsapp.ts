@@ -103,8 +103,8 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp")({
         const mode = url.searchParams.get("hub.mode");
         const token = url.searchParams.get("hub.verify_token");
         const challenge = url.searchParams.get("hub.challenge");
-        const verify = process.env.WHATSAPP_VERIFY_TOKEN;
-        if (mode === "subscribe" && verify && token === verify) {
+        const { verifyToken } = await getCreds();
+        if (mode === "subscribe" && verifyToken && token === verifyToken) {
           return new Response(challenge ?? "", { status: 200 });
         }
         return new Response("forbidden", { status: 403 });
@@ -112,9 +112,9 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp")({
 
       POST: async ({ request }) => {
         const raw = await request.text();
+        const { accessToken, appSecret } = await getCreds();
 
-        // Verificação de assinatura (X-Hub-Signature-256) usando WHATSAPP_APP_SECRET
-        const appSecret = process.env.WHATSAPP_APP_SECRET;
+        // Verificação de assinatura (X-Hub-Signature-256)
         if (appSecret) {
           const sig = request.headers.get("x-hub-signature-256") ?? "";
           const expected =
