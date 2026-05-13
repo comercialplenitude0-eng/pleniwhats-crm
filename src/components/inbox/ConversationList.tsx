@@ -76,6 +76,8 @@ export function ConversationList({
     "all",
   );
   const [unreadOnly, setUnreadOnly] = useState(false);
+  const [accountIds, setAccountIds] = useState<Set<string>>(new Set());
+  const [accounts, setAccounts] = useState<AccountOpt[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [messageMatchIds, setMessageMatchIds] = useState<Set<string> | null>(
     null,
