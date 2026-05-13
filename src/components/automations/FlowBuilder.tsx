@@ -1,0 +1,301 @@
+import { useCallback, useMemo, useRef, useState } from "react";
+import {
+  ReactFlow,
+  ReactFlowProvider,
+  Background,
+  Controls,
+  MiniMap,
+  addEdge,
+  useEdgesState,
+  useNodesState,
+  type Connection,
+  type Edge,
+  type Node,
+  type NodeMouseHandler,
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { ArrowLeft, Save, Plus } from "lucide-react";
+import { toast } from "sonner";
+import { FlowNode } from "./FlowNode";
+import { NodeConfigPanel } from "./NodeConfigPanel";
+import {
+  NODE_META,
+  emptyGraph,
+  type FlowGraph,
+  type FlowNodeData,
+  type FlowNodeKind,
+  type DbTrigger,
+  type DbAction,
+} from "./flow-types";
+
+const nodeTypes = { trigger: FlowNode, wait: FlowNode, condition: FlowNode, action: FlowNode };
+
+type Profile = { id: string; name: string };
+type Template = { id: string; title: string };
+
+export type SaveResult = {
+  name: string;
+  enabled: boolean;
+  graph: FlowGraph;
+  trigger: DbTrigger;
+  trigger_config: Record<string, unknown>;
+  action: DbAction;
+  action_config: Record<string, unknown>;
+};
+
+export function FlowBuilder({
+  initialName,
+  initialEnabled,
+  initialGraph,
+  profiles,
+  templates,
+  onBack,
+  onSave,
+  saving,
+}: {
+  initialName: string;
+  initialEnabled: boolean;
+  initialGraph: FlowGraph;
+  profiles: Profile[];
+  templates: Template[];
+  onBack: () => void;
+  onSave: (data: SaveResult) => Promise<void> | void;
+  saving: boolean;
+}) {
+  return (
+    <ReactFlowProvider>
+      <Inner
+        initialName={initialName}
+        initialEnabled={initialEnabled}
+        initialGraph={initialGraph}
+        profiles={profiles}
+        templates={templates}
+        onBack={onBack}
+        onSave={onSave}
+        saving={saving}
+      />
+    </ReactFlowProvider>
+  );
+}
+
+function Inner({
+  initialName,
+  initialEnabled,
+  initialGraph,
+  profiles,
+  templates,
+  onBack,
+  onSave,
+  saving,
+}: Parameters<typeof FlowBuilder>[0]) {
+  const [name, setName] = useState(initialName);
+  const [enabled, setEnabled] = useState(initialEnabled);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>(
+    initialGraph.nodes as unknown as Node[],
+  );
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(
+    initialGraph.edges as unknown as Edge[],
+  );
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const idRef = useRef(0);
+  const nextId = (kind: FlowNodeKind) => `${kind}-${Date.now()}-${++idRef.current}`;
+
+  const onConnect = useCallback(
+    (c: Connection) => setEdges((eds) => addEdge({ ...c, animated: true }, eds)),
+    [setEdges],
+  );
+
+  const onNodeClick: NodeMouseHandler = useCallback((_, n) => setSelectedId(n.id), []);
+  const onPaneClick = useCallback(() => setSelectedId(null), []);
+
+  const selectedNode = useMemo(
+    () => nodes.find((n) => n.id === selectedId) ?? null,
+    [nodes, selectedId],
+  );
+
+  const addNode = (kind: FlowNodeKind) => {
+    const id = nextId(kind);
+    const defaultData: Record<FlowNodeKind, FlowNodeData> = {
+      trigger: { kind: "trigger", trigger: "new_conversation", config: {} },
+      wait: { kind: "wait", minutes: 60 },
+      condition: { kind: "condition", question: "Lead respondeu?" },
+      action: { kind: "action", action: "set_label", config: {} },
+    };
+    const newNode: Node = {
+      id,
+      type: kind,
+      position: { x: 240 + Math.random() * 120, y: 200 + Math.random() * 120 },
+      data: defaultData[kind] as unknown as Record<string, unknown>,
+    };
+    setNodes((ns) => [...ns, newNode]);
+    setSelectedId(id);
+  };
+
+  const updateNodeData = (id: string, next: FlowNodeData) => {
+    setNodes((ns) =>
+      ns.map((n) => (n.id === id ? { ...n, data: next as unknown as Record<string, unknown> } : n)),
+    );
+  };
+
+  const deleteNode = (id: string) => {
+    setNodes((ns) => ns.filter((n) => n.id !== id));
+    setEdges((es) => es.filter((e) => e.source !== id && e.target !== id));
+    setSelectedId(null);
+  };
+
+  async function handleSave() {
+    if (!name.trim()) return toast.error("Dê um nome ao fluxo");
+    const triggerNode = nodes.find((n) => (n.data as unknown as FlowNodeData).kind === "trigger");
+    const actionNode = nodes.find((n) => (n.data as unknown as FlowNodeData).kind === "action");
+    if (!triggerNode) return toast.error("Adicione um nó de Gatilho");
+    if (!actionNode) return toast.error("Adicione ao menos um nó de Ação");
+
+    const td = triggerNode.data as unknown as Extract<FlowNodeData, { kind: "trigger" }>;
+    const ad = actionNode.data as unknown as Extract<FlowNodeData, { kind: "action" }>;
+
+    const graph: FlowGraph = {
+      nodes: nodes.map((n) => ({
+        id: n.id,
+        type: n.type as FlowNodeKind,
+        position: n.position,
+        data: n.data as unknown as FlowNodeData,
+      })),
+      edges: edges.map((e) => ({
+        id: e.id,
+        source: e.source,
+        target: e.target,
+        sourceHandle: e.sourceHandle ?? null,
+        label: typeof e.label === "string" ? e.label : undefined,
+      })),
+    };
+
+    await onSave({
+      name: name.trim(),
+      enabled,
+      graph,
+      trigger: td.trigger,
+      trigger_config: td.config,
+      action: ad.action,
+      action_config: ad.config,
+    });
+  }
+
+  return (
+    <div className="flex-1 min-w-0 flex flex-col bg-background dark">
+      {/* Toolbar */}
+      <header className="px-4 sm:px-6 py-3 border-b bg-card flex items-center gap-3 flex-wrap">
+        <Button variant="ghost" size="icon" onClick={onBack}>
+          <ArrowLeft className="size-4" />
+        </Button>
+        <div className="flex-1 min-w-[180px]">
+          <Input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Nome do fluxo..."
+            className="h-9 text-sm font-medium border-0 bg-transparent focus-visible:ring-1 px-2"
+          />
+          <p className="text-[11px] text-muted-foreground px-2">
+            Clique nos nós para configurar · Arraste para mover
+          </p>
+        </div>
+
+        <div className="hidden md:flex items-center gap-1 bg-muted/40 border rounded-lg p-1">
+          {(Object.keys(NODE_META) as FlowNodeKind[]).map((k) => (
+            <button
+              key={k}
+              onClick={() => addNode(k)}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border ${NODE_META[k].accent} hover:brightness-125 transition`}
+            >
+              <span>{NODE_META[k].emoji}</span> {NODE_META[k].name}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Label htmlFor="enabled" className="text-xs">Ativa</Label>
+          <Switch id="enabled" checked={enabled} onCheckedChange={setEnabled} />
+        </div>
+
+        <Button onClick={handleSave} disabled={saving} size="sm">
+          <Save className="size-4 mr-1" /> {saving ? "Salvando..." : "Salvar"}
+        </Button>
+      </header>
+
+      {/* Mobile palette */}
+      <div className="md:hidden px-4 py-2 border-b bg-card flex gap-2 overflow-x-auto">
+        {(Object.keys(NODE_META) as FlowNodeKind[]).map((k) => (
+          <button
+            key={k}
+            onClick={() => addNode(k)}
+            className={`shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border ${NODE_META[k].accent}`}
+          >
+            <Plus className="size-3" /> {NODE_META[k].emoji} {NODE_META[k].name}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex-1 min-h-0 flex">
+        <div className="flex-1 min-w-0 relative">
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onNodeClick={onNodeClick}
+            onPaneClick={onPaneClick}
+            nodeTypes={nodeTypes}
+            fitView
+            proOptions={{ hideAttribution: true }}
+            colorMode="dark"
+            defaultEdgeOptions={{ animated: true, style: { stroke: "hsl(var(--primary))", strokeWidth: 2 } }}
+          >
+            <Background gap={20} size={1} />
+            <Controls position="bottom-left" />
+            <MiniMap pannable zoomable className="!bg-card !border" />
+          </ReactFlow>
+        </div>
+
+        {/* Side config panel */}
+        {selectedNode && (
+          <aside className="w-full max-w-[300px] border-l bg-card overflow-y-auto p-4 hidden md:block">
+            <NodeConfigPanel
+              data={selectedNode.data as unknown as FlowNodeData}
+              onChange={(next) => updateNodeData(selectedNode.id, next)}
+              onDelete={() => deleteNode(selectedNode.id)}
+              canDelete={
+                (selectedNode.data as unknown as FlowNodeData).kind !== "trigger" ||
+                nodes.filter((n) => (n.data as unknown as FlowNodeData).kind === "trigger").length > 1
+              }
+              profiles={profiles}
+              templates={templates}
+            />
+          </aside>
+        )}
+      </div>
+
+      {/* Mobile config sheet */}
+      {selectedNode && (
+        <div className="md:hidden border-t bg-card p-4 max-h-[55vh] overflow-y-auto">
+          <NodeConfigPanel
+            data={selectedNode.data as unknown as FlowNodeData}
+            onChange={(next) => updateNodeData(selectedNode.id, next)}
+            onDelete={() => deleteNode(selectedNode.id)}
+            canDelete={
+              (selectedNode.data as unknown as FlowNodeData).kind !== "trigger" ||
+              nodes.filter((n) => (n.data as unknown as FlowNodeData).kind === "trigger").length > 1
+            }
+            profiles={profiles}
+            templates={templates}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+export { emptyGraph };
