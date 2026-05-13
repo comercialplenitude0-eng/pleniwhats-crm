@@ -290,6 +290,18 @@ function SettingsPage() {
                 </div>
                 <ChevronRight className="size-4 text-muted-foreground" />
               </Link>
+              <Link
+                to="/settings/tags"
+                className="flex items-center justify-between rounded-md border p-3 hover:bg-accent transition-colors"
+              >
+                <div>
+                  <p className="text-sm font-medium">Tags de conversas</p>
+                  <p className="text-xs text-muted-foreground">
+                    Crie e edite as tags usadas para classificar conversas
+                  </p>
+                </div>
+                <ChevronRight className="size-4 text-muted-foreground" />
+              </Link>
             </CardContent>
           </Card>
 
