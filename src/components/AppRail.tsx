@@ -70,12 +70,12 @@ export function AppRail() {
     { to: "/inbox", icon: MessageCircle, label: "Inbox", show: true, badge: unreadInbox },
     { to: "/contacts", icon: Contact, label: "Contatos", show: true },
     { to: "/templates", icon: Zap, label: "Respostas rápidas", show: true },
-    { to: "/dashboard", icon: BarChart3, label: "Dashboard", show: role === "gestor" },
-    { to: "/team", icon: Users, label: "Equipe", show: role === "gestor" },
-    { to: "/automations", icon: Workflow, label: "Automações", show: role === "gestor" },
-    { to: "/campaigns", icon: Megaphone, label: "Campanhas", show: role === "gestor" },
-    { to: "/audit", icon: Activity, label: "Auditoria", show: role === "gestor" },
-    { to: "/settings", icon: Settings, label: "Configurações", show: role === "gestor" },
+    { to: "/dashboard", icon: BarChart3, label: "Dashboard", show: isManager },
+    { to: "/team", icon: Users, label: "Equipe", show: isManager },
+    { to: "/automations", icon: Workflow, label: "Automações", show: isManager },
+    { to: "/campaigns", icon: Megaphone, label: "Campanhas", show: isManager },
+    { to: "/audit", icon: Activity, label: "Auditoria", show: isManager },
+    { to: "/settings", icon: Settings, label: "Configurações", show: isManager },
   ].filter((i) => i.show);
 
   async function claimGestor() {
