@@ -318,6 +318,34 @@ export function ConversationList({
                 </div>
               </div>
 
+              {accounts.length > 1 && (
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+                    Conta WhatsApp
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {accounts.map((a) => {
+                      const on = accountIds.has(a.id);
+                      return (
+                        <button
+                          key={a.id}
+                          onClick={() => setAccountIds((s) => toggleSet(s, a.id))}
+                          className={cn(
+                            "inline-flex items-center gap-1 text-xs px-2 py-1 rounded border transition-colors",
+                            on
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "bg-background hover:bg-accent",
+                          )}
+                        >
+                          {on && <Check className="size-3" />}
+                          {a.display_name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {role === "gestor" && (
                 <div>
                   <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
