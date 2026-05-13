@@ -148,13 +148,20 @@ function ContactsPage() {
 
   return (
     <div className="flex-1 min-w-0 flex flex-col">
-      <header className="px-6 py-4 border-b bg-card">
-        <h1 className="text-xl font-semibold flex items-center gap-2">
-          <Users className="size-5 text-primary" /> Contatos
-        </h1>
-        <p className="text-xs text-muted-foreground mt-1">
-          Diretório agregado de todos os contatos do workspace.
-        </p>
+      <header className="px-6 py-4 border-b bg-card flex items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold flex items-center gap-2">
+            <Users className="size-5 text-primary" /> Contatos
+          </h1>
+          <p className="text-xs text-muted-foreground mt-1">
+            Diretório agregado de todos os contatos do workspace.
+          </p>
+        </div>
+        {isManagerRole(role) && (
+          <Button size="sm" onClick={() => setEditing({ id: null, phone: "", name: "" })}>
+            <UserPlus className="size-4 mr-1" /> Novo contato
+          </Button>
+        )}
       </header>
 
       <ScrollArea className="flex-1">
