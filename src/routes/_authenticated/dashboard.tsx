@@ -436,7 +436,7 @@ function DashboardPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={s.isManagerRole(role) ? "default" : "secondary"} className="capitalize">{s.role}</Badge>
+                        <Badge variant={isManagerRole(s.role) ? "default" : "secondary"} className="capitalize">{s.role}</Badge>
                       </TableCell>
                       <TableCell className="text-right tabular-nums">{s.total}</TableCell>
                       <TableCell className="text-right tabular-nums">{s.open}</TableCell>
@@ -456,7 +456,7 @@ function DashboardPage() {
                           disabled={s.id === profile?.id}
                           title={s.id === profile?.id ? "Não é possível alterar seu próprio perfil" : ""}
                         >
-                          {s.isManagerRole(role) ? "Tornar vendedor" : "Promover a gestor"}
+                          {isManagerRole(s.role) ? "Tornar vendedor" : "Promover a gestor"}
                         </Button>
                       </TableCell>
                     </TableRow>

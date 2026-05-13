@@ -173,10 +173,10 @@ function TeamPage() {
                           <Badge variant="outline" className="text-xs">você</Badge>
                         )}
                         <Badge
-                          variant={m.isManagerRole(role) ? "default" : "secondary"}
+                          variant={isManagerRole(m.role) ? "default" : "secondary"}
                           className="capitalize"
                         >
-                          {m.isManagerRole(role) && <Shield className="size-3 mr-1" />}
+                          {isManagerRole(m.role) && <Shield className="size-3 mr-1" />}
                           {m.role}
                         </Badge>
                       </div>
@@ -207,7 +207,7 @@ function TeamPage() {
                       onClick={() => toggleRole(m.id, m.role)}
                       disabled={m.id === profile?.id}
                     >
-                      {m.isManagerRole(role) ? "Tornar vendedor" : "Promover"}
+                      {isManagerRole(m.role) ? "Tornar vendedor" : "Promover"}
                     </Button>
                     {m.id !== profile?.id && (
                       <AlertDialog>

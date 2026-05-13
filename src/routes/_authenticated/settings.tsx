@@ -83,7 +83,7 @@ function SettingsPage() {
       });
     }
     const gestorIds = new Set(((r.data ?? []) as { user_id: string; role: string }[])
-      .filter((x) => x.isManagerRole(role)).map((x) => x.user_id));
+      .filter((x) => isManagerRole(x.role as AppRole)).map((x) => x.user_id));
     setMembers(((p.data ?? []) as { id: string; name: string; email: string }[])
       .map((m) => ({ ...m, isGestor: gestorIds.has(m.id) })));
 

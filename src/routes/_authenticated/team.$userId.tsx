@@ -76,7 +76,7 @@ function SellerDetailsPage() {
       supabase.from("profiles").select("id,name,email").neq("id", userId).order("name"),
     ]);
     setProfile((p.data ?? null) as Profile | null);
-    setIsManager(((r.data ?? []) as { role: string }[]).some((x) => x.isManagerRole(role)));
+    setIsManager(((r.data ?? []) as { role: string }[]).some((x) => isManagerRole(x.role as AppRole)));
     setConversations((c.data ?? []) as Conversation[]);
     setMessages(m.data ?? []);
     setOthers((others.data ?? []) as Profile[]);
