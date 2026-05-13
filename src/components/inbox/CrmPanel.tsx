@@ -152,7 +152,7 @@ export function CrmPanel({ conversation, onUpdated }: Props) {
   }, [conversation?.id]);
 
   if (!conversation) {
-    return <aside className="w-[340px] border-l bg-sidebar shrink-0 hidden xl:block" />;
+    return <aside className="w-[340px] border-l bg-sidebar shrink-0 hidden xl:block" aria-hidden />;
   }
 
   async function save() {
