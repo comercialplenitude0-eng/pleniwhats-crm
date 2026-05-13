@@ -3,26 +3,27 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
+const RoleEnum = z.enum(["admin", "gestor", "comercial", "cs"]);
+
 const InviteSchema = z.object({
   email: z.string().email(),
   name: z.string().min(1).max(80),
-  role: z.enum(["vendedor", "gestor"]),
+  role: RoleEnum,
   password: z.string().min(8).max(72),
 });
+
+async function assertManager(supabase: typeof import("@supabase/supabase-js").SupabaseClient.prototype, userId: string) {
+  const { data, error } = await supabase.rpc("is_manager_role", { _user_id: userId });
+  if (error) throw new Error(error.message);
+  if (!data) throw new Response("Forbidden", { status: 403 });
+}
 
 export const inviteMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => InviteSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-
-    // Verify caller is gestor (RLS-respecting)
-    const { data: isGestor, error: roleErr } = await supabase.rpc("has_role", {
-      _user_id: userId,
-      _role: "gestor",
-    });
-    if (roleErr) throw new Error(roleErr.message);
-    if (!isGestor) throw new Response("Forbidden", { status: 403 });
+    await assertManager(supabase as never, userId);
 
     // Create the auth user (auto-confirmed)
     const { data: created, error: createErr } =
@@ -35,13 +36,13 @@ export const inviteMember = createServerFn({ method: "POST" })
     if (createErr) throw new Error(createErr.message);
     const newId = created.user!.id;
 
-    // handle_new_user trigger inserts profile + 'vendedor' role.
-    // If gestor requested, swap role.
-    if (data.role === "gestor") {
+    // handle_new_user trigger inserts profile + 'comercial' role.
+    // If a different role was requested, swap it.
+    if (data.role !== "comercial") {
       await supabaseAdmin.from("user_roles").delete().eq("user_id", newId);
       await supabaseAdmin
         .from("user_roles")
-        .insert({ user_id: newId, role: "gestor" });
+        .insert({ user_id: newId, role: data.role });
     }
 
     return { id: newId, email: data.email };
@@ -55,14 +56,8 @@ export const removeMember = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     if (data.user_id === userId) throw new Error("Você não pode remover a si mesmo");
+    await assertManager(supabase as never, userId);
 
-    const { data: isGestor } = await supabase.rpc("has_role", {
-      _user_id: userId,
-      _role: "gestor",
-    });
-    if (!isGestor) throw new Response("Forbidden", { status: 403 });
-
-    // Unassign their conversations
     await supabaseAdmin
       .from("conversations")
       .update({ assigned_to: null })
@@ -83,11 +78,7 @@ export const reassignAll = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => ReassignAllSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { data: isGestor } = await supabase.rpc("has_role", {
-      _user_id: userId,
-      _role: "gestor",
-    });
-    if (!isGestor) throw new Response("Forbidden", { status: 403 });
+    await assertManager(supabase as never, userId);
 
     const { error, count } = await supabaseAdmin
       .from("conversations")
@@ -95,4 +86,37 @@ export const reassignAll = createServerFn({ method: "POST" })
       .eq("assigned_to", data.from_user_id);
     if (error) throw new Error(error.message);
     return { moved: count ?? 0 };
+  });
+
+const SetRoleSchema = z.object({
+  user_id: z.string().uuid(),
+  role: RoleEnum,
+});
+
+export const setMemberRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => SetRoleSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertManager(supabase as never, userId);
+
+    // Prevent removing the last manager
+    if (data.role !== "admin" && data.role !== "gestor") {
+      const { data: managers } = await supabaseAdmin
+        .from("user_roles")
+        .select("user_id")
+        .in("role", ["admin", "gestor"]);
+      const ids = new Set((managers ?? []).map((m) => m.user_id));
+      ids.delete(data.user_id);
+      if (ids.size === 0) {
+        throw new Error("Não é possível remover o último gerente (Admin/Gestor).");
+      }
+    }
+
+    await supabaseAdmin.from("user_roles").delete().eq("user_id", data.user_id);
+    const { error } = await supabaseAdmin
+      .from("user_roles")
+      .insert({ user_id: data.user_id, role: data.role });
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });
