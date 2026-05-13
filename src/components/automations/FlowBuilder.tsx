@@ -103,10 +103,25 @@ function Inner({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const idRef = useRef(0);
   const nextId = (kind: FlowNodeKind) => `${kind}-${Date.now()}-${++idRef.current}`;
+  const automationEdgeStyle = useMemo(
+    () => ({ stroke: "var(--primary)", strokeWidth: 2.5 }),
+    [],
+  );
 
   const onConnect = useCallback(
-    (c: Connection) => setEdges((eds) => addEdge({ ...c, animated: true }, eds)),
-    [setEdges],
+    (c: Connection) =>
+      setEdges((eds) =>
+        addEdge(
+          {
+            ...c,
+            animated: true,
+            type: "smoothstep",
+            style: automationEdgeStyle,
+          },
+          eds,
+        ),
+      ),
+    [automationEdgeStyle, setEdges],
   );
 
   const onNodeClick: NodeMouseHandler = useCallback((_, n) => setSelectedId(n.id), []);
@@ -251,7 +266,9 @@ function Inner({
             fitView
             proOptions={{ hideAttribution: true }}
             colorMode="dark"
-            defaultEdgeOptions={{ animated: true, style: { stroke: "hsl(var(--primary))", strokeWidth: 2 } }}
+            connectionRadius={28}
+            connectionLineStyle={automationEdgeStyle}
+            defaultEdgeOptions={{ animated: true, type: "smoothstep", style: automationEdgeStyle }}
           >
             <Background gap={20} size={1} />
             <Controls position="bottom-left" />
