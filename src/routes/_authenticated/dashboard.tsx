@@ -158,9 +158,11 @@ function DashboardPage() {
     const userConvs = conversations.filter((c) => c.assigned_to === p.id);
     const userMsgs = messages.filter((m) => m.sender_id === p.id && m.direction === "outbound");
     const closedCount = userConvs.filter((c) => c.label === "closed" || c.status === "encerrada").length;
+    const priority: AppRole[] = ["admin", "gestor", "cs", "comercial", "vendedor"];
+    const pickedRole: AppRole = priority.find((p) => userRoles.includes(p)) ?? "comercial";
     return {
       ...p,
-      role: userRoles.includes("gestor") ? "gestor" : "vendedor",
+      role: pickedRole,
       total: userConvs.length,
       open: userConvs.filter((c) => c.status !== "encerrada").length,
       unread: userConvs.reduce((s, c) => s + c.unread_count, 0),
