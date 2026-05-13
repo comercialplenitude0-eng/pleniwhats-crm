@@ -1,0 +1,1 @@
+ALTER TABLE public.automation_rules ADD COLUMN IF NOT EXISTS graph jsonb NOT NULL DEFAULT '{"nodes":[],"edges":[]}'::jsonb;

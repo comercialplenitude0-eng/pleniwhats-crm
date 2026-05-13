@@ -57,6 +57,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           enabled: boolean
+          graph: Json
           id: string
           name: string
           trigger: Database["public"]["Enums"]["automation_trigger"]
@@ -69,6 +70,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           enabled?: boolean
+          graph?: Json
           id?: string
           name: string
           trigger: Database["public"]["Enums"]["automation_trigger"]
@@ -81,6 +83,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           enabled?: boolean
+          graph?: Json
           id?: string
           name?: string
           trigger?: Database["public"]["Enums"]["automation_trigger"]
