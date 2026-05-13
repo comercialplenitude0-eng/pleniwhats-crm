@@ -392,3 +392,54 @@ function SettingsPage() {
     </div>
   );
 }
+
+function AccountAccessControl({
+  accounts,
+  selected,
+  onToggle,
+}: {
+  accounts: AccountLite[];
+  selected: Set<string>;
+  onToggle: (accountId: string) => void;
+}) {
+  const count = selected.size;
+  const summary =
+    count === 0 ? "Nenhuma conta" : count === accounts.length ? "Todas as contas" : `${count} conta(s)`;
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="sm" className="h-8 gap-2 font-normal">
+          <Phone className="size-3.5" />
+          <span className="text-xs">{summary}</span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-64 p-2">
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground px-2 py-1">
+          Contas WhatsApp permitidas
+        </div>
+        <div className="max-h-64 overflow-y-auto">
+          {accounts.map((a) => {
+            const on = selected.has(a.id);
+            return (
+              <button
+                key={a.id}
+                type="button"
+                onClick={() => onToggle(a.id)}
+                className="w-full flex items-center gap-2 px-2 py-2 rounded hover:bg-accent text-left"
+              >
+                <Checkbox checked={on} className="pointer-events-none" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm truncate">{a.display_name}</div>
+                  <div className="text-[11px] text-muted-foreground truncate">
+                    {a.phone_number ?? "—"}
+                    {!a.enabled && " · desativada"}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
