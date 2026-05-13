@@ -11,7 +11,36 @@ function normalizePhone(p: string) {
 
 type MetaPayload = Record<string, unknown> & { to: string; type: string };
 
-async function sendToMeta(payload: MetaPayload): Promise<string | null> {
+async function getCredsForAccount(accountId: string | null): Promise<{
+  token: string;
+  phoneId: string;
+}> {
+  // 1) Tenta pela conta específica
+  if (accountId) {
+    const { data: acc } = await supabaseAdmin
+      .from("whatsapp_accounts")
+      .select("access_token, phone_number_id, enabled")
+      .eq("id", accountId)
+      .maybeSingle();
+    if (acc?.enabled === false) {
+      throw new Error("Esta conta WhatsApp está desativada.");
+    }
+    if (acc?.access_token && acc?.phone_number_id) {
+      return { token: acc.access_token, phoneId: acc.phone_number_id };
+    }
+  }
+  // 2) Fallback: primeira conta habilitada
+  const { data: any1 } = await supabaseAdmin
+    .from("whatsapp_accounts")
+    .select("access_token, phone_number_id")
+    .eq("enabled", true)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (any1?.access_token && any1?.phone_number_id) {
+    return { token: any1.access_token, phoneId: any1.phone_number_id };
+  }
+  // 3) Último fallback: legado whatsapp_settings
   const { data: cfg } = await supabaseAdmin
     .from("whatsapp_settings")
     .select("access_token, phone_number_id")
@@ -21,9 +50,17 @@ async function sendToMeta(payload: MetaPayload): Promise<string | null> {
   const phoneId = cfg?.phone_number_id || process.env.WHATSAPP_PHONE_NUMBER_ID;
   if (!token || !phoneId) {
     throw new Error(
-      "WhatsApp não configurado. Cadastre as credenciais Meta em Configurações → WhatsApp.",
+      "Nenhuma conta WhatsApp configurada. Cadastre uma em Configurações → Contas WhatsApp.",
     );
   }
+  return { token, phoneId };
+}
+
+async function sendToMeta(
+  payload: MetaPayload,
+  accountId: string | null,
+): Promise<string | null> {
+  const { token, phoneId } = await getCredsForAccount(accountId);
   const res = await fetch(
     `https://graph.facebook.com/${GRAPH_VERSION}/${phoneId}/messages`,
     {
@@ -59,7 +96,7 @@ export const sendWhatsappMessage = createServerFn({ method: "POST" })
 
     const { data: conv, error: cErr } = await supabaseAdmin
       .from("conversations")
-      .select("id, contact_phone")
+      .select("id, contact_phone, account_id")
       .eq("id", data.conversationId)
       .maybeSingle();
     if (cErr || !conv) throw new Error("Conversa não encontrada");
@@ -96,7 +133,7 @@ export const sendWhatsappMessage = createServerFn({ method: "POST" })
     let status: "sent" | "failed" = "sent";
     let sendError: string | null = null;
     try {
-      wamid = await sendToMeta(payload);
+      wamid = await sendToMeta(payload, conv.account_id ?? null);
     } catch (e) {
       status = "failed";
       sendError = (e as Error).message ?? String(e);
@@ -104,6 +141,7 @@ export const sendWhatsappMessage = createServerFn({ method: "POST" })
 
     const { error: insErr } = await supabaseAdmin.from("messages").insert({
       conversation_id: data.conversationId,
+      account_id: conv.account_id ?? null,
       direction: "outbound",
       type: data.type,
       content: data.content ?? null,
