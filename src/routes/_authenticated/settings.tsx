@@ -242,21 +242,13 @@ function SettingsPage() {
               <CardDescription>Promova ou rebaixe gestores do workspace.</CardDescription>
             </CardHeader>
             <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>E-mail</TableHead>
-                    <TableHead>Papel</TableHead>
-                    <TableHead className="text-right">Ação</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {members.map((m) => (
-                    <TableRow key={m.id}>
-                      <TableCell className="font-medium text-sm">{m.name}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{m.email}</TableCell>
-                      <TableCell>
+              {/* Mobile: card list */}
+              <div className="md:hidden divide-y">
+                {members.map((m) => (
+                  <div key={m.id} className="p-4 flex items-center gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-medium truncate">{m.name}</span>
                         {m.isGestor ? (
                           <Badge className="bg-amber-500/15 text-amber-600 border-amber-500/30" variant="outline">
                             <Crown className="size-3 mr-1" /> Gestor
@@ -264,16 +256,51 @@ function SettingsPage() {
                         ) : (
                           <Badge variant="secondary">Vendedor</Badge>
                         )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button size="sm" variant="outline" onClick={() => toggleGestor(m)}>
-                          {m.isGestor ? "Rebaixar" : "Promover"}
-                        </Button>
-                      </TableCell>
+                      </div>
+                      <div className="text-xs text-muted-foreground truncate">{m.email}</div>
+                    </div>
+                    <Button size="sm" variant="outline" onClick={() => toggleGestor(m)} className="shrink-0">
+                      {m.isGestor ? "Rebaixar" : "Promover"}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop: table */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nome</TableHead>
+                      <TableHead>E-mail</TableHead>
+                      <TableHead>Papel</TableHead>
+                      <TableHead className="text-right">Ação</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {members.map((m) => (
+                      <TableRow key={m.id}>
+                        <TableCell className="font-medium text-sm">{m.name}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{m.email}</TableCell>
+                        <TableCell>
+                          {m.isGestor ? (
+                            <Badge className="bg-amber-500/15 text-amber-600 border-amber-500/30" variant="outline">
+                              <Crown className="size-3 mr-1" /> Gestor
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary">Vendedor</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button size="sm" variant="outline" onClick={() => toggleGestor(m)}>
+                            {m.isGestor ? "Rebaixar" : "Promover"}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </CardContent>
           </Card>
         </div>
