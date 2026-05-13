@@ -105,9 +105,11 @@ function TeamPage() {
     setMembers(
       profiles.map((pr) => {
         const userRoles = roles.filter((x) => x.user_id === pr.id).map((x) => x.role);
+        const priority: Role[] = ["admin", "gestor", "cs", "comercial", "vendedor"];
+        const picked: Role = priority.find((p) => userRoles.includes(p)) ?? "comercial";
         return {
           ...pr,
-          role: userRoles.includes("gestor") ? "gestor" : "vendedor",
+          role: picked,
           convCount: convs.filter((cv) => cv.assigned_to === pr.id).length,
         };
       }),
