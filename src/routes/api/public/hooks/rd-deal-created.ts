@@ -124,7 +124,7 @@ export const Route = createFileRoute("/api/public/hooks/rd-deal-created")({
         // e vincula rd_deal_id quando ainda não houver.
         const updates: Array<{ id: string; status: string }> = [];
         for (const c of matches) {
-          const patch: Record<string, unknown> = {};
+          const patch: { course?: string; rd_deal_id?: string } = {};
           if (course && course !== c.course) patch.course = course;
           if (!c.rd_deal_id && dealId) patch.rd_deal_id = dealId;
           if (Object.keys(patch).length === 0) {
