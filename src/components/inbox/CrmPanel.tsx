@@ -212,6 +212,16 @@ export function CrmPanel({ conversation, onUpdated }: Props) {
         <p className="text-xs text-muted-foreground flex items-center justify-center gap-1.5 mt-0.5">
           <Phone className="size-3" /> {conversation.contact_phone}
         </p>
+        {isManagerRole(role) && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="mt-2 h-7 text-xs"
+            onClick={() => setEditingContact(true)}
+          >
+            Editar contato
+          </Button>
+        )}
       </div>
 
       <Tabs defaultValue="lead" className="flex-1 flex flex-col min-h-0">
