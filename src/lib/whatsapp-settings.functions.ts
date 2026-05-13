@@ -56,7 +56,14 @@ export const saveWhatsappSettings = createServerFn({ method: "POST" })
     const { supabase, userId } = context as { supabase: any; userId: string };
     await ensureGestor(supabase, userId);
 
-    const patch: Record<string, unknown> = {
+    const patch: {
+      phone_number_id: string;
+      verify_token: string;
+      business_account_id: string | null;
+      updated_by: string;
+      access_token?: string;
+      app_secret?: string;
+    } = {
       phone_number_id: data.phone_number_id,
       verify_token: data.verify_token,
       business_account_id: data.business_account_id || null,
