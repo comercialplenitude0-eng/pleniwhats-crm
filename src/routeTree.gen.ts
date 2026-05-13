@@ -25,6 +25,7 @@ import { Route as AuthenticatedAutomationsRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAuditRouteImport } from './routes/_authenticated/audit'
 import { Route as AuthenticatedTeamUserIdRouteImport } from './routes/_authenticated/team.$userId'
 import { Route as AuthenticatedContactsPhoneRouteImport } from './routes/_authenticated/contacts.$phone'
+import { Route as ApiPublicHooksWhatsappRouteImport } from './routes/api/public/hooks/whatsapp'
 import { Route as ApiPublicHooksCrmAutoNotesRouteImport } from './routes/api/public/hooks/crm-auto-notes'
 
 const LoginRoute = LoginRouteImport.update({
@@ -108,6 +109,11 @@ const AuthenticatedContactsPhoneRoute =
     path: '/$phone',
     getParentRoute: () => AuthenticatedContactsRoute,
   } as any)
+const ApiPublicHooksWhatsappRoute = ApiPublicHooksWhatsappRouteImport.update({
+  id: '/api/public/hooks/whatsapp',
+  path: '/api/public/hooks/whatsapp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksCrmAutoNotesRoute =
   ApiPublicHooksCrmAutoNotesRouteImport.update({
     id: '/api/public/hooks/crm-auto-notes',
@@ -132,6 +138,7 @@ export interface FileRoutesByFullPath {
   '/contacts/$phone': typeof AuthenticatedContactsPhoneRoute
   '/team/$userId': typeof AuthenticatedTeamUserIdRoute
   '/api/public/hooks/crm-auto-notes': typeof ApiPublicHooksCrmAutoNotesRoute
+  '/api/public/hooks/whatsapp': typeof ApiPublicHooksWhatsappRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -150,6 +157,7 @@ export interface FileRoutesByTo {
   '/contacts/$phone': typeof AuthenticatedContactsPhoneRoute
   '/team/$userId': typeof AuthenticatedTeamUserIdRoute
   '/api/public/hooks/crm-auto-notes': typeof ApiPublicHooksCrmAutoNotesRoute
+  '/api/public/hooks/whatsapp': typeof ApiPublicHooksWhatsappRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -170,6 +178,7 @@ export interface FileRoutesById {
   '/_authenticated/contacts/$phone': typeof AuthenticatedContactsPhoneRoute
   '/_authenticated/team/$userId': typeof AuthenticatedTeamUserIdRoute
   '/api/public/hooks/crm-auto-notes': typeof ApiPublicHooksCrmAutoNotesRoute
+  '/api/public/hooks/whatsapp': typeof ApiPublicHooksWhatsappRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -190,6 +199,7 @@ export interface FileRouteTypes {
     | '/contacts/$phone'
     | '/team/$userId'
     | '/api/public/hooks/crm-auto-notes'
+    | '/api/public/hooks/whatsapp'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -208,6 +218,7 @@ export interface FileRouteTypes {
     | '/contacts/$phone'
     | '/team/$userId'
     | '/api/public/hooks/crm-auto-notes'
+    | '/api/public/hooks/whatsapp'
   id:
     | '__root__'
     | '/'
@@ -227,6 +238,7 @@ export interface FileRouteTypes {
     | '/_authenticated/contacts/$phone'
     | '/_authenticated/team/$userId'
     | '/api/public/hooks/crm-auto-notes'
+    | '/api/public/hooks/whatsapp'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -234,6 +246,7 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
   ApiPublicHooksCrmAutoNotesRoute: typeof ApiPublicHooksCrmAutoNotesRoute
+  ApiPublicHooksWhatsappRoute: typeof ApiPublicHooksWhatsappRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -350,6 +363,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedContactsPhoneRouteImport
       parentRoute: typeof AuthenticatedContactsRoute
     }
+    '/api/public/hooks/whatsapp': {
+      id: '/api/public/hooks/whatsapp'
+      path: '/api/public/hooks/whatsapp'
+      fullPath: '/api/public/hooks/whatsapp'
+      preLoaderRoute: typeof ApiPublicHooksWhatsappRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/crm-auto-notes': {
       id: '/api/public/hooks/crm-auto-notes'
       path: '/api/public/hooks/crm-auto-notes'
@@ -421,7 +441,18 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
   ApiPublicHooksCrmAutoNotesRoute: ApiPublicHooksCrmAutoNotesRoute,
+  ApiPublicHooksWhatsappRoute: ApiPublicHooksWhatsappRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
