@@ -12,10 +12,8 @@ const InviteSchema = z.object({
   password: z.string().min(8).max(72),
 });
 
-async function assertManager(
-  supabase: { rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }> },
-  userId: string,
-) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function assertManager(supabase: any, userId: string) {
   const { data, error } = await supabase.rpc("is_manager_role", { _user_id: userId });
   if (error) throw new Error(error.message);
   if (!data) throw new Response("Forbidden", { status: 403 });
