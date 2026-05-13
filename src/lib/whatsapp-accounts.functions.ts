@@ -90,7 +90,7 @@ export const saveWhatsappAccount = createServerFn({ method: "POST" })
     if (data.id) {
       const { error } = await supabaseAdmin
         .from("whatsapp_accounts")
-        .update(base)
+        .update(base as any)
         .eq("id", data.id);
       if (error) throw new Error(error.message);
       return { id: data.id };
@@ -98,7 +98,7 @@ export const saveWhatsappAccount = createServerFn({ method: "POST" })
       base.created_by = userId;
       const { data: ins, error } = await supabaseAdmin
         .from("whatsapp_accounts")
-        .insert(base as never)
+        .insert(base as any)
         .select("id")
         .single();
       if (error) throw new Error(error.message);
