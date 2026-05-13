@@ -399,14 +399,15 @@ function InviteDialog({
                 <Label>Perfil</Label>
                 <Select
                   value={roleVal}
-                  onValueChange={(v) => setRoleVal(v as Role)}
+                  onValueChange={(v) => setRoleVal(v as Exclude<Role, "vendedor">)}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="vendedor">Vendedor</SelectItem>
-                    <SelectItem value="gestor">Gestor</SelectItem>
+                    {ROLE_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
