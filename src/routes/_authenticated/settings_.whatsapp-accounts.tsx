@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { useAuth, isManagerRole, type AppRole } from "@/lib/auth";
+import { useAuth, isManagerRole } from "@/lib/auth";
 import {
   listWhatsappAccounts,
   saveWhatsappAccount,
