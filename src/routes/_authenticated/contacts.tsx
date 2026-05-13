@@ -251,6 +251,7 @@ function ContactsPage() {
                       <TableHead className="text-right">Conversas</TableHead>
                       <TableHead className="text-right">Não lidas</TableHead>
                       <TableHead className="text-right">Última msg</TableHead>
+                      {isManagerRole(role) && <TableHead className="w-12" />}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
