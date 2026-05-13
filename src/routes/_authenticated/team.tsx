@@ -303,7 +303,7 @@ function InviteDialog({
   function reset() {
     setName("");
     setEmail("");
-    setRoleVal("vendedor");
+    setRoleVal("comercial");
     setPassword(randomPassword());
     setCreatedCreds(null);
   }
