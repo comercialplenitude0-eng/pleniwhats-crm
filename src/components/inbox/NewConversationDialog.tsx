@@ -39,6 +39,7 @@ export function NewConversationDialog({
     setName("");
     setPhone("");
     setDealId("");
+    setCourse("");
   }
 
   async function loadFromCrm() {
