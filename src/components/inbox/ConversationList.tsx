@@ -44,6 +44,7 @@ type Props = {
 };
 
 type Profile = { id: string; name: string };
+type AccountOpt = { id: string; display_name: string };
 
 const LABEL_KEYS = Object.keys(LABEL_META) as ConvLabel[];
 const STATUS_KEYS = Object.keys(STATUS_LABEL) as ConvStatus[];
