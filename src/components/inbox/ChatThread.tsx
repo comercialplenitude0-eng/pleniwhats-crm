@@ -14,6 +14,8 @@ import EmojiPicker, { EmojiStyle, Theme } from "emoji-picker-react";
 import { TemplatePicker } from "./TemplatePicker";
 import { TemplateVarsDialog } from "./TemplateVarsDialog";
 import { applyTemplateVars, extractVars, type MessageTemplate } from "@/lib/templates";
+import { useServerFn } from "@tanstack/react-start";
+import { sendWhatsappMessage } from "@/lib/whatsapp.functions";
 
 type Props = { conversation: Conversation | null };
 
@@ -37,6 +39,7 @@ export function ChatThread({ conversation }: Props) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerQuery, setPickerQuery] = useState("");
   const [pendingTemplate, setPendingTemplate] = useState<MessageTemplate | null>(null);
+  const sendWa = useServerFn(sendWhatsappMessage);
 
   // Load templates once per user
   useEffect(() => {
@@ -129,20 +132,14 @@ export function ChatThread({ conversation }: Props) {
     if (!conversation || !text.trim() || !user) return;
     const content = text.trim();
     setSending(true);
-    const { error } = await supabase.from("messages").insert({
-      conversation_id: conversation.id,
-      direction: "outbound",
-      type: "text",
-      content,
-      sender_id: user.id,
-      status: "sent",
-    });
-    setSending(false);
-    if (error) {
-      toast.error(error.message);
-      return;
+    try {
+      await sendWa({ data: { conversationId: conversation.id, type: "text", content } });
+      setText("");
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setSending(false);
     }
-    setText("");
   }
 
   function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -165,16 +162,15 @@ export function ChatThread({ conversation }: Props) {
       });
       if (upErr) throw upErr;
       const { data: pub } = supabase.storage.from("chat-media").getPublicUrl(path);
-      const { error } = await supabase.from("messages").insert({
-        conversation_id: conversation.id,
-        direction: "outbound",
-        type: kind,
-        content: kind === "document" ? filename : null,
-        media_url: pub.publicUrl,
-        sender_id: user.id,
-        status: "sent",
+      await sendWa({
+        data: {
+          conversationId: conversation.id,
+          type: kind,
+          content: kind === "document" ? filename : null,
+          mediaUrl: pub.publicUrl,
+          filename,
+        },
       });
-      if (error) throw error;
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
