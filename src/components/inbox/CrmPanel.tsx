@@ -229,7 +229,7 @@ export function CrmPanel({ conversation, onUpdated }: Props) {
               <div className="space-y-3">
                 <div className="space-y-1.5">
                   <Label className="text-xs uppercase text-muted-foreground tracking-wide">
-                    Etiqueta
+                    Etiqueta principal
                   </Label>
                   <Select value={label} onValueChange={(v) => setLabel(v as ConvLabel)}>
                     <SelectTrigger>
@@ -244,6 +244,14 @@ export function CrmPanel({ conversation, onUpdated }: Props) {
                     </SelectContent>
                   </Select>
                 </div>
+                {conversation && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs uppercase text-muted-foreground tracking-wide">
+                      Tags
+                    </Label>
+                    <TagPicker conversationId={conversation.id} />
+                  </div>
+                )}
                 <div className="space-y-1.5">
                   <Label className="text-xs uppercase text-muted-foreground tracking-wide">
                     Status
