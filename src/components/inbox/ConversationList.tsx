@@ -94,6 +94,16 @@ export function ConversationList({
       .then(({ data }) => setProfiles((data ?? []) as Profile[]));
   }, [role]);
 
+  // Load accessible WhatsApp accounts (RLS filters automatically)
+  useEffect(() => {
+    supabase
+      .from("whatsapp_accounts")
+      .select("id,display_name")
+      .eq("enabled", true)
+      .order("display_name")
+      .then(({ data }) => setAccounts((data ?? []) as AccountOpt[]));
+  }, []);
+
   // Search inside message content (debounced)
   useEffect(() => {
     const q = debouncedQuery.trim();
