@@ -14,11 +14,12 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Search, X, Users, MessageSquare, Inbox, Flame } from "lucide-react";
+import { Loader2, Search, X, Users, MessageSquare, Inbox, Flame, Pencil, UserPlus } from "lucide-react";
 import {
   initials, formatTime, LABEL_META, STATUS_LABEL,
   type Conversation, type ConvLabel, type ConvStatus,
 } from "@/lib/inbox-types";
+import { ContactEditDialog } from "@/components/contacts/ContactEditDialog";
 
 export const Route = createFileRoute("/_authenticated/contacts")({
   component: ContactsPage,
