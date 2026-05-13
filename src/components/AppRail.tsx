@@ -11,15 +11,16 @@ import { toast } from "sonner";
 export function AppRail() {
   const { role, user } = useAuth();
   const path = useRouterState({ select: (r) => r.location.pathname });
-  const [hasGestor, setHasGestor] = useState(true);
+  const isManager = isManagerRole(role);
+  const [hasManager, setHasManager] = useState(true);
   const [unreadInbox, setUnreadInbox] = useState(0);
   const seenRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
-    if (role === "gestor") return;
-    supabase.from("user_roles").select("role").eq("role", "gestor").limit(1)
-      .then(({ data }) => setHasGestor((data?.length ?? 0) > 0));
-  }, [role]);
+    if (isManager) return;
+    supabase.from("user_roles").select("role").in("role", ["admin", "gestor"]).limit(1)
+      .then(({ data }) => setHasManager((data?.length ?? 0) > 0));
+  }, [isManager]);
 
   // Reset badge when on inbox
   useEffect(() => {
