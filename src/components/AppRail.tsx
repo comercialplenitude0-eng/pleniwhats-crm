@@ -2,7 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { MessageCircle, BarChart3, Crown, Zap, Users, Contact, Settings, Workflow, Activity, Megaphone, UserCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/lib/auth";
+import { useAuth, isManagerRole } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
