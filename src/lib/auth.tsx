@@ -67,7 +67,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     ]);
     setProfile(p ?? null);
     const roles = (r ?? []).map((x) => x.role as AppRole);
-    setRole(roles.includes("gestor") ? "gestor" : roles[0] ?? "vendedor");
+    // Priority: admin > gestor > cs > comercial/vendedor
+    const priority: AppRole[] = ["admin", "gestor", "cs", "comercial", "vendedor"];
+    const picked = priority.find((p) => roles.includes(p)) ?? null;
+    setRole(picked);
   };
 
   useEffect(() => {
