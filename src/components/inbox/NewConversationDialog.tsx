@@ -190,6 +190,19 @@ export function NewConversationDialog({
               </Button>
             </div>
           </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="nc-course">Curso</Label>
+            <Input
+              id="nc-course"
+              value={course}
+              onChange={(e) => setCourse(e.target.value)}
+              placeholder="ex: Marketing Digital 2026"
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Usado para identificar o card certo no CRM quando o lead tem mais de um (precisa bater com o campo personalizado &quot;curso&quot; do deal).
+            </p>
+          </div>
         </div>
 
         <DialogFooter>
