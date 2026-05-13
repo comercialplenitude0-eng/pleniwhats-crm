@@ -12,11 +12,16 @@ function normalizePhone(p: string) {
 type MetaPayload = Record<string, unknown> & { to: string; type: string };
 
 async function sendToMeta(payload: MetaPayload): Promise<string | null> {
-  const token = process.env.WHATSAPP_ACCESS_TOKEN;
-  const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+  const { data: cfg } = await supabaseAdmin
+    .from("whatsapp_settings")
+    .select("access_token, phone_number_id")
+    .eq("id", true)
+    .maybeSingle();
+  const token = cfg?.access_token || process.env.WHATSAPP_ACCESS_TOKEN;
+  const phoneId = cfg?.phone_number_id || process.env.WHATSAPP_PHONE_NUMBER_ID;
   if (!token || !phoneId) {
     throw new Error(
-      "WhatsApp não configurado. Cadastre WHATSAPP_ACCESS_TOKEN e WHATSAPP_PHONE_NUMBER_ID.",
+      "WhatsApp não configurado. Cadastre as credenciais Meta em Configurações → WhatsApp.",
     );
   }
   const res = await fetch(

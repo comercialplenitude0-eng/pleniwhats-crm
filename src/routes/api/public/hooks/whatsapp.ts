@@ -10,11 +10,25 @@ function normalizeDigits(p?: string | null): string {
   return (p ?? "").replace(/\D/g, "");
 }
 
+async function getCreds() {
+  const { data } = await supabaseAdmin
+    .from("whatsapp_settings")
+    .select("access_token, verify_token, app_secret")
+    .eq("id", true)
+    .maybeSingle();
+  return {
+    accessToken: data?.access_token || process.env.WHATSAPP_ACCESS_TOKEN || null,
+    verifyToken: data?.verify_token || process.env.WHATSAPP_VERIFY_TOKEN || null,
+    appSecret: data?.app_secret || process.env.WHATSAPP_APP_SECRET || null,
+  };
+}
+
 async function downloadMediaToBucket(
   mediaId: string,
   conversationId: string,
+  accessToken: string | null,
 ): Promise<{ url: string | null; mime: string | null; filename: string | null }> {
-  const token = process.env.WHATSAPP_ACCESS_TOKEN;
+  const token = accessToken;
   if (!token) return { url: null, mime: null, filename: null };
   try {
     // 1) get media URL
@@ -89,8 +103,8 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp")({
         const mode = url.searchParams.get("hub.mode");
         const token = url.searchParams.get("hub.verify_token");
         const challenge = url.searchParams.get("hub.challenge");
-        const verify = process.env.WHATSAPP_VERIFY_TOKEN;
-        if (mode === "subscribe" && verify && token === verify) {
+        const { verifyToken } = await getCreds();
+        if (mode === "subscribe" && verifyToken && token === verifyToken) {
           return new Response(challenge ?? "", { status: 200 });
         }
         return new Response("forbidden", { status: 403 });
@@ -98,9 +112,9 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp")({
 
       POST: async ({ request }) => {
         const raw = await request.text();
+        const { accessToken, appSecret } = await getCreds();
 
-        // Verificação de assinatura (X-Hub-Signature-256) usando WHATSAPP_APP_SECRET
-        const appSecret = process.env.WHATSAPP_APP_SECRET;
+        // Verificação de assinatura (X-Hub-Signature-256)
         if (appSecret) {
           const sig = request.headers.get("x-hub-signature-256") ?? "";
           const expected =
@@ -148,25 +162,25 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp")({
               } else if (mtype === "image" && msg.image?.id) {
                 type = "image";
                 content = msg.image?.caption ?? null;
-                const r = await downloadMediaToBucket(msg.image.id, convoId);
+                const r = await downloadMediaToBucket(msg.image.id, convoId, accessToken);
                 mediaUrl = r.url;
               } else if (mtype === "audio" && msg.audio?.id) {
                 type = "audio";
-                const r = await downloadMediaToBucket(msg.audio.id, convoId);
+                const r = await downloadMediaToBucket(msg.audio.id, convoId, accessToken);
                 mediaUrl = r.url;
               } else if (mtype === "voice" && msg.voice?.id) {
                 type = "audio";
-                const r = await downloadMediaToBucket(msg.voice.id, convoId);
+                const r = await downloadMediaToBucket(msg.voice.id, convoId, accessToken);
                 mediaUrl = r.url;
               } else if (mtype === "document" && msg.document?.id) {
                 type = "document";
                 content = msg.document?.filename ?? null;
-                const r = await downloadMediaToBucket(msg.document.id, convoId);
+                const r = await downloadMediaToBucket(msg.document.id, convoId, accessToken);
                 mediaUrl = r.url;
               } else if (mtype === "video" && msg.video?.id) {
                 type = "document";
                 content = "vídeo recebido";
-                const r = await downloadMediaToBucket(msg.video.id, convoId);
+                const r = await downloadMediaToBucket(msg.video.id, convoId, accessToken);
                 mediaUrl = r.url;
               } else if (mtype === "button") {
                 content = msg.button?.text ?? null;
