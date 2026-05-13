@@ -10,11 +10,25 @@ function normalizeDigits(p?: string | null): string {
   return (p ?? "").replace(/\D/g, "");
 }
 
+async function getCreds() {
+  const { data } = await supabaseAdmin
+    .from("whatsapp_settings")
+    .select("access_token, verify_token, app_secret")
+    .eq("id", true)
+    .maybeSingle();
+  return {
+    accessToken: data?.access_token || process.env.WHATSAPP_ACCESS_TOKEN || null,
+    verifyToken: data?.verify_token || process.env.WHATSAPP_VERIFY_TOKEN || null,
+    appSecret: data?.app_secret || process.env.WHATSAPP_APP_SECRET || null,
+  };
+}
+
 async function downloadMediaToBucket(
   mediaId: string,
   conversationId: string,
+  accessToken: string | null,
 ): Promise<{ url: string | null; mime: string | null; filename: string | null }> {
-  const token = process.env.WHATSAPP_ACCESS_TOKEN;
+  const token = accessToken;
   if (!token) return { url: null, mime: null, filename: null };
   try {
     // 1) get media URL
