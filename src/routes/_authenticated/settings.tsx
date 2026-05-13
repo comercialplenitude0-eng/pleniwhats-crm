@@ -263,15 +263,29 @@ function SettingsPage() {
               </CardTitle>
               <CardDescription>Conecte canais de mensageria e APIs externas.</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-2">
+              <Link
+                to="/settings/whatsapp-accounts"
+                className="flex items-center justify-between rounded-md border p-3 hover:bg-accent transition-colors"
+              >
+                <div>
+                  <p className="text-sm font-medium flex items-center gap-2">
+                    <Phone className="size-3.5" /> Contas WhatsApp (multi-conta)
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Cadastre múltiplos números Meta · {accounts.length} conta(s) ativa(s)
+                  </p>
+                </div>
+                <ChevronRight className="size-4 text-muted-foreground" />
+              </Link>
               <Link
                 to="/settings/whatsapp"
                 className="flex items-center justify-between rounded-md border p-3 hover:bg-accent transition-colors"
               >
                 <div>
-                  <p className="text-sm font-medium">WhatsApp Cloud API (Meta)</p>
+                  <p className="text-sm font-medium">WhatsApp Cloud API (legado)</p>
                   <p className="text-xs text-muted-foreground">
-                    Tokens, phone number, verify token e app secret
+                    Configuração de conta única — em desuso
                   </p>
                 </div>
                 <ChevronRight className="size-4 text-muted-foreground" />
