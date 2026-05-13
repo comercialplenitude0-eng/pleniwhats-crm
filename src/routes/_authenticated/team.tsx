@@ -137,7 +137,7 @@ function TeamPage() {
   }
 
   async function toggleRole(userId: string, current: Role) {
-    const newRole: Role = current === "gestor" ? "vendedor" : "gestor";
+    const newRole: Role = isManagerRole(current) ? "comercial" : "gestor";
     const { error: dErr } = await supabase
       .from("user_roles")
       .delete()
@@ -147,7 +147,7 @@ function TeamPage() {
       .from("user_roles")
       .insert({ user_id: userId, role: newRole });
     if (error) return toast.error(error.message);
-    toast.success(`Perfil atualizado para ${newRole}`);
+    toast.success(`Perfil atualizado para ${roleLabelLocal(newRole)}`);
     void load();
   }
 
