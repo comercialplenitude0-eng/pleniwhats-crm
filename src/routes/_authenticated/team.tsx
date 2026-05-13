@@ -292,7 +292,7 @@ function InviteDialog({
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [roleVal, setRoleVal] = useState<Role>("vendedor");
+  const [roleVal, setRoleVal] = useState<Exclude<Role, "vendedor">>("comercial");
   const [password, setPassword] = useState(() => randomPassword());
   const [submitting, setSubmitting] = useState(false);
   const [createdCreds, setCreatedCreds] = useState<{
