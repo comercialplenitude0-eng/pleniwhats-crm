@@ -31,6 +31,7 @@ export function NewConversationDialog({
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [dealId, setDealId] = useState("");
+  const [course, setCourse] = useState("");
   const [loadingCrm, setLoadingCrm] = useState(false);
   const [saving, setSaving] = useState(false);
 
