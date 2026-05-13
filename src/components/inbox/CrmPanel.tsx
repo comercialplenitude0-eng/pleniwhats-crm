@@ -55,7 +55,8 @@ type Activity = {
 type ProfileLite = { id: string; name: string };
 
 export function CrmPanel({ conversation, onUpdated }: Props) {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  const [editingContact, setEditingContact] = useState(false);
   const [crm, setCrm] = useState<Record<string, string>>({});
   const [label, setLabel] = useState<ConvLabel>("new");
   const [status, setStatus] = useState<ConvStatus>("aguardando");
