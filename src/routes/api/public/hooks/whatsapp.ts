@@ -10,17 +10,51 @@ function normalizeDigits(p?: string | null): string {
   return (p ?? "").replace(/\D/g, "");
 }
 
-async function getCreds() {
+async function getCredsByPhoneId(phoneNumberId: string | null) {
+  // Tenta primeiro nas contas (multi-conta)
+  if (phoneNumberId) {
+    const { data: acc } = await supabaseAdmin
+      .from("whatsapp_accounts")
+      .select("id, access_token, app_secret, verify_token")
+      .eq("phone_number_id", phoneNumberId)
+      .maybeSingle();
+    if (acc) {
+      return {
+        accountId: acc.id as string,
+        accessToken: acc.access_token,
+        appSecret: acc.app_secret,
+        verifyToken: acc.verify_token,
+      };
+    }
+  }
+  // Fallback: legado
   const { data } = await supabaseAdmin
     .from("whatsapp_settings")
     .select("access_token, verify_token, app_secret")
     .eq("id", true)
     .maybeSingle();
   return {
+    accountId: null as string | null,
     accessToken: data?.access_token || process.env.WHATSAPP_ACCESS_TOKEN || null,
     verifyToken: data?.verify_token || process.env.WHATSAPP_VERIFY_TOKEN || null,
     appSecret: data?.app_secret || process.env.WHATSAPP_APP_SECRET || null,
   };
+}
+
+// Para verificação inicial (sem payload), aceitar verify_token de QUALQUER conta
+async function findVerifyToken(token: string): Promise<boolean> {
+  const { data: accs } = await supabaseAdmin
+    .from("whatsapp_accounts")
+    .select("verify_token")
+    .eq("verify_token", token)
+    .limit(1);
+  if (accs && accs.length > 0) return true;
+  const { data: legacy } = await supabaseAdmin
+    .from("whatsapp_settings")
+    .select("verify_token")
+    .eq("id", true)
+    .maybeSingle();
+  return !!legacy?.verify_token && legacy.verify_token === token;
 }
 
 async function downloadMediaToBucket(
