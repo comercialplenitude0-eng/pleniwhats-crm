@@ -64,7 +64,7 @@ export function AppRail() {
       )
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [user, role]);
+  }, [user, isManager]);
 
   const items = [
     { to: "/inbox", icon: MessageCircle, label: "Inbox", show: true, badge: unreadInbox },
