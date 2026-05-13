@@ -23,7 +23,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { Loader2, Settings as SettingsIcon, Clock, Users, Crown, Save, MessageCircle, ChevronRight } from "lucide-react";
+import { Loader2, Settings as SettingsIcon, Clock, Users, Crown, Save, MessageCircle, ChevronRight, Phone } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/settings")({
