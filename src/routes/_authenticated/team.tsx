@@ -225,7 +225,7 @@ function TeamPage() {
                       onClick={() => toggleRole(m.id, m.role)}
                       disabled={m.id === profile?.id}
                     >
-                      {isManagerRole(m.role) ? "Tornar vendedor" : "Promover"}
+                      {isManagerRole(m.role) ? "Rebaixar a Comercial" : "Promover a Gestor"}
                     </Button>
                     {m.id !== profile?.id && (
                       <AlertDialog>
