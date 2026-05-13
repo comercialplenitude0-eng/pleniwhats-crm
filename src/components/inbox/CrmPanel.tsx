@@ -27,6 +27,7 @@ import {
 } from "@/lib/inbox-types";
 import { toast } from "sonner";
 import { RdCrmSection } from "./RdCrmSection";
+import { TagPicker } from "./TagPicker";
 
 type Props = {
   conversation: Conversation | null;
