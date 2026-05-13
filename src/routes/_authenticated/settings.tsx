@@ -203,8 +203,8 @@ function SettingsPage() {
             </CardContent>
           </Card>
 
-          <div className="flex justify-end">
-            <Button onClick={saveSettings} disabled={saving}>
+          <div className="flex sm:justify-end">
+            <Button onClick={saveSettings} disabled={saving} className="w-full sm:w-auto">
               {saving ? <Loader2 className="size-4 mr-2 animate-spin" /> : <Save className="size-4 mr-2" />}
               Salvar configurações
             </Button>
