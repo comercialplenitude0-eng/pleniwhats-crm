@@ -268,7 +268,10 @@ function ContactsPage() {
                             </Avatar>
                             <div className="min-w-0">
                               <div className="font-medium text-sm truncate">{c.name}</div>
-                              <div className="text-xs text-muted-foreground tabular-nums">{c.phone}</div>
+                              <div className="text-xs text-muted-foreground tabular-nums">
+                                {c.phone}
+                                {c.email && <span className="ml-2">· {c.email}</span>}
+                              </div>
                             </div>
                           </div>
                         </TableCell>
