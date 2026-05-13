@@ -298,29 +298,40 @@ function SettingsPage() {
               <CardTitle className="text-sm flex items-center gap-2">
                 <Users className="size-4" /> Membros e papéis
               </CardTitle>
-              <CardDescription>Promova ou rebaixe gestores do workspace.</CardDescription>
+              <CardDescription>
+                Promova ou rebaixe gestores e defina a quais contas WhatsApp cada vendedor tem acesso.
+              </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
               {/* Mobile: card list */}
               <div className="md:hidden divide-y">
                 {members.map((m) => (
-                  <div key={m.id} className="p-4 flex items-center gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-medium truncate">{m.name}</span>
-                        {m.isGestor ? (
-                          <Badge className="bg-amber-500/15 text-amber-600 border-amber-500/30" variant="outline">
-                            <Crown className="size-3 mr-1" /> Gestor
-                          </Badge>
-                        ) : (
-                          <Badge variant="secondary">Vendedor</Badge>
-                        )}
+                  <div key={m.id} className="p-4 space-y-2">
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-medium truncate">{m.name}</span>
+                          {m.isGestor ? (
+                            <Badge className="bg-amber-500/15 text-amber-600 border-amber-500/30" variant="outline">
+                              <Crown className="size-3 mr-1" /> Gestor
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary">Vendedor</Badge>
+                          )}
+                        </div>
+                        <div className="text-xs text-muted-foreground truncate">{m.email}</div>
                       </div>
-                      <div className="text-xs text-muted-foreground truncate">{m.email}</div>
+                      <Button size="sm" variant="outline" onClick={() => toggleGestor(m)} className="shrink-0">
+                        {m.isGestor ? "Rebaixar" : "Promover"}
+                      </Button>
                     </div>
-                    <Button size="sm" variant="outline" onClick={() => toggleGestor(m)} className="shrink-0">
-                      {m.isGestor ? "Rebaixar" : "Promover"}
-                    </Button>
+                    {!m.isGestor && accounts.length > 0 && (
+                      <AccountAccessControl
+                        accounts={accounts}
+                        selected={accessMap[m.id] ?? new Set()}
+                        onToggle={(accountId) => toggleAccess(m.id, accountId)}
+                      />
+                    )}
                   </div>
                 ))}
               </div>
@@ -333,6 +344,7 @@ function SettingsPage() {
                       <TableHead>Nome</TableHead>
                       <TableHead>E-mail</TableHead>
                       <TableHead>Papel</TableHead>
+                      <TableHead>Contas WhatsApp</TableHead>
                       <TableHead className="text-right">Ação</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -348,6 +360,19 @@ function SettingsPage() {
                             </Badge>
                           ) : (
                             <Badge variant="secondary">Vendedor</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {m.isGestor ? (
+                            <span className="text-xs text-muted-foreground">Acesso total</span>
+                          ) : accounts.length === 0 ? (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          ) : (
+                            <AccountAccessControl
+                              accounts={accounts}
+                              selected={accessMap[m.id] ?? new Set()}
+                              onToggle={(accountId) => toggleAccess(m.id, accountId)}
+                            />
                           )}
                         </TableCell>
                         <TableCell className="text-right">
