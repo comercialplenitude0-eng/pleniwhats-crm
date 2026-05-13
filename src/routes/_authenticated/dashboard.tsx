@@ -197,8 +197,8 @@ function DashboardPage() {
     void load();
   }
 
-  async function toggleRole(userId: string, current: string) {
-    const newRole = current === "gestor" ? "vendedor" : "gestor";
+  async function toggleRole(userId: string, current: AppRole) {
+    const newRole: AppRole = isManagerRole(current) ? "comercial" : "gestor";
     const { error: delErr } = await supabase.from("user_roles").delete().eq("user_id", userId);
     if (delErr) return toast.error(delErr.message);
     const { error } = await supabase.from("user_roles").insert({ user_id: userId, role: newRole });
