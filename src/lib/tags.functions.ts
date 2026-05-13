@@ -128,10 +128,10 @@ export const setConversationTags = createServerFn({ method: "POST" })
       .select("tag_id")
       .eq("conversation_id", data.conversationId);
     if (exErr) throw new Error(exErr.message);
-    const current = new Set((existing ?? []).map((r: any) => r.tag_id));
-    const desired = new Set(data.tagIds);
-    const toAdd = [...desired].filter((id) => !current.has(id));
-    const toRemove = [...current].filter((id) => !desired.has(id));
+    const current = new Set<string>((existing ?? []).map((r: any) => r.tag_id as string));
+    const desired = new Set<string>(data.tagIds);
+    const toAdd: string[] = [...desired].filter((id) => !current.has(id));
+    const toRemove: string[] = [...current].filter((id) => !desired.has(id));
     if (toRemove.length) {
       const { error } = await supabase
         .from("conversation_tags")
