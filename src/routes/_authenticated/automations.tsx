@@ -98,7 +98,7 @@ function AutomationsPage() {
       ? await supabase.from("automation_rules").update(body).eq("id", editing.id)
       : await supabase.from("automation_rules").insert({ ...body, created_by: user?.id ?? null });
     setSaving(false);
-    if (res.error) return toast.error(res.error.message);
+    if (res.error) { toast.error(res.error.message); return; }
     toast.success(editing ? "Fluxo atualizado" : "Fluxo criado");
     setEditing(null);
     setCreating(false);
