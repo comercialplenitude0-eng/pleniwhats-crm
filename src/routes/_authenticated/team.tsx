@@ -135,9 +135,9 @@ function TeamPage() {
 
   return (
     <div className="flex-1 min-w-0 flex flex-col">
-      <header className="px-6 py-4 border-b bg-card flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold">Equipe</h1>
+      <header className="px-4 sm:px-6 py-4 border-b bg-card flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-lg sm:text-xl font-semibold">Equipe</h1>
           <p className="text-xs text-muted-foreground">
             {members.length} {members.length === 1 ? "membro" : "membros"}
           </p>
@@ -151,7 +151,7 @@ function TeamPage() {
       </header>
 
       <ScrollArea className="flex-1">
-        <div className="p-6 max-w-5xl mx-auto space-y-3">
+        <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-3">
           {loading ? (
             <div className="grid place-items-center py-20">
               <Loader2 className="size-6 animate-spin text-muted-foreground" />
@@ -159,33 +159,35 @@ function TeamPage() {
           ) : (
             members.map((m) => (
               <Card key={m.id}>
-                <CardContent className="p-4 flex items-center gap-4">
-                  <Avatar className="size-11">
-                    <AvatarFallback className="bg-secondary">
-                      {initials(m.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium truncate">{m.name}</span>
-                      {m.id === profile?.id && (
-                        <Badge variant="outline" className="text-xs">você</Badge>
-                      )}
-                      <Badge
-                        variant={m.role === "gestor" ? "default" : "secondary"}
-                        className="capitalize"
-                      >
-                        {m.role === "gestor" && <Shield className="size-3 mr-1" />}
-                        {m.role}
-                      </Badge>
-                    </div>
-                    <div className="text-xs text-muted-foreground truncate">
-                      {m.email} · {m.convCount}{" "}
-                      {m.convCount === 1 ? "conversa" : "conversas"}
+                <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                  <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                    <Avatar className="size-11 shrink-0">
+                      <AvatarFallback className="bg-secondary">
+                        {initials(m.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium truncate">{m.name}</span>
+                        {m.id === profile?.id && (
+                          <Badge variant="outline" className="text-xs">você</Badge>
+                        )}
+                        <Badge
+                          variant={m.role === "gestor" ? "default" : "secondary"}
+                          className="capitalize"
+                        >
+                          {m.role === "gestor" && <Shield className="size-3 mr-1" />}
+                          {m.role}
+                        </Badge>
+                      </div>
+                      <div className="text-xs text-muted-foreground truncate">
+                        {m.email} · {m.convCount}{" "}
+                        {m.convCount === 1 ? "conversa" : "conversas"}
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 sm:gap-2 justify-end shrink-0 flex-wrap">
                     {m.convCount > 0 && (
                       <ReassignDialog
                         from={m}
@@ -215,6 +217,7 @@ function TeamPage() {
                             size="icon"
                             className="text-destructive hover:text-destructive"
                             title="Remover membro"
+                            aria-label="Remover membro"
                           >
                             <Trash2 className="size-4" />
                           </Button>
@@ -373,7 +376,7 @@ function InviteDialog({
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Perfil</Label>
                 <Select
