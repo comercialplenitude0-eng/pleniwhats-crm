@@ -110,7 +110,7 @@ function Inner({
   );
 
   const onNodeClick: NodeMouseHandler = useCallback((_, n) => setSelectedId(n.id), []);
-  const onPaneClick = useCallback(() => setSelectedId(null), []);
+  // Não desselecionar ao clicar no canvas — mantém o nó editável até o usuário trocar de seleção
 
   const selectedNode = useMemo(
     () => nodes.find((n) => n.id === selectedId) ?? null,
@@ -185,7 +185,7 @@ function Inner({
   }
 
   return (
-    <div className="flex-1 min-w-0 flex flex-col bg-background dark">
+    <div className="flex-1 min-w-0 flex flex-col bg-background">
       {/* Toolbar */}
       <header className="px-4 sm:px-6 py-3 border-b bg-card flex items-center gap-3 flex-wrap">
         <Button variant="ghost" size="icon" onClick={onBack}>
@@ -247,7 +247,6 @@ function Inner({
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             onNodeClick={onNodeClick}
-            onPaneClick={onPaneClick}
             nodeTypes={nodeTypes}
             fitView
             proOptions={{ hideAttribution: true }}
@@ -260,9 +259,9 @@ function Inner({
           </ReactFlow>
         </div>
 
-        {/* Side config panel */}
-        {selectedNode && (
-          <aside className="w-full max-w-[300px] border-l bg-card overflow-y-auto p-4 hidden md:block">
+        {/* Side config panel — sempre visível em desktop */}
+        <aside className="hidden md:flex w-[300px] shrink-0 border-l bg-card overflow-y-auto p-4 flex-col">
+          {selectedNode ? (
             <NodeConfigPanel
               data={selectedNode.data as unknown as FlowNodeData}
               onChange={(next) => updateNodeData(selectedNode.id, next)}
@@ -274,8 +273,15 @@ function Inner({
               profiles={profiles}
               templates={templates}
             />
-          </aside>
-        )}
+          ) : (
+            <div className="flex-1 grid place-items-center text-center text-xs text-muted-foreground px-4">
+              <div>
+                <div className="text-3xl mb-2 opacity-60">👆</div>
+                Clique em um nó do canvas para editar suas configurações.
+              </div>
+            </div>
+          )}
+        </aside>
       </div>
 
       {/* Mobile config sheet */}
