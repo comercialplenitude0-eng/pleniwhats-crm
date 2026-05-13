@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
+import { useAuth, isManagerRole, type AppRole } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -27,7 +27,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 type Profile = { id: string; name: string; email: string };
-type RoleRow = { user_id: string; role: "vendedor" | "gestor" };
+type RoleRow = { user_id: string; role: AppRole };
 type RangeKey = "7d" | "14d" | "30d";
 
 const RANGE_DAYS: Record<RangeKey, number> = { "7d": 7, "14d": 14, "30d": 30 };
@@ -125,7 +125,7 @@ function DashboardPage() {
     return { recentConvs, avgResponseMin, conversionRate, closed, series, responseTimes };
   }, [conversations, messages, days]);
 
-  if (role !== "gestor") {
+  if (!isManagerRole(role)) {
     return (
       <div className="flex-1 grid place-items-center p-8">
         <Card className="max-w-md">
@@ -158,9 +158,11 @@ function DashboardPage() {
     const userConvs = conversations.filter((c) => c.assigned_to === p.id);
     const userMsgs = messages.filter((m) => m.sender_id === p.id && m.direction === "outbound");
     const closedCount = userConvs.filter((c) => c.label === "closed" || c.status === "encerrada").length;
+    const priority: AppRole[] = ["admin", "gestor", "cs", "comercial", "vendedor"];
+    const pickedRole: AppRole = priority.find((p) => userRoles.includes(p)) ?? "comercial";
     return {
       ...p,
-      role: userRoles.includes("gestor") ? "gestor" : "vendedor",
+      role: pickedRole,
       total: userConvs.length,
       open: userConvs.filter((c) => c.status !== "encerrada").length,
       unread: userConvs.reduce((s, c) => s + c.unread_count, 0),
@@ -195,8 +197,8 @@ function DashboardPage() {
     void load();
   }
 
-  async function toggleRole(userId: string, current: string) {
-    const newRole = current === "gestor" ? "vendedor" : "gestor";
+  async function toggleRole(userId: string, current: AppRole) {
+    const newRole: AppRole = isManagerRole(current) ? "comercial" : "gestor";
     const { error: delErr } = await supabase.from("user_roles").delete().eq("user_id", userId);
     if (delErr) return toast.error(delErr.message);
     const { error } = await supabase.from("user_roles").insert({ user_id: userId, role: newRole });
@@ -241,7 +243,7 @@ function DashboardPage() {
           </section>
 
           <AlertsPanel
-            isGestor={role === "gestor"}
+            isGestor={isManagerRole(role)}
             ctx={{
               avgResponseMin: metrics.avgResponseMin,
               conversionRate: metrics.conversionRate,
@@ -436,7 +438,7 @@ function DashboardPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={s.role === "gestor" ? "default" : "secondary"} className="capitalize">{s.role}</Badge>
+                        <Badge variant={isManagerRole(s.role) ? "default" : "secondary"} className="capitalize">{s.role}</Badge>
                       </TableCell>
                       <TableCell className="text-right tabular-nums">{s.total}</TableCell>
                       <TableCell className="text-right tabular-nums">{s.open}</TableCell>
@@ -456,7 +458,7 @@ function DashboardPage() {
                           disabled={s.id === profile?.id}
                           title={s.id === profile?.id ? "Não é possível alterar seu próprio perfil" : ""}
                         >
-                          {s.role === "gestor" ? "Tornar vendedor" : "Promover a gestor"}
+                          {isManagerRole(s.role) ? "Tornar comercial" : "Promover a gestor"}
                         </Button>
                       </TableCell>
                     </TableRow>

@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
+import { useAuth, isManagerRole } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -189,7 +189,7 @@ function ContactsPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                {role === "gestor" && (
+                {isManagerRole(role) && (
                   <Select value={assignedFilter} onValueChange={setAssignedFilter}>
                     <SelectTrigger className="h-8 w-[180px]"><SelectValue /></SelectTrigger>
                     <SelectContent>

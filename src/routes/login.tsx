@@ -79,7 +79,7 @@ function LoginPage() {
           <p className="text-sm text-muted-foreground mt-1">
             {mode === "login"
               ? "Acesse o inbox da sua equipe."
-              : "Cadastre-se como vendedor (gestor pode promover depois)."}
+              : "Cadastre-se como Comercial (Admin/Gestor pode promover depois)."}
           </p>
 
           <form onSubmit={submit} className="mt-8 space-y-4">

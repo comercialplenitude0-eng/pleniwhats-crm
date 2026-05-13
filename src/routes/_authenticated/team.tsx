@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
+import { useAuth, isManagerRole } from "@/lib/auth";
 import { inviteMember, removeMember, reassignAll } from "@/lib/team.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -54,7 +54,23 @@ export const Route = createFileRoute("/_authenticated/team")({
 });
 
 type Profile = { id: string; name: string; email: string };
-type Role = "vendedor" | "gestor";
+type Role = "admin" | "gestor" | "comercial" | "cs" | "vendedor";
+
+const ROLE_OPTIONS: Array<{ value: Exclude<Role, "vendedor">; label: string }> = [
+  { value: "admin", label: "Admin" },
+  { value: "gestor", label: "Gestor" },
+  { value: "comercial", label: "Comercial" },
+  { value: "cs", label: "CS" },
+];
+
+function roleLabelLocal(r: Role): string {
+  switch (r) {
+    case "admin": return "Admin";
+    case "gestor": return "Gestor";
+    case "cs": return "CS";
+    default: return "Comercial";
+  }
+}
 
 function randomPassword(len = 12) {
   const chars = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%";
@@ -89,9 +105,11 @@ function TeamPage() {
     setMembers(
       profiles.map((pr) => {
         const userRoles = roles.filter((x) => x.user_id === pr.id).map((x) => x.role);
+        const priority: Role[] = ["admin", "gestor", "cs", "comercial", "vendedor"];
+        const picked: Role = priority.find((p) => userRoles.includes(p)) ?? "comercial";
         return {
           ...pr,
-          role: userRoles.includes("gestor") ? "gestor" : "vendedor",
+          role: picked,
           convCount: convs.filter((cv) => cv.assigned_to === pr.id).length,
         };
       }),
@@ -103,7 +121,7 @@ function TeamPage() {
     void load();
   }, [load]);
 
-  if (role !== "gestor") {
+  if (!isManagerRole(role)) {
     return (
       <div className="flex-1 grid place-items-center p-8">
         <Card className="max-w-md">
@@ -119,7 +137,7 @@ function TeamPage() {
   }
 
   async function toggleRole(userId: string, current: Role) {
-    const newRole: Role = current === "gestor" ? "vendedor" : "gestor";
+    const newRole: Role = isManagerRole(current) ? "comercial" : "gestor";
     const { error: dErr } = await supabase
       .from("user_roles")
       .delete()
@@ -129,7 +147,7 @@ function TeamPage() {
       .from("user_roles")
       .insert({ user_id: userId, role: newRole });
     if (error) return toast.error(error.message);
-    toast.success(`Perfil atualizado para ${newRole}`);
+    toast.success(`Perfil atualizado para ${roleLabelLocal(newRole)}`);
     void load();
   }
 
@@ -173,11 +191,11 @@ function TeamPage() {
                           <Badge variant="outline" className="text-xs">você</Badge>
                         )}
                         <Badge
-                          variant={m.role === "gestor" ? "default" : "secondary"}
+                          variant={isManagerRole(m.role) ? "default" : "secondary"}
                           className="capitalize"
                         >
-                          {m.role === "gestor" && <Shield className="size-3 mr-1" />}
-                          {m.role}
+                          {isManagerRole(m.role) && <Shield className="size-3 mr-1" />}
+                          {roleLabelLocal(m.role)}
                         </Badge>
                       </div>
                       <div className="text-xs text-muted-foreground truncate">
@@ -207,7 +225,7 @@ function TeamPage() {
                       onClick={() => toggleRole(m.id, m.role)}
                       disabled={m.id === profile?.id}
                     >
-                      {m.role === "gestor" ? "Tornar vendedor" : "Promover"}
+                      {isManagerRole(m.role) ? "Rebaixar a Comercial" : "Promover a Gestor"}
                     </Button>
                     {m.id !== profile?.id && (
                       <AlertDialog>
@@ -267,14 +285,14 @@ function InviteDialog({
   onInvite: (p: {
     email: string;
     name: string;
-    role: Role;
+    role: Exclude<Role, "vendedor">;
     password: string;
   }) => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [roleVal, setRoleVal] = useState<Role>("vendedor");
+  const [roleVal, setRoleVal] = useState<Exclude<Role, "vendedor">>("comercial");
   const [password, setPassword] = useState(() => randomPassword());
   const [submitting, setSubmitting] = useState(false);
   const [createdCreds, setCreatedCreds] = useState<{
@@ -285,7 +303,7 @@ function InviteDialog({
   function reset() {
     setName("");
     setEmail("");
-    setRoleVal("vendedor");
+    setRoleVal("comercial");
     setPassword(randomPassword());
     setCreatedCreds(null);
   }
@@ -381,14 +399,15 @@ function InviteDialog({
                 <Label>Perfil</Label>
                 <Select
                   value={roleVal}
-                  onValueChange={(v) => setRoleVal(v as Role)}
+                  onValueChange={(v) => setRoleVal(v as Exclude<Role, "vendedor">)}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="vendedor">Vendedor</SelectItem>
-                    <SelectItem value="gestor">Gestor</SelectItem>
+                    {ROLE_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

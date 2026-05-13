@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
+import { useAuth, isManagerRole } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -52,7 +52,7 @@ function AuditPage() {
   const [actorFilter, setActorFilter] = useState<string>("all");
 
   useEffect(() => {
-    if (role && role !== "gestor") navigate({ to: "/inbox" });
+    if (role && !isManagerRole(role)) navigate({ to: "/inbox" });
   }, [role, navigate]);
 
   useEffect(() => {

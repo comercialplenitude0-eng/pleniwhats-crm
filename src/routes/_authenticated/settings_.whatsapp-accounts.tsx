@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { useAuth } from "@/lib/auth";
+import { useAuth, isManagerRole } from "@/lib/auth";
 import {
   listWhatsappAccounts,
   saveWhatsappAccount,
@@ -69,7 +69,7 @@ function WhatsappAccountsPage() {
   const [testingId, setTestingId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (role && role !== "gestor") navigate({ to: "/inbox" });
+    if (role && !isManagerRole(role)) navigate({ to: "/inbox" });
   }, [role, navigate]);
 
   async function load() {

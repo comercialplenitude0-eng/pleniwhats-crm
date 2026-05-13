@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
+import { useAuth, isManagerRole, type AppRole } from "@/lib/auth";
 import {
   listWhatsappAccounts,
   getAllUserAccess,
@@ -64,7 +64,7 @@ function SettingsPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (role && role !== "gestor") navigate({ to: "/inbox" });
+    if (role && !isManagerRole(role)) navigate({ to: "/inbox" });
   }, [role, navigate]);
 
   async function load() {
@@ -83,7 +83,7 @@ function SettingsPage() {
       });
     }
     const gestorIds = new Set(((r.data ?? []) as { user_id: string; role: string }[])
-      .filter((x) => x.role === "gestor").map((x) => x.user_id));
+      .filter((x) => isManagerRole(x.role as AppRole)).map((x) => x.user_id));
     setMembers(((p.data ?? []) as { id: string; name: string; email: string }[])
       .map((m) => ({ ...m, isGestor: gestorIds.has(m.id) })));
 

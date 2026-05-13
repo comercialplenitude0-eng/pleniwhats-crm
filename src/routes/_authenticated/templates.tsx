@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Plus, Trash2, Save, Loader2, Zap, Share2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
+import { useAuth, isManagerRole } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -170,7 +170,7 @@ function TemplatesPage() {
           <div className="grid gap-2">
             {items.map((t) => {
               const mine = t.owner_id === user?.id;
-              const canEdit = mine || role === "gestor";
+              const canEdit = mine || isManagerRole(role);
               return (
                 <Card
                   key={t.id}

@@ -21,7 +21,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/lib/auth";
+import { useAuth, isManagerRole } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import {
   LABEL_META,
@@ -86,7 +86,7 @@ export function ConversationList({
 
   // Load profiles for assignee filter (gestor only)
   useEffect(() => {
-    if (role !== "gestor") return;
+    if (!isManagerRole(role)) return;
     supabase
       .from("profiles")
       .select("id,name")
@@ -346,7 +346,7 @@ export function ConversationList({
                 </div>
               )}
 
-              {role === "gestor" && (
+              {isManagerRole(role) && (
                 <div>
                   <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
                     Responsável

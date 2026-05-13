@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
+import { useAuth, isManagerRole } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -113,7 +113,7 @@ function ProfilePage() {
               <div className="font-medium truncate">{profile?.email}</div>
               <div className="flex items-center gap-2 mt-1">
                 <Badge variant="secondary" className="gap-1">
-                  <Shield className="size-3" /> {role === "gestor" ? "Gestor" : "Vendedor"}
+                  <Shield className="size-3" /> {role === "admin" ? "Admin" : role === "gestor" ? "Gestor" : role === "cs" ? "CS" : "Comercial"}
                 </Badge>
                 <Badge variant="outline" className="gap-1.5">
                   <span className={`size-1.5 rounded-full ${STATUS_META[status].dot}`} />

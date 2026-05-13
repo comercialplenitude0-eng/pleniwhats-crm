@@ -6,14 +6,9 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 const GRAPH_VERSION = "v21.0";
 
 async function ensureGestor(supabase: any, userId: string) {
-  const { data, error } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId)
-    .eq("role", "gestor")
-    .maybeSingle();
+  const { data, error } = await supabase.rpc("is_manager_role", { _user_id: userId });
   if (error) throw new Error(error.message);
-  if (!data) throw new Error("Apenas gestores podem acessar essas configurações.");
+  if (!data) throw new Error("Apenas gerentes (Admin/Gestor) podem acessar essas configurações.");
 }
 
 export const getWhatsappSettings = createServerFn({ method: "GET" })

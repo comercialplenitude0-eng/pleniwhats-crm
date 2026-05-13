@@ -2,7 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { MessageCircle, BarChart3, Crown, Zap, Users, Contact, Settings, Workflow, Activity, Megaphone, UserCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/lib/auth";
+import { useAuth, isManagerRole } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,15 +11,16 @@ import { toast } from "sonner";
 export function AppRail() {
   const { role, user } = useAuth();
   const path = useRouterState({ select: (r) => r.location.pathname });
-  const [hasGestor, setHasGestor] = useState(true);
+  const isManager = isManagerRole(role);
+  const [hasManager, setHasManager] = useState(true);
   const [unreadInbox, setUnreadInbox] = useState(0);
   const seenRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
-    if (role === "gestor") return;
-    supabase.from("user_roles").select("role").eq("role", "gestor").limit(1)
-      .then(({ data }) => setHasGestor((data?.length ?? 0) > 0));
-  }, [role]);
+    if (isManager) return;
+    supabase.from("user_roles").select("role").in("role", ["admin", "gestor"]).limit(1)
+      .then(({ data }) => setHasManager((data?.length ?? 0) > 0));
+  }, [isManager]);
 
   // Reset badge when on inbox
   useEffect(() => {
@@ -45,7 +46,7 @@ export function AppRail() {
             .eq("id", msg.conversation_id)
             .maybeSingle();
           if (!conv) return;
-          if (role !== "gestor" && conv.assigned_to !== user.id) return;
+          if (!isManager && conv.assigned_to !== user.id) return;
 
           if (!window.location.pathname.startsWith("/inbox")) {
             setUnreadInbox((n) => n + 1);
@@ -63,18 +64,18 @@ export function AppRail() {
       )
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [user, role]);
+  }, [user, isManager]);
 
   const items = [
     { to: "/inbox", icon: MessageCircle, label: "Inbox", show: true, badge: unreadInbox },
     { to: "/contacts", icon: Contact, label: "Contatos", show: true },
     { to: "/templates", icon: Zap, label: "Respostas rápidas", show: true },
-    { to: "/dashboard", icon: BarChart3, label: "Dashboard", show: role === "gestor" },
-    { to: "/team", icon: Users, label: "Equipe", show: role === "gestor" },
-    { to: "/automations", icon: Workflow, label: "Automações", show: role === "gestor" },
-    { to: "/campaigns", icon: Megaphone, label: "Campanhas", show: role === "gestor" },
-    { to: "/audit", icon: Activity, label: "Auditoria", show: role === "gestor" },
-    { to: "/settings", icon: Settings, label: "Configurações", show: role === "gestor" },
+    { to: "/dashboard", icon: BarChart3, label: "Dashboard", show: isManager },
+    { to: "/team", icon: Users, label: "Equipe", show: isManager },
+    { to: "/automations", icon: Workflow, label: "Automações", show: isManager },
+    { to: "/campaigns", icon: Megaphone, label: "Campanhas", show: isManager },
+    { to: "/audit", icon: Activity, label: "Auditoria", show: isManager },
+    { to: "/settings", icon: Settings, label: "Configurações", show: isManager },
   ].filter((i) => i.show);
 
   async function claimGestor() {
@@ -118,12 +119,12 @@ export function AppRail() {
         );
       })}
       <div className="mt-auto flex flex-col items-center gap-1">
-        {role !== "gestor" && !hasGestor && (
+        {!isManager && !hasManager && (
           <Button
             size="icon"
             variant="ghost"
             onClick={claimGestor}
-            title="Tornar-me gestor (nenhum gestor existe)"
+            title="Tornar-me gestor (nenhum gerente existe)"
             className="text-amber-500 hover:text-amber-600"
           >
             <Crown className="size-5" />
