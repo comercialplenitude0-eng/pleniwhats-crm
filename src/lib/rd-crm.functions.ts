@@ -206,13 +206,27 @@ export type RdCustomFieldDef = {
 function parseCustomFieldDef(raw: any): RdCustomFieldDef | null {
   const id = String(raw?._id ?? raw?.id ?? "");
   if (!id) return null;
-  const opts = (raw?.custom_field_options ?? raw?.options ?? []) as Array<any>;
+  const opts = (raw?.custom_field_options ??
+    raw?.selectable_options ??
+    raw?.options ??
+    raw?.values ??
+    []) as Array<any>;
+  const rawType = String(
+    raw?.type ?? raw?.field_type ?? raw?.presentation_type ?? raw?.kind ?? "text",
+  ).toLowerCase();
+  // Se vier opções e o tipo não indicar lista, força "list" para virar dropdown
+  const type = opts.length > 0 && !rawType.includes("multi") && !rawType.includes("check")
+    ? (rawType === "text" || rawType === "string" ? "list" : rawType)
+    : rawType;
   return {
     id,
     label: String(raw?.label ?? raw?.name ?? id),
-    type: String(raw?.type ?? raw?.field_type ?? "text"),
+    type,
     options: opts
-      .map((o) => ({ id: String(o?._id ?? o?.id ?? o?.value ?? ""), label: String(o?.label ?? o?.name ?? o?.value ?? "") }))
+      .map((o) => ({
+        id: String(o?._id ?? o?.id ?? o?.value ?? ""),
+        label: String(o?.label ?? o?.name ?? o?.value ?? ""),
+      }))
       .filter((o) => o.id || o.label),
   };
 }
