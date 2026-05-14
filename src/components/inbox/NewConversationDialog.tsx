@@ -111,6 +111,10 @@ export function NewConversationDialog({
       toast.error("Informe nome e telefone");
       return;
     }
+    if (!accountId) {
+      toast.error("Selecione a conta WhatsApp para esta conversa");
+      return;
+    }
     setSaving(true);
     try {
       const { data, error } = await supabase
@@ -119,6 +123,7 @@ export function NewConversationDialog({
           contact_name: n,
           contact_phone: p,
           assigned_to: user.id,
+          account_id: accountId,
           rd_deal_id: dealId.trim() || null,
           course: course.trim() || null,
           last_message: null,
