@@ -22,7 +22,7 @@ import { Route as AuthenticatedContactsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedCampaignsRouteImport } from './routes/_authenticated/campaigns'
 import { Route as AuthenticatedAutomationsRouteImport } from './routes/_authenticated/automations'
 import { Route as AuthenticatedAuditRouteImport } from './routes/_authenticated/audit'
-import { Route as AuthenticatedTeamUserIdRouteImport } from './routes/_authenticated/team.$userId'
+import { Route as AuthenticatedTeamUserIdRouteImport } from './routes/_authenticated/team_.$userId'
 import { Route as AuthenticatedSettingsWhatsappAccountsRouteImport } from './routes/_authenticated/settings_.whatsapp-accounts'
 import { Route as AuthenticatedSettingsWhatsappRouteImport } from './routes/_authenticated/settings_.whatsapp'
 import { Route as AuthenticatedSettingsWaTemplatesRouteImport } from './routes/_authenticated/settings_.wa-templates'
@@ -99,9 +99,9 @@ const AuthenticatedAuditRoute = AuthenticatedAuditRouteImport.update({
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedTeamUserIdRoute = AuthenticatedTeamUserIdRouteImport.update({
-  id: '/$userId',
-  path: '/$userId',
-  getParentRoute: () => AuthenticatedTeamRoute,
+  id: '/team_/$userId',
+  path: '/team/$userId',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedSettingsWhatsappAccountsRoute =
   AuthenticatedSettingsWhatsappAccountsRouteImport.update({
@@ -168,7 +168,7 @@ export interface FileRoutesByFullPath {
   '/inbox': typeof AuthenticatedInboxRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/settings': typeof AuthenticatedSettingsRoute
-  '/team': typeof AuthenticatedTeamRouteWithChildren
+  '/team': typeof AuthenticatedTeamRoute
   '/templates': typeof AuthenticatedTemplatesRoute
   '/contacts/$phone': typeof AuthenticatedContactsPhoneRoute
   '/settings/media-retention': typeof AuthenticatedSettingsMediaRetentionRoute
@@ -192,7 +192,7 @@ export interface FileRoutesByTo {
   '/inbox': typeof AuthenticatedInboxRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/settings': typeof AuthenticatedSettingsRoute
-  '/team': typeof AuthenticatedTeamRouteWithChildren
+  '/team': typeof AuthenticatedTeamRoute
   '/templates': typeof AuthenticatedTemplatesRoute
   '/contacts/$phone': typeof AuthenticatedContactsPhoneRoute
   '/settings/media-retention': typeof AuthenticatedSettingsMediaRetentionRoute
@@ -218,7 +218,7 @@ export interface FileRoutesById {
   '/_authenticated/inbox': typeof AuthenticatedInboxRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
-  '/_authenticated/team': typeof AuthenticatedTeamRouteWithChildren
+  '/_authenticated/team': typeof AuthenticatedTeamRoute
   '/_authenticated/templates': typeof AuthenticatedTemplatesRoute
   '/_authenticated/contacts/$phone': typeof AuthenticatedContactsPhoneRoute
   '/_authenticated/settings_/media-retention': typeof AuthenticatedSettingsMediaRetentionRoute
@@ -226,7 +226,7 @@ export interface FileRoutesById {
   '/_authenticated/settings_/wa-templates': typeof AuthenticatedSettingsWaTemplatesRoute
   '/_authenticated/settings_/whatsapp': typeof AuthenticatedSettingsWhatsappRoute
   '/_authenticated/settings_/whatsapp-accounts': typeof AuthenticatedSettingsWhatsappAccountsRoute
-  '/_authenticated/team/$userId': typeof AuthenticatedTeamUserIdRoute
+  '/_authenticated/team_/$userId': typeof AuthenticatedTeamUserIdRoute
   '/api/public/hooks/cleanup-media': typeof ApiPublicHooksCleanupMediaRoute
   '/api/public/hooks/crm-auto-notes': typeof ApiPublicHooksCrmAutoNotesRoute
   '/api/public/hooks/whatsapp': typeof ApiPublicHooksWhatsappRoute
@@ -301,7 +301,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings_/wa-templates'
     | '/_authenticated/settings_/whatsapp'
     | '/_authenticated/settings_/whatsapp-accounts'
-    | '/_authenticated/team/$userId'
+    | '/_authenticated/team_/$userId'
     | '/api/public/hooks/cleanup-media'
     | '/api/public/hooks/crm-auto-notes'
     | '/api/public/hooks/whatsapp'
@@ -409,12 +409,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAuditRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/team/$userId': {
-      id: '/_authenticated/team/$userId'
-      path: '/$userId'
+    '/_authenticated/team_/$userId': {
+      id: '/_authenticated/team_/$userId'
+      path: '/team/$userId'
       fullPath: '/team/$userId'
       preLoaderRoute: typeof AuthenticatedTeamUserIdRouteImport
-      parentRoute: typeof AuthenticatedTeamRoute
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/settings_/whatsapp-accounts': {
       id: '/_authenticated/settings_/whatsapp-accounts'
@@ -495,17 +495,6 @@ const AuthenticatedContactsRouteWithChildren =
     AuthenticatedContactsRouteChildren,
   )
 
-interface AuthenticatedTeamRouteChildren {
-  AuthenticatedTeamUserIdRoute: typeof AuthenticatedTeamUserIdRoute
-}
-
-const AuthenticatedTeamRouteChildren: AuthenticatedTeamRouteChildren = {
-  AuthenticatedTeamUserIdRoute: AuthenticatedTeamUserIdRoute,
-}
-
-const AuthenticatedTeamRouteWithChildren =
-  AuthenticatedTeamRoute._addFileChildren(AuthenticatedTeamRouteChildren)
-
 interface AuthenticatedRouteChildren {
   AuthenticatedAuditRoute: typeof AuthenticatedAuditRoute
   AuthenticatedAutomationsRoute: typeof AuthenticatedAutomationsRoute
@@ -515,13 +504,14 @@ interface AuthenticatedRouteChildren {
   AuthenticatedInboxRoute: typeof AuthenticatedInboxRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
-  AuthenticatedTeamRoute: typeof AuthenticatedTeamRouteWithChildren
+  AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
   AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRoute
   AuthenticatedSettingsMediaRetentionRoute: typeof AuthenticatedSettingsMediaRetentionRoute
   AuthenticatedSettingsTagsRoute: typeof AuthenticatedSettingsTagsRoute
   AuthenticatedSettingsWaTemplatesRoute: typeof AuthenticatedSettingsWaTemplatesRoute
   AuthenticatedSettingsWhatsappRoute: typeof AuthenticatedSettingsWhatsappRoute
   AuthenticatedSettingsWhatsappAccountsRoute: typeof AuthenticatedSettingsWhatsappAccountsRoute
+  AuthenticatedTeamUserIdRoute: typeof AuthenticatedTeamUserIdRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -533,7 +523,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedInboxRoute: AuthenticatedInboxRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
-  AuthenticatedTeamRoute: AuthenticatedTeamRouteWithChildren,
+  AuthenticatedTeamRoute: AuthenticatedTeamRoute,
   AuthenticatedTemplatesRoute: AuthenticatedTemplatesRoute,
   AuthenticatedSettingsMediaRetentionRoute:
     AuthenticatedSettingsMediaRetentionRoute,
@@ -542,6 +532,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSettingsWhatsappRoute: AuthenticatedSettingsWhatsappRoute,
   AuthenticatedSettingsWhatsappAccountsRoute:
     AuthenticatedSettingsWhatsappAccountsRoute,
+  AuthenticatedTeamUserIdRoute: AuthenticatedTeamUserIdRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
