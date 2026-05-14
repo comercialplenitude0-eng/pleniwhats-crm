@@ -494,7 +494,7 @@ export const createRdDeal = createServerFn({ method: "POST" })
       stageId: z.string().min(1),
       contactName: z.string().min(1).max(255),
       contactPhone: z.string().min(4).max(40),
-      contactEmail: z.string().email().optional().nullable(),
+      contactEmail: z.string().trim().email().max(255),
       rating: z.number().int().min(0).max(5).nullable().optional(),
       predictionDate: z.string().nullable().optional(),
       amountTotal: z.number().nullable().optional(),
