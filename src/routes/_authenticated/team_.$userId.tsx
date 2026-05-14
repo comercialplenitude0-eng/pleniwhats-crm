@@ -25,6 +25,13 @@ import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
 } from "recharts";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import {
+  listWhatsappAccounts,
+  getAllUserAccess,
+  setUserAccountAccess,
+} from "@/lib/whatsapp-accounts.functions";
+import { Phone, Save } from "lucide-react";
 
 type RangeKey = "7d" | "14d" | "30d";
 const RANGE_DAYS: Record<RangeKey, number> = { "7d": 7, "14d": 14, "30d": 30 };
@@ -344,6 +351,9 @@ function SellerDetailsPage() {
             <Kpi icon={CheckCircle2} label="Fechadas" value={closedAll} />
           </section>
 
+          {/* WhatsApp account access */}
+          <WhatsappAccessCard userId={userId} isManager={isManager} />
+
           {/* Conversations list */}
           <Card>
             <CardHeader className="pb-3 space-y-3">
@@ -534,6 +544,120 @@ function Kpi({
           {value}{suffix ? <span className="text-sm font-normal text-muted-foreground ml-1">{suffix}</span> : null}
         </div>
         {sub && <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{sub}</div>}
+      </CardContent>
+    </Card>
+  );
+}
+
+function WhatsappAccessCard({ userId, isManager }: { userId: string; isManager: boolean }) {
+  const fetchAccounts = useServerFn(listWhatsappAccounts);
+  const fetchAccess = useServerFn(getAllUserAccess);
+  const saveAccess = useServerFn(setUserAccountAccess);
+
+  const [accounts, setAccounts] = useState<Awaited<ReturnType<typeof listWhatsappAccounts>>>([]);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [initial, setInitial] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [accs, access] = await Promise.all([fetchAccounts(), fetchAccess()]);
+        setAccounts(accs);
+        const mine = new Set(
+          (access ?? []).filter((a) => a.user_id === userId).map((a) => a.account_id),
+        );
+        setSelected(mine);
+        setInitial(mine);
+      } catch (e) {
+        toast.error((e as Error).message);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [userId, fetchAccounts, fetchAccess]);
+
+  const dirty = useMemo(() => {
+    if (selected.size !== initial.size) return true;
+    for (const id of selected) if (!initial.has(id)) return true;
+    return false;
+  }, [selected, initial]);
+
+  function toggle(id: string, on: boolean) {
+    setSelected((prev) => {
+      const n = new Set(prev);
+      if (on) n.add(id); else n.delete(id);
+      return n;
+    });
+  }
+
+  async function save() {
+    setSaving(true);
+    try {
+      await saveAccess({ data: { user_id: userId, account_ids: Array.from(selected) } });
+      setInitial(new Set(selected));
+      toast.success("Acessos atualizados");
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm flex items-center gap-2">
+          <Phone className="size-4 text-primary" />
+          Números de WhatsApp vinculados
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <div className="py-6 grid place-items-center">
+            <Loader2 className="size-4 animate-spin text-muted-foreground" />
+          </div>
+        ) : isManager ? (
+          <p className="text-sm text-muted-foreground">
+            Gestores acessam todas as contas automaticamente — não é necessário vincular.
+          </p>
+        ) : accounts.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            Nenhuma conta WhatsApp cadastrada ainda.{" "}
+            <Link to="/settings/whatsapp-accounts" className="text-primary underline">
+              Cadastrar agora
+            </Link>
+            .
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {accounts.map((a) => (
+              <label
+                key={a.id}
+                className="flex items-center gap-3 p-2 rounded-md border hover:bg-accent/50 cursor-pointer"
+              >
+                <Checkbox
+                  checked={selected.has(a.id)}
+                  onCheckedChange={(v) => toggle(a.id, !!v)}
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium truncate">{a.display_name}</div>
+                  <div className="text-xs text-muted-foreground truncate">
+                    {a.phone_number ?? "—"} · ID: <span className="font-mono">{a.phone_number_id}</span>
+                  </div>
+                </div>
+                {!a.enabled && <Badge variant="secondary">Desativada</Badge>}
+              </label>
+            ))}
+            <div className="flex justify-end pt-2">
+              <Button size="sm" onClick={save} disabled={!dirty || saving}>
+                {saving ? <Loader2 className="size-4 mr-2 animate-spin" /> : <Save className="size-4 mr-2" />}
+                Salvar acessos
+              </Button>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
