@@ -33,7 +33,7 @@ const searchSchema = z.object({
   range: z.enum(["7d", "14d", "30d"]).catch("14d"),
 });
 
-export const Route = createFileRoute("/_authenticated/team/$userId")({
+export const Route = createFileRoute("/_authenticated/team_/$userId")({
   validateSearch: searchSchema,
   component: SellerDetailsPage,
 });
