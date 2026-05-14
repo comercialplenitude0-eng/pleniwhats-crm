@@ -1,0 +1,1 @@
+ALTER TYPE public.msg_type ADD VALUE IF NOT EXISTS 'video';

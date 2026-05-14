@@ -797,7 +797,7 @@ export type Database = {
       conv_status: "aguardando" | "em_atendimento" | "encerrada"
       msg_direction: "inbound" | "outbound"
       msg_status: "sent" | "delivered" | "read" | "failed"
-      msg_type: "text" | "audio" | "image" | "document" | "template"
+      msg_type: "text" | "audio" | "image" | "document" | "template" | "video"
       user_status: "online" | "busy" | "away" | "offline"
     }
     CompositeTypes: {
@@ -940,7 +940,7 @@ export const Constants = {
       conv_status: ["aguardando", "em_atendimento", "encerrada"],
       msg_direction: ["inbound", "outbound"],
       msg_status: ["sent", "delivered", "read", "failed"],
-      msg_type: ["text", "audio", "image", "document", "template"],
+      msg_type: ["text", "audio", "image", "document", "template", "video"],
       user_status: ["online", "busy", "away", "offline"],
     },
   },
