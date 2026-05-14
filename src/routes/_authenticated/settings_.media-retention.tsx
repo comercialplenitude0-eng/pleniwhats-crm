@@ -28,8 +28,8 @@ const MEDIA_OPTIONS: { value: "audio" | "video" | "image" | "document"; label: s
 ];
 
 function MediaRetentionPage() {
-  const { roles } = useAuth();
-  const isManager = isManagerRole(roles);
+  const { role } = useAuth();
+  const isManager = isManagerRole(role);
   const fetchSettings = useServerFn(getMediaRetentionSettings);
   const saveSettings = useServerFn(updateMediaRetentionSettings);
   const runNow = useServerFn(runMediaCleanupNow);
