@@ -119,6 +119,13 @@ type RdDeal = {
   _id?: string;
   id?: string;
   name?: string;
+  rating?: number | null;
+  prediction_date?: string | null;
+  amount_total?: number | string | null;
+  amount_unique?: number | string | null;
+  amount_montly?: number | string | null;
+  user?: { _id?: string; id?: string; name?: string } | null;
+  user_id?: string;
   contacts?: RdContact[];
   deal_stage?: { _id?: string; id?: string; name?: string; deal_pipeline_id?: string; deal_pipeline?: { _id?: string; id?: string; name?: string } };
   deal_custom_fields?: Array<{
@@ -360,8 +367,22 @@ export type RdDealMirror = {
   stageName: string;
   pipelineId: string;
   pipelineName: string;
+  rating: number | null;
+  predictionDate: string | null;
+  amountTotal: number | null;
+  ownerId: string | null;
+  ownerName: string | null;
+  contactName: string | null;
+  contactPhone: string | null;
+  contactEmail: string | null;
   customFields: Record<string, RdFieldValue>; // custom_field_id -> value
 };
+
+function toNumberOrNull(v: unknown): number | null {
+  if (v === null || v === undefined || v === "") return null;
+  const n = typeof v === "number" ? v : Number(String(v).replace(",", "."));
+  return Number.isFinite(n) ? n : null;
+}
 
 /** Busca um deal completo (com custom fields) para espelhar na UI. */
 export const getRdDeal = createServerFn({ method: "POST" })
@@ -387,6 +408,8 @@ export const getRdDeal = createServerFn({ method: "POST" })
       if (cfId) customFields[cfId] = toFieldValue(f.value);
     }
     const stage = json.deal_stage;
+    const c = json.contacts?.[0];
+    const phoneRaw = c?.phones?.find((p) => p.phone)?.phone ?? c?.phones?.[0]?.phone ?? null;
     const mirror: RdDealMirror = {
       id: String(json._id ?? json.id ?? data.dealId),
       name: json.name ?? "",
@@ -394,6 +417,14 @@ export const getRdDeal = createServerFn({ method: "POST" })
       stageName: stage?.name ?? "",
       pipelineId: String(stage?.deal_pipeline?._id ?? stage?.deal_pipeline?.id ?? stage?.deal_pipeline_id ?? ""),
       pipelineName: stage?.deal_pipeline?.name ?? "",
+      rating: typeof json.rating === "number" ? json.rating : toNumberOrNull(json.rating),
+      predictionDate: json.prediction_date ? String(json.prediction_date).slice(0, 10) : null,
+      amountTotal: toNumberOrNull(json.amount_total),
+      ownerId: json.user?._id ?? json.user?.id ?? json.user_id ?? null,
+      ownerName: json.user?.name ?? null,
+      contactName: c?.name ?? null,
+      contactPhone: normalizePhone(phoneRaw),
+      contactEmail: c?.emails?.find((e) => e.email)?.email ?? null,
       customFields,
     };
     return { deal: mirror };
@@ -416,13 +447,17 @@ export const getRdDealContact = createServerFn({ method: "POST" })
     };
   });
 
-/** Atualiza custom fields e/ou etapa de um deal no RD CRM. */
+/** Atualiza campos padrão, custom fields e/ou etapa de um deal no RD CRM. */
 export const updateRdDeal = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
     z.object({
       dealId: z.string().min(1),
       stageId: z.string().optional(),
+      name: z.string().optional(),
+      rating: z.number().int().min(0).max(5).nullable().optional(),
+      predictionDate: z.string().nullable().optional(),
+      amountTotal: z.number().nullable().optional(),
       customFields: z.record(
         z.string(),
         z.union([z.string(), z.number(), z.boolean(), z.null(), z.array(z.string())]),
@@ -432,6 +467,10 @@ export const updateRdDeal = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const dealBody: Record<string, unknown> = {};
     if (data.stageId) dealBody.deal_stage_id = data.stageId;
+    if (data.name !== undefined) dealBody.name = data.name;
+    if (data.rating !== undefined) dealBody.rating = data.rating;
+    if (data.predictionDate !== undefined) dealBody.prediction_date = data.predictionDate;
+    if (data.amountTotal !== undefined) dealBody.amount_total = data.amountTotal;
     if (data.customFields) {
       dealBody.deal_custom_fields = Object.entries(data.customFields).map(([custom_field_id, value]) => ({
         custom_field_id,
@@ -444,4 +483,53 @@ export const updateRdDeal = createServerFn({ method: "POST" })
       body: JSON.stringify({ deal: dealBody }),
     });
     return { ok: true };
+  });
+
+/** Cria um novo deal no RD CRM com contato inline. */
+export const createRdDeal = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      name: z.string().min(1).max(255),
+      stageId: z.string().min(1),
+      contactName: z.string().min(1).max(255),
+      contactPhone: z.string().min(4).max(40),
+      contactEmail: z.string().email().optional().nullable(),
+      rating: z.number().int().min(0).max(5).nullable().optional(),
+      predictionDate: z.string().nullable().optional(),
+      amountTotal: z.number().nullable().optional(),
+      customFields: z.record(
+        z.string(),
+        z.union([z.string(), z.number(), z.boolean(), z.null(), z.array(z.string())]),
+      ).optional(),
+    }).parse(d),
+  )
+  .handler(async ({ data }) => {
+    const deal: Record<string, unknown> = {
+      name: data.name,
+      deal_stage_id: data.stageId,
+    };
+    if (data.rating != null) deal.rating = data.rating;
+    if (data.predictionDate) deal.prediction_date = data.predictionDate;
+    if (data.amountTotal != null) deal.amount_total = data.amountTotal;
+    if (data.customFields && Object.keys(data.customFields).length > 0) {
+      deal.deal_custom_fields = Object.entries(data.customFields).map(([custom_field_id, value]) => ({
+        custom_field_id,
+        value,
+      }));
+    }
+    const contact: Record<string, unknown> = {
+      name: data.contactName,
+      phones: [{ phone: data.contactPhone, type: "cellphone" }],
+    };
+    if (data.contactEmail) contact.emails = [{ email: data.contactEmail }];
+
+    const json = (await rdCrm(`/deals`, {
+      method: "POST",
+      body: JSON.stringify({ deal, contacts: [contact] }),
+    })) as RdDeal | { deal?: RdDeal };
+    const created = (json as { deal?: RdDeal })?.deal ?? (json as RdDeal);
+    const dealId = String(created?._id ?? created?.id ?? "");
+    if (!dealId) throw new Error("RD CRM não retornou o ID do card criado");
+    return { dealId };
   });
