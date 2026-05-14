@@ -61,31 +61,35 @@ export const ACTION_LABEL: Record<DbAction, string> = {
 
 export const NODE_META: Record<
   FlowNodeKind,
-  { name: string; emoji: string; accent: string; ring: string }
+  { name: string; emoji: string; accent: string; ring: string; dot: string }
 > = {
   trigger: {
     name: "Gatilho",
     emoji: "⚡",
-    accent: "bg-amber-500/15 border-amber-500/60 text-amber-200",
-    ring: "shadow-[0_0_0_1px_rgba(245,158,11,0.5),0_0_24px_-4px_rgba(245,158,11,0.55)]",
+    accent: "bg-card border-border text-card-foreground",
+    ring: "shadow-[0_0_0_1px_var(--primary),0_0_24px_-4px_var(--primary)]",
+    dot: "bg-amber-400",
   },
   wait: {
     name: "Espera",
     emoji: "⏳",
-    accent: "bg-sky-500/15 border-sky-500/60 text-sky-200",
-    ring: "shadow-[0_0_0_1px_rgba(14,165,233,0.5),0_0_24px_-4px_rgba(14,165,233,0.55)]",
+    accent: "bg-card border-border text-card-foreground",
+    ring: "shadow-[0_0_0_1px_var(--primary),0_0_24px_-4px_var(--primary)]",
+    dot: "bg-sky-400",
   },
   condition: {
     name: "Condição",
     emoji: "🔀",
-    accent: "bg-fuchsia-500/15 border-fuchsia-500/60 text-fuchsia-200",
-    ring: "shadow-[0_0_0_1px_rgba(217,70,239,0.5),0_0_24px_-4px_rgba(217,70,239,0.55)]",
+    accent: "bg-card border-border text-card-foreground",
+    ring: "shadow-[0_0_0_1px_var(--primary),0_0_24px_-4px_var(--primary)]",
+    dot: "bg-fuchsia-400",
   },
   action: {
     name: "Ação",
     emoji: "⚙️",
-    accent: "bg-emerald-500/15 border-emerald-500/60 text-emerald-200",
-    ring: "shadow-[0_0_0_1px_rgba(16,185,129,0.5),0_0_24px_-4px_rgba(16,185,129,0.55)]",
+    accent: "bg-card border-border text-card-foreground",
+    ring: "shadow-[0_0_0_1px_var(--primary),0_0_24px_-4px_var(--primary)]",
+    dot: "bg-emerald-400",
   },
 };
 

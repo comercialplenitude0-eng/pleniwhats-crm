@@ -49,9 +49,9 @@ export const FlowNode = memo(({ data, selected }: NodeProps) => {
   return (
     <div
       className={cn(
-        "rounded-xl border bg-card/80 backdrop-blur-sm min-w-[220px] transition-all",
+        "rounded-xl border bg-card backdrop-blur-sm min-w-[220px] transition-all shadow-md",
         meta.accent,
-        selected ? meta.ring : "shadow-md",
+        selected && meta.ring,
       )}
     >
       {!isTrigger && (
@@ -62,11 +62,12 @@ export const FlowNode = memo(({ data, selected }: NodeProps) => {
           className="!w-5 !h-5 !bg-primary !border-2 !border-background hover:!scale-125 transition-transform"
         />
       )}
-      <div className="px-3 py-2 border-b border-current/20 flex items-center gap-2">
+      <div className="px-3 py-2 border-b border-border flex items-center gap-2">
+        <span className={cn("size-2 rounded-full", meta.dot)} />
         <span className="text-base leading-none">{meta.emoji}</span>
-        <span className="text-xs font-semibold uppercase tracking-wider">{meta.name}</span>
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{meta.name}</span>
       </div>
-      <div className="px-3 py-2.5 text-sm text-foreground/90">{summarize(d)}</div>
+      <div className="px-3 py-2.5 text-sm text-foreground">{summarize(d)}</div>
 
       {isCondition ? (
         <div className="px-3 pb-2 flex items-center justify-between gap-2 text-[10px] font-medium">

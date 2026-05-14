@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -107,6 +107,17 @@ function Inner({
     () => ({ stroke: "var(--primary)", strokeWidth: 2.5 }),
     [],
   );
+  const [isLight, setIsLight] = useState(
+    typeof document !== "undefined" && document.documentElement.classList.contains("light"),
+  );
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const obs = new MutationObserver(() =>
+      setIsLight(document.documentElement.classList.contains("light")),
+    );
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => obs.disconnect();
+  }, []);
 
   const onConnect = useCallback(
     (c: Connection) =>
@@ -223,8 +234,9 @@ function Inner({
             <button
               key={k}
               onClick={() => addNode(k)}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border ${NODE_META[k].accent} hover:brightness-125 transition`}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border border-border bg-card text-card-foreground hover:bg-accent hover:text-accent-foreground transition"
             >
+              <span className={`size-2 rounded-full ${NODE_META[k].dot}`} />
               <span>{NODE_META[k].emoji}</span> {NODE_META[k].name}
             </button>
           ))}
@@ -246,9 +258,11 @@ function Inner({
           <button
             key={k}
             onClick={() => addNode(k)}
-            className={`shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border ${NODE_META[k].accent}`}
+            className="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border border-border bg-card text-card-foreground"
           >
-            <Plus className="size-3" /> {NODE_META[k].emoji} {NODE_META[k].name}
+            <Plus className="size-3" />
+            <span className={`size-2 rounded-full ${NODE_META[k].dot}`} />
+            {NODE_META[k].emoji} {NODE_META[k].name}
           </button>
         ))}
       </div>
@@ -265,12 +279,13 @@ function Inner({
             nodeTypes={nodeTypes}
             fitView
             proOptions={{ hideAttribution: true }}
-            colorMode="dark"
+            colorMode={isLight ? "light" : "dark"}
+            style={{ background: "var(--background)" }}
             connectionRadius={28}
             connectionLineStyle={automationEdgeStyle}
             defaultEdgeOptions={{ animated: true, type: "smoothstep", style: automationEdgeStyle }}
           >
-            <Background gap={20} size={1} />
+            <Background gap={20} size={1} color="var(--border)" />
             <Controls position="bottom-left" />
             <MiniMap pannable zoomable className="!bg-card !border" />
           </ReactFlow>
