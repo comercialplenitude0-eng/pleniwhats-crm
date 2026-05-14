@@ -26,9 +26,11 @@ import { Route as AuthenticatedTeamUserIdRouteImport } from './routes/_authentic
 import { Route as AuthenticatedSettingsWhatsappAccountsRouteImport } from './routes/_authenticated/settings_.whatsapp-accounts'
 import { Route as AuthenticatedSettingsWhatsappRouteImport } from './routes/_authenticated/settings_.whatsapp'
 import { Route as AuthenticatedSettingsTagsRouteImport } from './routes/_authenticated/settings_.tags'
+import { Route as AuthenticatedSettingsMediaRetentionRouteImport } from './routes/_authenticated/settings_.media-retention'
 import { Route as AuthenticatedContactsPhoneRouteImport } from './routes/_authenticated/contacts.$phone'
 import { Route as ApiPublicHooksWhatsappRouteImport } from './routes/api/public/hooks/whatsapp'
 import { Route as ApiPublicHooksCrmAutoNotesRouteImport } from './routes/api/public/hooks/crm-auto-notes'
+import { Route as ApiPublicHooksCleanupMediaRouteImport } from './routes/api/public/hooks/cleanup-media'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -118,6 +120,12 @@ const AuthenticatedSettingsTagsRoute =
     path: '/settings/tags',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedSettingsMediaRetentionRoute =
+  AuthenticatedSettingsMediaRetentionRouteImport.update({
+    id: '/settings_/media-retention',
+    path: '/settings/media-retention',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedContactsPhoneRoute =
   AuthenticatedContactsPhoneRouteImport.update({
     id: '/$phone',
@@ -135,6 +143,12 @@ const ApiPublicHooksCrmAutoNotesRoute =
     path: '/api/public/hooks/crm-auto-notes',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksCleanupMediaRoute =
+  ApiPublicHooksCleanupMediaRouteImport.update({
+    id: '/api/public/hooks/cleanup-media',
+    path: '/api/public/hooks/cleanup-media',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -150,10 +164,12 @@ export interface FileRoutesByFullPath {
   '/team': typeof AuthenticatedTeamRouteWithChildren
   '/templates': typeof AuthenticatedTemplatesRoute
   '/contacts/$phone': typeof AuthenticatedContactsPhoneRoute
+  '/settings/media-retention': typeof AuthenticatedSettingsMediaRetentionRoute
   '/settings/tags': typeof AuthenticatedSettingsTagsRoute
   '/settings/whatsapp': typeof AuthenticatedSettingsWhatsappRoute
   '/settings/whatsapp-accounts': typeof AuthenticatedSettingsWhatsappAccountsRoute
   '/team/$userId': typeof AuthenticatedTeamUserIdRoute
+  '/api/public/hooks/cleanup-media': typeof ApiPublicHooksCleanupMediaRoute
   '/api/public/hooks/crm-auto-notes': typeof ApiPublicHooksCrmAutoNotesRoute
   '/api/public/hooks/whatsapp': typeof ApiPublicHooksWhatsappRoute
 }
@@ -171,10 +187,12 @@ export interface FileRoutesByTo {
   '/team': typeof AuthenticatedTeamRouteWithChildren
   '/templates': typeof AuthenticatedTemplatesRoute
   '/contacts/$phone': typeof AuthenticatedContactsPhoneRoute
+  '/settings/media-retention': typeof AuthenticatedSettingsMediaRetentionRoute
   '/settings/tags': typeof AuthenticatedSettingsTagsRoute
   '/settings/whatsapp': typeof AuthenticatedSettingsWhatsappRoute
   '/settings/whatsapp-accounts': typeof AuthenticatedSettingsWhatsappAccountsRoute
   '/team/$userId': typeof AuthenticatedTeamUserIdRoute
+  '/api/public/hooks/cleanup-media': typeof ApiPublicHooksCleanupMediaRoute
   '/api/public/hooks/crm-auto-notes': typeof ApiPublicHooksCrmAutoNotesRoute
   '/api/public/hooks/whatsapp': typeof ApiPublicHooksWhatsappRoute
 }
@@ -194,10 +212,12 @@ export interface FileRoutesById {
   '/_authenticated/team': typeof AuthenticatedTeamRouteWithChildren
   '/_authenticated/templates': typeof AuthenticatedTemplatesRoute
   '/_authenticated/contacts/$phone': typeof AuthenticatedContactsPhoneRoute
+  '/_authenticated/settings_/media-retention': typeof AuthenticatedSettingsMediaRetentionRoute
   '/_authenticated/settings_/tags': typeof AuthenticatedSettingsTagsRoute
   '/_authenticated/settings_/whatsapp': typeof AuthenticatedSettingsWhatsappRoute
   '/_authenticated/settings_/whatsapp-accounts': typeof AuthenticatedSettingsWhatsappAccountsRoute
   '/_authenticated/team/$userId': typeof AuthenticatedTeamUserIdRoute
+  '/api/public/hooks/cleanup-media': typeof ApiPublicHooksCleanupMediaRoute
   '/api/public/hooks/crm-auto-notes': typeof ApiPublicHooksCrmAutoNotesRoute
   '/api/public/hooks/whatsapp': typeof ApiPublicHooksWhatsappRoute
 }
@@ -217,10 +237,12 @@ export interface FileRouteTypes {
     | '/team'
     | '/templates'
     | '/contacts/$phone'
+    | '/settings/media-retention'
     | '/settings/tags'
     | '/settings/whatsapp'
     | '/settings/whatsapp-accounts'
     | '/team/$userId'
+    | '/api/public/hooks/cleanup-media'
     | '/api/public/hooks/crm-auto-notes'
     | '/api/public/hooks/whatsapp'
   fileRoutesByTo: FileRoutesByTo
@@ -238,10 +260,12 @@ export interface FileRouteTypes {
     | '/team'
     | '/templates'
     | '/contacts/$phone'
+    | '/settings/media-retention'
     | '/settings/tags'
     | '/settings/whatsapp'
     | '/settings/whatsapp-accounts'
     | '/team/$userId'
+    | '/api/public/hooks/cleanup-media'
     | '/api/public/hooks/crm-auto-notes'
     | '/api/public/hooks/whatsapp'
   id:
@@ -260,10 +284,12 @@ export interface FileRouteTypes {
     | '/_authenticated/team'
     | '/_authenticated/templates'
     | '/_authenticated/contacts/$phone'
+    | '/_authenticated/settings_/media-retention'
     | '/_authenticated/settings_/tags'
     | '/_authenticated/settings_/whatsapp'
     | '/_authenticated/settings_/whatsapp-accounts'
     | '/_authenticated/team/$userId'
+    | '/api/public/hooks/cleanup-media'
     | '/api/public/hooks/crm-auto-notes'
     | '/api/public/hooks/whatsapp'
   fileRoutesById: FileRoutesById
@@ -272,6 +298,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
+  ApiPublicHooksCleanupMediaRoute: typeof ApiPublicHooksCleanupMediaRoute
   ApiPublicHooksCrmAutoNotesRoute: typeof ApiPublicHooksCrmAutoNotesRoute
   ApiPublicHooksWhatsappRoute: typeof ApiPublicHooksWhatsappRoute
 }
@@ -397,6 +424,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsTagsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/settings_/media-retention': {
+      id: '/_authenticated/settings_/media-retention'
+      path: '/settings/media-retention'
+      fullPath: '/settings/media-retention'
+      preLoaderRoute: typeof AuthenticatedSettingsMediaRetentionRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/contacts/$phone': {
       id: '/_authenticated/contacts/$phone'
       path: '/$phone'
@@ -416,6 +450,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/hooks/crm-auto-notes'
       fullPath: '/api/public/hooks/crm-auto-notes'
       preLoaderRoute: typeof ApiPublicHooksCrmAutoNotesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/cleanup-media': {
+      id: '/api/public/hooks/cleanup-media'
+      path: '/api/public/hooks/cleanup-media'
+      fullPath: '/api/public/hooks/cleanup-media'
+      preLoaderRoute: typeof ApiPublicHooksCleanupMediaRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -456,6 +497,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedTeamRoute: typeof AuthenticatedTeamRouteWithChildren
   AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRoute
+  AuthenticatedSettingsMediaRetentionRoute: typeof AuthenticatedSettingsMediaRetentionRoute
   AuthenticatedSettingsTagsRoute: typeof AuthenticatedSettingsTagsRoute
   AuthenticatedSettingsWhatsappRoute: typeof AuthenticatedSettingsWhatsappRoute
   AuthenticatedSettingsWhatsappAccountsRoute: typeof AuthenticatedSettingsWhatsappAccountsRoute
@@ -472,6 +514,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedTeamRoute: AuthenticatedTeamRouteWithChildren,
   AuthenticatedTemplatesRoute: AuthenticatedTemplatesRoute,
+  AuthenticatedSettingsMediaRetentionRoute:
+    AuthenticatedSettingsMediaRetentionRoute,
   AuthenticatedSettingsTagsRoute: AuthenticatedSettingsTagsRoute,
   AuthenticatedSettingsWhatsappRoute: AuthenticatedSettingsWhatsappRoute,
   AuthenticatedSettingsWhatsappAccountsRoute:
@@ -486,6 +530,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
+  ApiPublicHooksCleanupMediaRoute: ApiPublicHooksCleanupMediaRoute,
   ApiPublicHooksCrmAutoNotesRoute: ApiPublicHooksCrmAutoNotesRoute,
   ApiPublicHooksWhatsappRoute: ApiPublicHooksWhatsappRoute,
 }

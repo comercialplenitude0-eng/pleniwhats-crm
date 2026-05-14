@@ -393,6 +393,42 @@ export type Database = {
           },
         ]
       }
+      media_retention_settings: {
+        Row: {
+          enabled: boolean
+          id: string
+          last_run_at: string | null
+          last_run_deleted_count: number
+          media_types: string[]
+          retention_months: number
+          singleton: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          enabled?: boolean
+          id?: string
+          last_run_at?: string | null
+          last_run_deleted_count?: number
+          media_types?: string[]
+          retention_months?: number
+          singleton?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          enabled?: boolean
+          id?: string
+          last_run_at?: string | null
+          last_run_deleted_count?: number
+          media_types?: string[]
+          retention_months?: number
+          singleton?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       message_templates: {
         Row: {
           content: string
@@ -761,7 +797,7 @@ export type Database = {
       conv_status: "aguardando" | "em_atendimento" | "encerrada"
       msg_direction: "inbound" | "outbound"
       msg_status: "sent" | "delivered" | "read" | "failed"
-      msg_type: "text" | "audio" | "image" | "document" | "template"
+      msg_type: "text" | "audio" | "image" | "document" | "template" | "video"
       user_status: "online" | "busy" | "away" | "offline"
     }
     CompositeTypes: {
@@ -904,7 +940,7 @@ export const Constants = {
       conv_status: ["aguardando", "em_atendimento", "encerrada"],
       msg_direction: ["inbound", "outbound"],
       msg_status: ["sent", "delivered", "read", "failed"],
-      msg_type: ["text", "audio", "image", "document", "template"],
+      msg_type: ["text", "audio", "image", "document", "template", "video"],
       user_status: ["online", "busy", "away", "offline"],
     },
   },
