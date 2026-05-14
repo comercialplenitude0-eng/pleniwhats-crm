@@ -343,6 +343,7 @@ function FieldEditor({
     !isMulti &&
     (t === "list" ||
       t === "select" ||
+      t === "option" ||
       t === "single_select" ||
       t === "dropdown" ||
       t === "radio" ||

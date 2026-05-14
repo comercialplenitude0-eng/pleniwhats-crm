@@ -203,31 +203,47 @@ export type RdCustomFieldDef = {
   options: RdCustomFieldOption[];
 };
 
-function parseCustomFieldDef(raw: any): RdCustomFieldDef | null {
-  const id = String(raw?._id ?? raw?.id ?? "");
-  if (!id) return null;
+function parseCustomFieldOptions(raw: any): RdCustomFieldOption[] {
   const opts = (raw?.custom_field_options ??
     raw?.selectable_options ??
     raw?.options ??
     raw?.values ??
+    raw?.opts ??
+    raw?.custom_field?.custom_field_options ??
+    raw?.custom_field?.options ??
+    raw?.custom_field?.opts ??
     []) as Array<any>;
+
+  return opts
+    .map((o) => {
+      if (typeof o === "string" || typeof o === "number") {
+        const value = String(o);
+        return { id: value, label: value };
+      }
+      return {
+        id: String(o?._id ?? o?.id ?? o?.value ?? o?.label ?? o?.name ?? ""),
+        label: String(o?.label ?? o?.name ?? o?.value ?? o?._id ?? o?.id ?? ""),
+      };
+    })
+    .filter((o) => o.id || o.label);
+}
+
+function parseCustomFieldDef(raw: any): RdCustomFieldDef | null {
+  const id = String(raw?._id ?? raw?.id ?? "");
+  if (!id) return null;
+  const options = parseCustomFieldOptions(raw);
   const rawType = String(
     raw?.type ?? raw?.field_type ?? raw?.presentation_type ?? raw?.kind ?? "text",
   ).toLowerCase();
   // Se vier opções e o tipo não indicar lista, força "list" para virar dropdown
-  const type = opts.length > 0 && !rawType.includes("multi") && !rawType.includes("check")
+  const type = options.length > 0 && !rawType.includes("multi") && !rawType.includes("check")
     ? (rawType === "text" || rawType === "string" ? "list" : rawType)
     : rawType;
   return {
     id,
     label: String(raw?.label ?? raw?.name ?? id),
     type,
-    options: opts
-      .map((o) => ({
-        id: String(o?._id ?? o?.id ?? o?.value ?? ""),
-        label: String(o?.label ?? o?.name ?? o?.value ?? ""),
-      }))
-      .filter((o) => o.id || o.label),
+    options,
   };
 }
 
@@ -274,19 +290,15 @@ export const listRdDealCustomFields = createServerFn({ method: "GET" })
         t.includes("list") ||
         t.includes("select") ||
         t.includes("choice") ||
+        t.includes("option") ||
         t.includes("dropdown") ||
         t.includes("radio") ||
         t.includes("multi");
       if (looksList && f.options.length === 0) {
         try {
           const d = await rdCrm(`/custom_fields/${encodeURIComponent(f.id)}`);
-          const opts = (d?.custom_field_options ?? d?.options ?? []) as any[];
-          f.options = opts
-            .map((o) => ({
-              id: String(o?._id ?? o?.id ?? o?.value ?? ""),
-              label: String(o?.label ?? o?.name ?? o?.value ?? ""),
-            }))
-            .filter((o) => o.id || o.label);
+          f.options = parseCustomFieldOptions(d?.custom_field ?? d);
+          if (f.options.length > 0 && !t.includes("multi") && !t.includes("check")) f.type = "list";
         } catch {
           // mantém vazio
         }
