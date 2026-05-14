@@ -29,6 +29,7 @@ import { Route as AuthenticatedSettingsTagsRouteImport } from './routes/_authent
 import { Route as AuthenticatedContactsPhoneRouteImport } from './routes/_authenticated/contacts.$phone'
 import { Route as ApiPublicHooksWhatsappRouteImport } from './routes/api/public/hooks/whatsapp'
 import { Route as ApiPublicHooksCrmAutoNotesRouteImport } from './routes/api/public/hooks/crm-auto-notes'
+import { Route as ApiPublicHooksCleanupMediaRouteImport } from './routes/api/public/hooks/cleanup-media'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -135,6 +136,12 @@ const ApiPublicHooksCrmAutoNotesRoute =
     path: '/api/public/hooks/crm-auto-notes',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksCleanupMediaRoute =
+  ApiPublicHooksCleanupMediaRouteImport.update({
+    id: '/api/public/hooks/cleanup-media',
+    path: '/api/public/hooks/cleanup-media',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -154,6 +161,7 @@ export interface FileRoutesByFullPath {
   '/settings/whatsapp': typeof AuthenticatedSettingsWhatsappRoute
   '/settings/whatsapp-accounts': typeof AuthenticatedSettingsWhatsappAccountsRoute
   '/team/$userId': typeof AuthenticatedTeamUserIdRoute
+  '/api/public/hooks/cleanup-media': typeof ApiPublicHooksCleanupMediaRoute
   '/api/public/hooks/crm-auto-notes': typeof ApiPublicHooksCrmAutoNotesRoute
   '/api/public/hooks/whatsapp': typeof ApiPublicHooksWhatsappRoute
 }
@@ -175,6 +183,7 @@ export interface FileRoutesByTo {
   '/settings/whatsapp': typeof AuthenticatedSettingsWhatsappRoute
   '/settings/whatsapp-accounts': typeof AuthenticatedSettingsWhatsappAccountsRoute
   '/team/$userId': typeof AuthenticatedTeamUserIdRoute
+  '/api/public/hooks/cleanup-media': typeof ApiPublicHooksCleanupMediaRoute
   '/api/public/hooks/crm-auto-notes': typeof ApiPublicHooksCrmAutoNotesRoute
   '/api/public/hooks/whatsapp': typeof ApiPublicHooksWhatsappRoute
 }
@@ -198,6 +207,7 @@ export interface FileRoutesById {
   '/_authenticated/settings_/whatsapp': typeof AuthenticatedSettingsWhatsappRoute
   '/_authenticated/settings_/whatsapp-accounts': typeof AuthenticatedSettingsWhatsappAccountsRoute
   '/_authenticated/team/$userId': typeof AuthenticatedTeamUserIdRoute
+  '/api/public/hooks/cleanup-media': typeof ApiPublicHooksCleanupMediaRoute
   '/api/public/hooks/crm-auto-notes': typeof ApiPublicHooksCrmAutoNotesRoute
   '/api/public/hooks/whatsapp': typeof ApiPublicHooksWhatsappRoute
 }
@@ -221,6 +231,7 @@ export interface FileRouteTypes {
     | '/settings/whatsapp'
     | '/settings/whatsapp-accounts'
     | '/team/$userId'
+    | '/api/public/hooks/cleanup-media'
     | '/api/public/hooks/crm-auto-notes'
     | '/api/public/hooks/whatsapp'
   fileRoutesByTo: FileRoutesByTo
@@ -242,6 +253,7 @@ export interface FileRouteTypes {
     | '/settings/whatsapp'
     | '/settings/whatsapp-accounts'
     | '/team/$userId'
+    | '/api/public/hooks/cleanup-media'
     | '/api/public/hooks/crm-auto-notes'
     | '/api/public/hooks/whatsapp'
   id:
@@ -264,6 +276,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings_/whatsapp'
     | '/_authenticated/settings_/whatsapp-accounts'
     | '/_authenticated/team/$userId'
+    | '/api/public/hooks/cleanup-media'
     | '/api/public/hooks/crm-auto-notes'
     | '/api/public/hooks/whatsapp'
   fileRoutesById: FileRoutesById
@@ -272,6 +285,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
+  ApiPublicHooksCleanupMediaRoute: typeof ApiPublicHooksCleanupMediaRoute
   ApiPublicHooksCrmAutoNotesRoute: typeof ApiPublicHooksCrmAutoNotesRoute
   ApiPublicHooksWhatsappRoute: typeof ApiPublicHooksWhatsappRoute
 }
@@ -418,6 +432,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksCrmAutoNotesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/cleanup-media': {
+      id: '/api/public/hooks/cleanup-media'
+      path: '/api/public/hooks/cleanup-media'
+      fullPath: '/api/public/hooks/cleanup-media'
+      preLoaderRoute: typeof ApiPublicHooksCleanupMediaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -486,6 +507,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
+  ApiPublicHooksCleanupMediaRoute: ApiPublicHooksCleanupMediaRoute,
   ApiPublicHooksCrmAutoNotesRoute: ApiPublicHooksCrmAutoNotesRoute,
   ApiPublicHooksWhatsappRoute: ApiPublicHooksWhatsappRoute,
 }

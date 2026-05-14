@@ -39,7 +39,7 @@ async function runCleanup() {
     const { data: rows, error } = await supabaseAdmin
       .from("messages")
       .select("id, media_url, type, created_at")
-      .in("type", types)
+      .in("type", types as Array<"audio" | "video" | "image" | "document" | "template" | "text">)
       .not("media_url", "is", null)
       .lt("created_at", cutoff.toISOString())
       .order("created_at", { ascending: true })
