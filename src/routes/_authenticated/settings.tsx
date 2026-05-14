@@ -53,7 +53,7 @@ type Settings = {
   away_message_enabled: boolean;
 };
 
-type Member = { id: string; name: string; email: string; isGestor: boolean };
+type Member = { id: string; name: string; email: string; isGestor: boolean; convCount: number };
 
 const DAYS = [
   { v: 0, label: "Dom" }, { v: 1, label: "Seg" }, { v: 2, label: "Ter" },
@@ -81,12 +81,13 @@ function SettingsPage() {
   }, [role, navigate]);
 
   async function load() {
-    const [s, p, r] = await Promise.all([
+    const [s, p, r, c] = await Promise.all([
       supabase.from("workspace_settings")
         .select("id,business_hours_start,business_hours_end,business_days,timezone,away_message,away_message_enabled")
         .limit(1).maybeSingle(),
       supabase.from("profiles").select("id,name,email").order("name"),
       supabase.from("user_roles").select("user_id,role"),
+      supabase.from("conversations").select("assigned_to"),
     ]);
     if (s.data) {
       setSettings({
@@ -97,8 +98,13 @@ function SettingsPage() {
     }
     const gestorIds = new Set(((r.data ?? []) as { user_id: string; role: string }[])
       .filter((x) => isManagerRole(x.role as AppRole)).map((x) => x.user_id));
+    const convs = (c.data ?? []) as { assigned_to: string | null }[];
     setMembers(((p.data ?? []) as { id: string; name: string; email: string }[])
-      .map((m) => ({ ...m, isGestor: gestorIds.has(m.id) })));
+      .map((m) => ({
+        ...m,
+        isGestor: gestorIds.has(m.id),
+        convCount: convs.filter((cv) => cv.assigned_to === m.id).length,
+      })));
 
     try {
       const [accs, access] = await Promise.all([fetchAccounts(), fetchAccess()]);
