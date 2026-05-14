@@ -33,10 +33,13 @@ export function TagPicker({ conversationId }: Props) {
         fetchAll(),
         fetchAssigned({ data: { conversationId } }),
       ]);
-      setAllTags(all);
-      setSelected(mine as Tag[]);
+      setAllTags(Array.isArray(all) ? (all as Tag[]) : []);
+      setSelected(Array.isArray(mine) ? (mine as Tag[]) : []);
     } catch (e) {
-      toast.error((e as Error).message);
+      console.error("[TagPicker] load failed", e);
+      setAllTags([]);
+      setSelected([]);
+      toast.error((e as Error).message ?? "Erro ao carregar tags");
     } finally {
       setLoading(false);
     }
