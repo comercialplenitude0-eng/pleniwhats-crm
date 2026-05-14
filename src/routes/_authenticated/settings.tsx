@@ -8,6 +8,19 @@ import {
   getAllUserAccess,
   setUserAccountAccess,
 } from "@/lib/whatsapp-accounts.functions";
+import { reassignAll, removeMember } from "@/lib/team.functions";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter,
+  DialogHeader, DialogTitle, DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader,
+  AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
@@ -23,7 +36,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { Loader2, Settings as SettingsIcon, Clock, Users, Crown, Save, MessageCircle, ChevronRight, Phone } from "lucide-react";
+import { Loader2, Settings as SettingsIcon, Clock, Users, Crown, Save, MessageCircle, ChevronRight, Phone, ArrowRightLeft, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/settings")({
