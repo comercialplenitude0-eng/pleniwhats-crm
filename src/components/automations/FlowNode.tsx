@@ -59,7 +59,7 @@ export const FlowNode = memo(({ data, selected }: NodeProps) => {
           type="target"
           position={Position.Top}
           isConnectable
-          className="!w-6 !h-6 !-top-3 !bg-primary !border-4 !border-background hover:!scale-125 transition-transform"
+          className="!w-5 !h-5 !bg-primary !border-2 !border-background hover:!scale-125 transition-transform"
         />
       )}
       <div className="px-3 py-2 border-b border-current/20 flex items-center gap-2">
