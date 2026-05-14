@@ -161,6 +161,29 @@ export function NewConversationDialog({
 
         <div className="space-y-3">
           <div className="space-y-1.5">
+            <Label htmlFor="nc-account">Conta WhatsApp</Label>
+            {accounts.length === 0 ? (
+              <p className="text-[12px] text-destructive">
+                Você não tem acesso a nenhuma conta WhatsApp. Peça ao gestor para vincular um número ao seu usuário.
+              </p>
+            ) : (
+              <select
+                id="nc-account"
+                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
+                value={accountId}
+                onChange={(e) => setAccountId(e.target.value)}
+              >
+                <option value="">Selecione...</option>
+                {accounts.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.display_name}{a.phone_number ? ` — ${a.phone_number}` : ""}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
             <Label htmlFor="nc-deal">ID do card no RD CRM (opcional)</Label>
             <div className="flex gap-2">
               <Input
