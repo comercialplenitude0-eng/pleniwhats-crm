@@ -26,7 +26,6 @@ export const inviteMember = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertManager(supabase, userId);
 
-    // Create the auth user (auto-confirmed)
     const { data: created, error: createErr } =
       await supabaseAdmin.auth.admin.createUser({
         email: data.email,
@@ -37,8 +36,6 @@ export const inviteMember = createServerFn({ method: "POST" })
     if (createErr) throw new Error(createErr.message);
     const newId = created.user!.id;
 
-    // handle_new_user trigger inserts profile + 'comercial' role.
-    // If a different role was requested, swap it.
     if (data.role !== "comercial") {
       await supabaseAdmin.from("user_roles").delete().eq("user_id", newId);
       await supabaseAdmin
@@ -101,7 +98,6 @@ export const setMemberRole = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertManager(supabase, userId);
 
-    // Prevent removing the last manager
     if (data.role !== "admin" && data.role !== "gestor") {
       const { data: managers } = await supabaseAdmin
         .from("user_roles")
@@ -120,4 +116,33 @@ export const setMemberRole = createServerFn({ method: "POST" })
       .insert({ user_id: data.user_id, role: data.role });
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+/** Heartbeat: refreshes profiles.last_seen_at for the calling user. */
+export const pingPresence = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase } = context;
+    await supabase.rpc("update_presence");
+    return { ok: true };
+  });
+
+export type TeamOverviewRow = {
+  user_id: string;
+  convs_count: number;
+  closed_count: number;
+  last_seen_at: string | null;
+  last_outbound_at: string | null;
+  avg_response_seconds: number | null;
+};
+
+/** Per-user stats for the Team dashboard. */
+export const getTeamOverview = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<TeamOverviewRow[]> => {
+    const { supabase, userId } = context;
+    await assertManager(supabase, userId);
+    const { data, error } = await supabaseAdmin.rpc("team_overview");
+    if (error) throw new Error(error.message);
+    return (data ?? []) as TeamOverviewRow[];
   });
