@@ -170,10 +170,10 @@ function WhatsappAccountsPage() {
     }
   }
 
-  const webhookUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/api/public/hooks/whatsapp`
-      : "/api/public/hooks/whatsapp";
+  // URL pública estável (produção) — esta é a URL que deve ser cadastrada na Meta.
+  // Não usamos window.location.origin porque no preview ele aponta para um domínio
+  // efêmero que muda a cada deploy.
+  const webhookUrl = "https://pleni-connect-chat.lovable.app/api/public/hooks/whatsapp";
 
   if (loading) {
     return (
