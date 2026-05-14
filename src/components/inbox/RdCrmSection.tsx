@@ -337,7 +337,19 @@ function FieldEditor({
     );
   }
 
-  if (t === "list" || t === "select" || t === "single_select") {
+  const isMulti =
+    t === "multi_select" || t === "multiple_select" || t === "checklist" || t.includes("multi");
+  const isSingleList =
+    !isMulti &&
+    (t === "list" ||
+      t === "select" ||
+      t === "single_select" ||
+      t === "dropdown" ||
+      t === "radio" ||
+      // fallback: any field that has options defined acts as a single-select dropdown
+      (def.options && def.options.length > 0));
+
+  if (isSingleList) {
     const cur = value == null ? "" : String(value);
     return (
       <div className="space-y-1">
