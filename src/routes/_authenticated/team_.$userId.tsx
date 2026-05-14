@@ -352,7 +352,7 @@ function SellerDetailsPage() {
           </section>
 
           {/* WhatsApp account access */}
-          <WhatsappAccessCard userId={userId} isManager />
+          <WhatsappAccessCard userId={userId} isManager={isManager} />
 
           {/* Conversations list */}
           <Card>
