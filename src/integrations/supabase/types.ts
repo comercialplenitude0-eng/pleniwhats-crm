@@ -393,6 +393,42 @@ export type Database = {
           },
         ]
       }
+      media_retention_settings: {
+        Row: {
+          enabled: boolean
+          id: string
+          last_run_at: string | null
+          last_run_deleted_count: number
+          media_types: string[]
+          retention_months: number
+          singleton: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          enabled?: boolean
+          id?: string
+          last_run_at?: string | null
+          last_run_deleted_count?: number
+          media_types?: string[]
+          retention_months?: number
+          singleton?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          enabled?: boolean
+          id?: string
+          last_run_at?: string | null
+          last_run_deleted_count?: number
+          media_types?: string[]
+          retention_months?: number
+          singleton?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       message_templates: {
         Row: {
           content: string
