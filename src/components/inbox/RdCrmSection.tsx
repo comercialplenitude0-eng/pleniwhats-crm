@@ -368,8 +368,8 @@ export function RdCrmSection({
               <Input value={cContactPhone} onChange={(e) => setCContactPhone(e.target.value)} className="h-8 text-sm" />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">E-mail</Label>
-              <Input type="email" value={cContactEmail} onChange={(e) => setCContactEmail(e.target.value)} className="h-8 text-sm" />
+              <Label className="text-xs">E-mail *</Label>
+              <Input type="email" required value={cContactEmail} onChange={(e) => setCContactEmail(e.target.value)} className="h-8 text-sm" />
             </div>
           </div>
 
