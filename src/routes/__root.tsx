@@ -33,13 +33,19 @@ function NotFoundComponent() {
 }
 
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
-  console.error(error);
+  console.error("[App error]", error);
   const router = useRouter();
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
+      <div className="max-w-2xl w-full text-center">
         <h1 className="text-xl font-semibold">Algo deu errado</h1>
         <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
+        {error.stack && (
+          <details className="mt-4 text-left">
+            <summary className="text-xs text-muted-foreground cursor-pointer">Ver detalhes técnicos</summary>
+            <pre className="mt-2 text-[10px] bg-muted p-3 rounded overflow-auto max-h-64 whitespace-pre-wrap break-all">{error.stack}</pre>
+          </details>
+        )}
         <button
           onClick={() => { router.invalidate(); reset(); }}
           className="mt-6 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
