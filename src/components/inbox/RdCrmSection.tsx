@@ -374,7 +374,7 @@ function FieldEditor({
     );
   }
 
-  if (t === "multi_select" || t === "multiple_select" || t === "checklist") {
+  if (isMulti) {
     const arr = Array.isArray(value) ? (value as string[]) : [];
     return (
       <div className="space-y-1.5">
