@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -34,12 +34,32 @@ export function NewConversationDialog({
   const [course, setCourse] = useState("");
   const [loadingCrm, setLoadingCrm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [accounts, setAccounts] = useState<Array<{ id: string; display_name: string; phone_number: string | null }>>([]);
+  const [accountId, setAccountId] = useState<string>("");
+
+  useEffect(() => {
+    if (!open) return;
+    (async () => {
+      const { data, error } = await supabase
+        .from("whatsapp_accounts")
+        .select("id, display_name, phone_number")
+        .eq("enabled", true)
+        .order("display_name");
+      if (error) {
+        toast.error("Erro ao carregar contas WhatsApp: " + error.message);
+        return;
+      }
+      setAccounts(data ?? []);
+      if ((data?.length ?? 0) === 1) setAccountId(data![0].id);
+    })();
+  }, [open]);
 
   function reset() {
     setName("");
     setPhone("");
     setDealId("");
     setCourse("");
+    setAccountId("");
   }
 
   async function loadFromCrm() {
@@ -91,6 +111,10 @@ export function NewConversationDialog({
       toast.error("Informe nome e telefone");
       return;
     }
+    if (!accountId) {
+      toast.error("Selecione a conta WhatsApp para esta conversa");
+      return;
+    }
     setSaving(true);
     try {
       const { data, error } = await supabase
@@ -99,6 +123,7 @@ export function NewConversationDialog({
           contact_name: n,
           contact_phone: p,
           assigned_to: user.id,
+          account_id: accountId,
           rd_deal_id: dealId.trim() || null,
           course: course.trim() || null,
           last_message: null,
@@ -135,6 +160,29 @@ export function NewConversationDialog({
         </DialogHeader>
 
         <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="nc-account">Conta WhatsApp</Label>
+            {accounts.length === 0 ? (
+              <p className="text-[12px] text-destructive">
+                Você não tem acesso a nenhuma conta WhatsApp. Peça ao gestor para vincular um número ao seu usuário.
+              </p>
+            ) : (
+              <select
+                id="nc-account"
+                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
+                value={accountId}
+                onChange={(e) => setAccountId(e.target.value)}
+              >
+                <option value="">Selecione...</option>
+                {accounts.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.display_name}{a.phone_number ? ` — ${a.phone_number}` : ""}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+
           <div className="space-y-1.5">
             <Label htmlFor="nc-deal">ID do card no RD CRM (opcional)</Label>
             <div className="flex gap-2">
