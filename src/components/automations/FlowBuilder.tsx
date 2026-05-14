@@ -223,8 +223,9 @@ function Inner({
             <button
               key={k}
               onClick={() => addNode(k)}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border ${NODE_META[k].accent} hover:brightness-125 transition`}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border border-border bg-card text-card-foreground hover:bg-accent hover:text-accent-foreground transition"
             >
+              <span className={`size-2 rounded-full ${NODE_META[k].dot}`} />
               <span>{NODE_META[k].emoji}</span> {NODE_META[k].name}
             </button>
           ))}
@@ -246,9 +247,11 @@ function Inner({
           <button
             key={k}
             onClick={() => addNode(k)}
-            className={`shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border ${NODE_META[k].accent}`}
+            className="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border border-border bg-card text-card-foreground"
           >
-            <Plus className="size-3" /> {NODE_META[k].emoji} {NODE_META[k].name}
+            <Plus className="size-3" />
+            <span className={`size-2 rounded-full ${NODE_META[k].dot}`} />
+            {NODE_META[k].emoji} {NODE_META[k].name}
           </button>
         ))}
       </div>
