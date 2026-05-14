@@ -532,6 +532,7 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          last_seen_at: string | null
           name: string
           status: Database["public"]["Enums"]["user_status"]
         }
@@ -540,6 +541,7 @@ export type Database = {
           created_at?: string
           email: string
           id: string
+          last_seen_at?: string | null
           name: string
           status?: Database["public"]["Enums"]["user_status"]
         }
@@ -548,6 +550,7 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          last_seen_at?: string | null
           name?: string
           status?: Database["public"]["Enums"]["user_status"]
         }
@@ -777,6 +780,18 @@ export type Database = {
         Returns: boolean
       }
       is_manager_role: { Args: { _user_id: string }; Returns: boolean }
+      team_overview: {
+        Args: never
+        Returns: {
+          avg_response_seconds: number
+          closed_count: number
+          convs_count: number
+          last_outbound_at: string
+          last_seen_at: string
+          user_id: string
+        }[]
+      }
+      update_presence: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "vendedor" | "gestor" | "admin" | "comercial" | "cs"
