@@ -34,12 +34,32 @@ export function NewConversationDialog({
   const [course, setCourse] = useState("");
   const [loadingCrm, setLoadingCrm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [accounts, setAccounts] = useState<Array<{ id: string; display_name: string; phone_number: string | null }>>([]);
+  const [accountId, setAccountId] = useState<string>("");
+
+  useEffect(() => {
+    if (!open) return;
+    (async () => {
+      const { data, error } = await supabase
+        .from("whatsapp_accounts")
+        .select("id, display_name, phone_number")
+        .eq("enabled", true)
+        .order("display_name");
+      if (error) {
+        toast.error("Erro ao carregar contas WhatsApp: " + error.message);
+        return;
+      }
+      setAccounts(data ?? []);
+      if ((data?.length ?? 0) === 1) setAccountId(data![0].id);
+    })();
+  }, [open]);
 
   function reset() {
     setName("");
     setPhone("");
     setDealId("");
     setCourse("");
+    setAccountId("");
   }
 
   async function loadFromCrm() {
