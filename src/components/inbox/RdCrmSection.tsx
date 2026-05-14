@@ -271,6 +271,10 @@ export function RdCrmSection({
     if (!cStageId) return toast.error("Escolha funil e etapa");
     if (!cContactName.trim() || !cContactPhone.trim())
       return toast.error("Informe o nome e telefone do contato");
+    const emailTrim = cContactEmail.trim();
+    if (!emailTrim) return toast.error("Informe o e-mail do contato");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrim))
+      return toast.error("E-mail inválido");
     setCreating(true);
     try {
       const r = await createDeal({
@@ -279,7 +283,7 @@ export function RdCrmSection({
           stageId: cStageId,
           contactName: cContactName.trim(),
           contactPhone: cContactPhone.trim(),
-          contactEmail: cContactEmail.trim() || null,
+          contactEmail: emailTrim,
           rating: cRating,
           predictionDate: cPrediction || null,
           amountTotal: cAmount === "" ? null : Number(cAmount),
