@@ -488,3 +488,178 @@ function AccountAccessControl({
     </Popover>
   );
 }
+
+function TransferConversationsCard({
+  members,
+  onDone,
+}: {
+  members: Member[];
+  onDone: () => void;
+}) {
+  const reassign = useServerFn(reassignAll);
+  const remove = useServerFn(removeMember);
+  const { user } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [fromId, setFromId] = useState<string>("");
+  const [toId, setToId] = useState<string>("__none");
+  const [busy, setBusy] = useState(false);
+
+  const fromMember = members.find((m) => m.id === fromId);
+  const candidates = members.filter((m) => m.id !== fromId);
+  const sellersWithConvs = members.filter((m) => m.convCount > 0);
+
+  async function submitTransfer() {
+    if (!fromId) return toast.error("Escolha um vendedor de origem");
+    setBusy(true);
+    try {
+      const res = await reassign({
+        data: { from_user_id: fromId, to_user_id: toId === "__none" ? null : toId },
+      });
+      toast.success(`${res.moved} conversa(s) transferida(s)`);
+      setOpen(false);
+      setFromId("");
+      setToId("__none");
+      onDone();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function removeUser(id: string) {
+    try {
+      await remove({ data: { user_id: id } });
+      toast.success("Membro removido");
+      onDone();
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-sm flex items-center gap-2">
+          <ArrowRightLeft className="size-4" /> Transferir conversas
+        </CardTitle>
+        <CardDescription>
+          Mova as conversas atribuídas de um vendedor para outro — útil em férias,
+          desligamentos ou redistribuição.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" className="w-full sm:w-auto">
+              <ArrowRightLeft className="size-4 mr-2" /> Transferir conversas
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Transferir conversas</DialogTitle>
+              <DialogDescription>
+                Selecione o vendedor de origem e para quem as conversas serão movidas.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <Label>De</Label>
+                <Select value={fromId} onValueChange={setFromId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Escolha um vendedor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {members.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.name} · {m.convCount} conv.
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Para</Label>
+                <Select value={toId} onValueChange={setToId}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none">Sem responsável</SelectItem>
+                    {candidates.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {fromMember && (
+                <p className="text-xs text-muted-foreground">
+                  {fromMember.convCount} conversa(s) serão movidas.
+                </p>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+              <Button onClick={submitTransfer} disabled={busy || !fromId}>
+                {busy && <Loader2 className="size-4 mr-2 animate-spin" />}
+                Transferir
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {sellersWithConvs.length > 0 && (
+          <div className="rounded-md border divide-y">
+            {sellersWithConvs.map((m) => (
+              <div key={m.id} className="flex items-center justify-between p-3 gap-3">
+                <div className="min-w-0">
+                  <div className="text-sm font-medium truncate">{m.name}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {m.convCount} conversa(s) atribuída(s)
+                  </div>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => { setFromId(m.id); setOpen(true); }}
+                  >
+                    <ArrowRightLeft className="size-4 mr-1" /> Transferir
+                  </Button>
+                  {m.id !== user?.id && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive"
+                          aria-label="Remover membro"
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Remover {m.name}?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            O acesso será revogado e suas {m.convCount} conversa(s)
+                            ficarão sem responsável. Ação irreversível.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => removeUser(m.id)}>
+                            Remover
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
