@@ -120,7 +120,39 @@ export function RdCrmSection({
     setCPrediction("");
     setCAmount("");
     setCValues({});
-  }, [conversation.id, conversation.rd_deal_id, conversation.contact_name, conversation.contact_phone]);
+
+    // Auto-fill email from existing contact record (by contact_id or phone)
+    let cancelled = false;
+    void (async () => {
+      try {
+        let email: string | null = null;
+        if (conversation.contact_id) {
+          const { data } = await supabase
+            .from("contacts")
+            .select("email")
+            .eq("id", conversation.contact_id)
+            .maybeSingle();
+          email = data?.email ?? null;
+        }
+        if (!email && conversation.contact_phone) {
+          const { data } = await supabase
+            .from("contacts")
+            .select("email")
+            .eq("phone", conversation.contact_phone)
+            .not("email", "is", null)
+            .limit(1)
+            .maybeSingle();
+          email = data?.email ?? null;
+        }
+        if (!cancelled && email) setCContactEmail(email);
+      } catch (e) {
+        console.error("[RD CRM] prefill email", e);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [conversation.id, conversation.rd_deal_id, conversation.contact_id, conversation.contact_name, conversation.contact_phone]);
 
   // load static metadata once
   useEffect(() => {
