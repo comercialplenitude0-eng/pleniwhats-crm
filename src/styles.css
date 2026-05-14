@@ -1,23 +1,23 @@
 @import "tailwindcss" source(none);
 @import "tw-animate-css";
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
 @source "../src";
 
 @custom-variant dark (&:is(.dark *));
 
 /*
- * PleniWhats — Design System
- * Inspired by WhatsApp Web + Intercom. Calm, focused workspace.
+ * Plenitude Educação — Design System v1.0
+ * Dark navy + electric blue. Glassmorphism-ready.
  */
 
 @theme inline {
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
 
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 20px;
+  --radius-2xl: 32px;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -54,93 +54,136 @@
   --color-label-closed: var(--label-closed);
 }
 
+/* ============================================================
+   PLENITUDE — DARK (default)
+   ============================================================ */
 :root {
-  --radius: 0.625rem;
+  --radius: 0.75rem;
 
-  /* Surfaces */
-  --background: oklch(0.985 0.005 150);
-  --foreground: oklch(0.22 0.02 240);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.22 0.02 240);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.22 0.02 240);
+  /* Plenitude raw palette */
+  --bg-base: #04060F;
+  --bg-surface: #080D1A;
+  --bg-elevated: #0D1526;
+  --bg-overlay: #111E35;
 
-  /* Brand: WhatsApp-inspired green */
-  --primary: oklch(0.62 0.15 150);
-  --primary-foreground: oklch(0.99 0.005 150);
-  --primary-glow: oklch(0.72 0.16 150);
+  --blue-300: #93C5FD;
+  --blue-400: #60A5FA;
+  --blue-500: #3B82F6;
+  --blue-600: #2563EB;
+  --blue-700: #1D4ED8;
+  --blue-neon: #00B4FF;
+  --blue-elec: #0EA5E9;
 
-  --secondary: oklch(0.96 0.01 150);
-  --secondary-foreground: oklch(0.25 0.02 240);
+  --grad-blue: linear-gradient(135deg, #1D4ED8 0%, #0EA5E9 50%, #00B4FF 100%);
+  --grad-text: linear-gradient(135deg, #60A5FA 0%, #00B4FF 40%, #93C5FD 100%);
+  --grad-mesh:
+    radial-gradient(ellipse at 15% 50%, rgba(59,130,246,0.18) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 20%, rgba(14,165,233,0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 55% 85%, rgba(29,78,216,0.14) 0%, transparent 50%);
 
-  --muted: oklch(0.96 0.005 240);
-  --muted-foreground: oklch(0.5 0.02 240);
+  --glow-blue-sm: 0 0 15px rgba(59,130,246,0.45), 0 0 30px rgba(59,130,246,0.22);
+  --glow-blue-md: 0 0 28px rgba(59,130,246,0.55), 0 0 70px rgba(59,130,246,0.28);
 
-  --accent: oklch(0.94 0.04 150);
-  --accent-foreground: oklch(0.28 0.05 150);
+  /* Semantic tokens (shadcn) */
+  --background: #04060F;
+  --foreground: #F0F6FF;
+  --card: #0D1526;
+  --card-foreground: #F0F6FF;
+  --popover: #111E35;
+  --popover-foreground: #F0F6FF;
 
-  --destructive: oklch(0.6 0.22 27);
-  --destructive-foreground: oklch(0.99 0.005 27);
+  --primary: #00B4FF;
+  --primary-foreground: #04060F;
+  --primary-glow: #60A5FA;
 
-  --border: oklch(0.92 0.005 240);
-  --input: oklch(0.92 0.005 240);
-  --ring: oklch(0.62 0.15 150);
+  --secondary: #111E35;
+  --secondary-foreground: #F0F6FF;
 
-  /* Chat surfaces */
-  --chat-panel: oklch(0.985 0.005 150);
-  --chat-bg: oklch(0.96 0.012 130);
-  --bubble-out: oklch(0.88 0.08 150);
-  --bubble-out-foreground: oklch(0.22 0.02 240);
-  --bubble-in: oklch(1 0 0);
-  --bubble-in-foreground: oklch(0.22 0.02 240);
+  --muted: #0D1526;
+  --muted-foreground: #94A3B8;
+
+  --accent: #1D4ED8;
+  --accent-foreground: #F0F6FF;
+
+  --destructive: #EF4444;
+  --destructive-foreground: #F0F6FF;
+
+  --border: rgba(255,255,255,0.10);
+  --input: rgba(255,255,255,0.10);
+  --ring: #00B4FF;
+
+  /* Chat surfaces — adapted to Plenitude dark */
+  --chat-panel: #080D1A;
+  --chat-bg: #04060F;
+  --bubble-out: #1D4ED8;
+  --bubble-out-foreground: #F0F6FF;
+  --bubble-in: #0D1526;
+  --bubble-in-foreground: #F0F6FF;
 
   /* Lead labels */
-  --label-hot: oklch(0.65 0.21 28);
-  --label-warm: oklch(0.78 0.16 70);
-  --label-cold: oklch(0.7 0.13 230);
-  --label-new: oklch(0.65 0.16 280);
-  --label-closed: oklch(0.62 0.15 150);
+  --label-hot: #EF4444;
+  --label-warm: #F59E0B;
+  --label-cold: #00B4FF;
+  --label-new: #A78BFA;
+  --label-closed: #22C55E;
 
-  --sidebar: oklch(0.99 0.003 150);
-  --sidebar-foreground: var(--foreground);
-  --sidebar-primary: var(--primary);
-  --sidebar-primary-foreground: var(--primary-foreground);
-  --sidebar-accent: var(--accent);
-  --sidebar-accent-foreground: var(--accent-foreground);
-  --sidebar-border: var(--border);
-  --sidebar-ring: var(--ring);
+  /* Sidebar */
+  --sidebar: #060A15;
+  --sidebar-foreground: #F0F6FF;
+  --sidebar-primary: #00B4FF;
+  --sidebar-primary-foreground: #04060F;
+  --sidebar-accent: #111E35;
+  --sidebar-accent-foreground: #F0F6FF;
+  --sidebar-border: rgba(255,255,255,0.06);
+  --sidebar-ring: #00B4FF;
 }
 
-.dark {
-  --background: oklch(0.18 0.015 240);
-  --foreground: oklch(0.96 0.005 150);
-  --card: oklch(0.22 0.018 240);
-  --card-foreground: oklch(0.96 0.005 150);
-  --popover: oklch(0.22 0.018 240);
-  --popover-foreground: oklch(0.96 0.005 150);
+/* ============================================================
+   PLENITUDE — LIGHT
+   ============================================================ */
+.light {
+  --background: #EEF4FF;
+  --foreground: #0B1221;
+  --card: #FFFFFF;
+  --card-foreground: #0B1221;
+  --popover: #FFFFFF;
+  --popover-foreground: #0B1221;
 
-  --primary: oklch(0.7 0.15 150);
-  --primary-foreground: oklch(0.18 0.015 240);
-  --primary-glow: oklch(0.78 0.14 150);
+  --primary: #1D4ED8;
+  --primary-foreground: #FFFFFF;
+  --primary-glow: #0EA5E9;
 
-  --secondary: oklch(0.26 0.02 240);
-  --secondary-foreground: oklch(0.96 0.005 150);
-  --muted: oklch(0.26 0.02 240);
-  --muted-foreground: oklch(0.7 0.02 240);
-  --accent: oklch(0.3 0.04 150);
-  --accent-foreground: oklch(0.96 0.005 150);
-  --destructive: oklch(0.65 0.2 27);
-  --destructive-foreground: oklch(0.99 0.005 27);
-  --border: oklch(1 0 0 / 8%);
-  --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.7 0.15 150);
+  --secondary: #DAE8FF;
+  --secondary-foreground: #0B1221;
 
-  --chat-panel: oklch(0.2 0.015 240);
-  --chat-bg: oklch(0.16 0.012 240);
-  --bubble-out: oklch(0.34 0.07 150);
-  --bubble-out-foreground: oklch(0.96 0.005 150);
-  --bubble-in: oklch(0.26 0.02 240);
-  --bubble-in-foreground: oklch(0.96 0.005 150);
+  --muted: #E5EEFF;
+  --muted-foreground: #475569;
+
+  --accent: #DBEAFE;
+  --accent-foreground: #1D4ED8;
+
+  --destructive: #DC2626;
+  --destructive-foreground: #FFFFFF;
+
+  --border: rgba(37,99,235,0.13);
+  --input: rgba(37,99,235,0.13);
+  --ring: #1D4ED8;
+
+  --chat-panel: #E5EEFF;
+  --chat-bg: #EEF4FF;
+  --bubble-out: #DBEAFE;
+  --bubble-out-foreground: #0B1221;
+  --bubble-in: #FFFFFF;
+  --bubble-in-foreground: #0B1221;
+
+  --sidebar: #EAF0FF;
+  --sidebar-foreground: #0B1221;
+  --sidebar-primary: #1D4ED8;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #DBEAFE;
+  --sidebar-accent-foreground: #1D4ED8;
+  --sidebar-border: rgba(37,99,235,0.07);
+  --sidebar-ring: #1D4ED8;
 }
 
 @layer base {
@@ -151,5 +194,27 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+    background-image: var(--grad-mesh);
+    background-attachment: fixed;
   }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(59,130,246,0.38);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(0,180,255,0.55); }
+}
+
+@layer utilities {
+  .text-gradient {
+    background: var(--grad-text);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .bg-gradient-blue { background: var(--grad-blue); }
+  .glow-blue-sm { box-shadow: var(--glow-blue-sm); }
+  .glow-blue-md { box-shadow: var(--glow-blue-md); }
 }
