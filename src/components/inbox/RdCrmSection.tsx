@@ -230,7 +230,15 @@ export function RdCrmSection({
         const before = deal.customFields[k] ?? null;
         if (JSON.stringify(before) !== JSON.stringify(v)) changedCustom[k] = v;
       }
-      const payload: Parameters<typeof updateDeal>[0]["data"] = { dealId: deal.id };
+      const payload: {
+        dealId: string;
+        stageId?: string;
+        name?: string;
+        rating?: number | null;
+        predictionDate?: string | null;
+        amountTotal?: number | null;
+        customFields?: Record<string, RdFieldValue>;
+      } = { dealId: deal.id };
       if (editStageId && editStageId !== deal.stageId) payload.stageId = editStageId;
       if (editName !== deal.name) payload.name = editName;
       if ((editRating ?? null) !== (deal.rating ?? null)) payload.rating = editRating;
