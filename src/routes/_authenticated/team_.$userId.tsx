@@ -351,6 +351,9 @@ function SellerDetailsPage() {
             <Kpi icon={CheckCircle2} label="Fechadas" value={closedAll} />
           </section>
 
+          {/* WhatsApp account access */}
+          <WhatsappAccessCard userId={userId} isManager />
+
           {/* Conversations list */}
           <Card>
             <CardHeader className="pb-3 space-y-3">
