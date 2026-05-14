@@ -119,6 +119,13 @@ type RdDeal = {
   _id?: string;
   id?: string;
   name?: string;
+  rating?: number | null;
+  prediction_date?: string | null;
+  amount_total?: number | string | null;
+  amount_unique?: number | string | null;
+  amount_montly?: number | string | null;
+  user?: { _id?: string; id?: string; name?: string } | null;
+  user_id?: string;
   contacts?: RdContact[];
   deal_stage?: { _id?: string; id?: string; name?: string; deal_pipeline_id?: string; deal_pipeline?: { _id?: string; id?: string; name?: string } };
   deal_custom_fields?: Array<{
