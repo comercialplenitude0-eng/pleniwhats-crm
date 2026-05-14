@@ -169,7 +169,7 @@ export const syncWaTemplates = createServerFn({ method: "POST" })
       const { error } = await supabaseAdmin
         .from("whatsapp_message_templates")
         .update({
-          status: t.status.toLowerCase(),
+          status: t.status.toLowerCase() as "pending" | "approved" | "rejected" | "paused" | "disabled",
           meta_template_id: t.id,
           rejection_reason: t.rejected_reason ?? null,
           last_sync_at: new Date().toISOString(),
