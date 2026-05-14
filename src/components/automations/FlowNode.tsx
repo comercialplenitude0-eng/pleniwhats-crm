@@ -83,7 +83,7 @@ export const FlowNode = memo(({ data, selected }: NodeProps) => {
             position={Position.Bottom}
             isConnectable
             style={{ left: "25%" }}
-            className="!w-6 !h-6 !-bottom-3 !bg-emerald-400 !border-4 !border-background hover:!scale-125 transition-transform"
+            className="!w-5 !h-5 !bg-emerald-400 !border-2 !border-background hover:!scale-125 transition-transform"
           />
           <Handle
             id="no"
@@ -91,7 +91,7 @@ export const FlowNode = memo(({ data, selected }: NodeProps) => {
             position={Position.Bottom}
             isConnectable
             style={{ left: "75%" }}
-            className="!w-6 !h-6 !-bottom-3 !bg-rose-400 !border-4 !border-background hover:!scale-125 transition-transform"
+            className="!w-5 !h-5 !bg-rose-400 !border-2 !border-background hover:!scale-125 transition-transform"
           />
         </>
       ) : (
@@ -99,7 +99,7 @@ export const FlowNode = memo(({ data, selected }: NodeProps) => {
           type="source"
           position={Position.Bottom}
           isConnectable
-          className="!w-6 !h-6 !-bottom-3 !bg-primary !border-4 !border-background hover:!scale-125 transition-transform"
+          className="!w-5 !h-5 !bg-primary !border-2 !border-background hover:!scale-125 transition-transform"
         />
       )}
     </div>
