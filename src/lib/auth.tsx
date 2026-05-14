@@ -78,6 +78,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
      
   }, [session?.user?.id]);
 
+  // Presence heartbeat: refresh last_seen_at every minute while logged in.
+  useEffect(() => {
+    if (!session?.user) return;
+    let stopped = false;
+    const ping = () => {
+      void supabase.rpc("update_presence");
+    };
+    ping();
+    const id = setInterval(() => {
+      if (!stopped && document.visibilityState === "visible") ping();
+    }, 60_000);
+    const onVis = () => {
+      if (document.visibilityState === "visible") ping();
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      stopped = true;
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [session?.user?.id]);
+
   const value: AuthState = {
     loading,
     user: session?.user ?? null,
