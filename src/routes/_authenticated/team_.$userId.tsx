@@ -25,6 +25,13 @@ import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
 } from "recharts";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import {
+  listWhatsappAccounts,
+  getAllUserAccess,
+  setUserAccountAccess,
+} from "@/lib/whatsapp-accounts.functions";
+import { Phone, Save } from "lucide-react";
 
 type RangeKey = "7d" | "14d" | "30d";
 const RANGE_DAYS: Record<RangeKey, number> = { "7d": 7, "14d": 14, "30d": 30 };
