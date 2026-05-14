@@ -25,6 +25,7 @@ import { Route as AuthenticatedAuditRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedTeamUserIdRouteImport } from './routes/_authenticated/team.$userId'
 import { Route as AuthenticatedSettingsWhatsappAccountsRouteImport } from './routes/_authenticated/settings_.whatsapp-accounts'
 import { Route as AuthenticatedSettingsWhatsappRouteImport } from './routes/_authenticated/settings_.whatsapp'
+import { Route as AuthenticatedSettingsWaTemplatesRouteImport } from './routes/_authenticated/settings_.wa-templates'
 import { Route as AuthenticatedSettingsTagsRouteImport } from './routes/_authenticated/settings_.tags'
 import { Route as AuthenticatedSettingsMediaRetentionRouteImport } from './routes/_authenticated/settings_.media-retention'
 import { Route as AuthenticatedContactsPhoneRouteImport } from './routes/_authenticated/contacts.$phone'
@@ -114,6 +115,12 @@ const AuthenticatedSettingsWhatsappRoute =
     path: '/settings/whatsapp',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedSettingsWaTemplatesRoute =
+  AuthenticatedSettingsWaTemplatesRouteImport.update({
+    id: '/settings_/wa-templates',
+    path: '/settings/wa-templates',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedSettingsTagsRoute =
   AuthenticatedSettingsTagsRouteImport.update({
     id: '/settings_/tags',
@@ -166,6 +173,7 @@ export interface FileRoutesByFullPath {
   '/contacts/$phone': typeof AuthenticatedContactsPhoneRoute
   '/settings/media-retention': typeof AuthenticatedSettingsMediaRetentionRoute
   '/settings/tags': typeof AuthenticatedSettingsTagsRoute
+  '/settings/wa-templates': typeof AuthenticatedSettingsWaTemplatesRoute
   '/settings/whatsapp': typeof AuthenticatedSettingsWhatsappRoute
   '/settings/whatsapp-accounts': typeof AuthenticatedSettingsWhatsappAccountsRoute
   '/team/$userId': typeof AuthenticatedTeamUserIdRoute
@@ -189,6 +197,7 @@ export interface FileRoutesByTo {
   '/contacts/$phone': typeof AuthenticatedContactsPhoneRoute
   '/settings/media-retention': typeof AuthenticatedSettingsMediaRetentionRoute
   '/settings/tags': typeof AuthenticatedSettingsTagsRoute
+  '/settings/wa-templates': typeof AuthenticatedSettingsWaTemplatesRoute
   '/settings/whatsapp': typeof AuthenticatedSettingsWhatsappRoute
   '/settings/whatsapp-accounts': typeof AuthenticatedSettingsWhatsappAccountsRoute
   '/team/$userId': typeof AuthenticatedTeamUserIdRoute
@@ -214,6 +223,7 @@ export interface FileRoutesById {
   '/_authenticated/contacts/$phone': typeof AuthenticatedContactsPhoneRoute
   '/_authenticated/settings_/media-retention': typeof AuthenticatedSettingsMediaRetentionRoute
   '/_authenticated/settings_/tags': typeof AuthenticatedSettingsTagsRoute
+  '/_authenticated/settings_/wa-templates': typeof AuthenticatedSettingsWaTemplatesRoute
   '/_authenticated/settings_/whatsapp': typeof AuthenticatedSettingsWhatsappRoute
   '/_authenticated/settings_/whatsapp-accounts': typeof AuthenticatedSettingsWhatsappAccountsRoute
   '/_authenticated/team/$userId': typeof AuthenticatedTeamUserIdRoute
@@ -239,6 +249,7 @@ export interface FileRouteTypes {
     | '/contacts/$phone'
     | '/settings/media-retention'
     | '/settings/tags'
+    | '/settings/wa-templates'
     | '/settings/whatsapp'
     | '/settings/whatsapp-accounts'
     | '/team/$userId'
@@ -262,6 +273,7 @@ export interface FileRouteTypes {
     | '/contacts/$phone'
     | '/settings/media-retention'
     | '/settings/tags'
+    | '/settings/wa-templates'
     | '/settings/whatsapp'
     | '/settings/whatsapp-accounts'
     | '/team/$userId'
@@ -286,6 +298,7 @@ export interface FileRouteTypes {
     | '/_authenticated/contacts/$phone'
     | '/_authenticated/settings_/media-retention'
     | '/_authenticated/settings_/tags'
+    | '/_authenticated/settings_/wa-templates'
     | '/_authenticated/settings_/whatsapp'
     | '/_authenticated/settings_/whatsapp-accounts'
     | '/_authenticated/team/$userId'
@@ -417,6 +430,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsWhatsappRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/settings_/wa-templates': {
+      id: '/_authenticated/settings_/wa-templates'
+      path: '/settings/wa-templates'
+      fullPath: '/settings/wa-templates'
+      preLoaderRoute: typeof AuthenticatedSettingsWaTemplatesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/settings_/tags': {
       id: '/_authenticated/settings_/tags'
       path: '/settings/tags'
@@ -499,6 +519,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRoute
   AuthenticatedSettingsMediaRetentionRoute: typeof AuthenticatedSettingsMediaRetentionRoute
   AuthenticatedSettingsTagsRoute: typeof AuthenticatedSettingsTagsRoute
+  AuthenticatedSettingsWaTemplatesRoute: typeof AuthenticatedSettingsWaTemplatesRoute
   AuthenticatedSettingsWhatsappRoute: typeof AuthenticatedSettingsWhatsappRoute
   AuthenticatedSettingsWhatsappAccountsRoute: typeof AuthenticatedSettingsWhatsappAccountsRoute
 }
@@ -517,6 +538,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSettingsMediaRetentionRoute:
     AuthenticatedSettingsMediaRetentionRoute,
   AuthenticatedSettingsTagsRoute: AuthenticatedSettingsTagsRoute,
+  AuthenticatedSettingsWaTemplatesRoute: AuthenticatedSettingsWaTemplatesRoute,
   AuthenticatedSettingsWhatsappRoute: AuthenticatedSettingsWhatsappRoute,
   AuthenticatedSettingsWhatsappAccountsRoute:
     AuthenticatedSettingsWhatsappAccountsRoute,

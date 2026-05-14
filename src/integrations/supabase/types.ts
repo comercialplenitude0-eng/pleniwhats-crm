@@ -690,6 +690,69 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_message_templates: {
+        Row: {
+          account_id: string
+          body_text: string
+          buttons: Json
+          category: Database["public"]["Enums"]["wa_template_category"]
+          created_at: string
+          created_by: string | null
+          example: Json
+          footer_text: string | null
+          header_text: string | null
+          header_type: string | null
+          id: string
+          language: string
+          last_sync_at: string | null
+          meta_template_id: string | null
+          name: string
+          rejection_reason: string | null
+          status: Database["public"]["Enums"]["wa_template_status"]
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          body_text: string
+          buttons?: Json
+          category?: Database["public"]["Enums"]["wa_template_category"]
+          created_at?: string
+          created_by?: string | null
+          example?: Json
+          footer_text?: string | null
+          header_text?: string | null
+          header_type?: string | null
+          id?: string
+          language?: string
+          last_sync_at?: string | null
+          meta_template_id?: string | null
+          name: string
+          rejection_reason?: string | null
+          status?: Database["public"]["Enums"]["wa_template_status"]
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          body_text?: string
+          buttons?: Json
+          category?: Database["public"]["Enums"]["wa_template_category"]
+          created_at?: string
+          created_by?: string | null
+          example?: Json
+          footer_text?: string | null
+          header_text?: string | null
+          header_type?: string | null
+          id?: string
+          language?: string
+          last_sync_at?: string | null
+          meta_template_id?: string | null
+          name?: string
+          rejection_reason?: string | null
+          status?: Database["public"]["Enums"]["wa_template_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       whatsapp_settings: {
         Row: {
           access_token: string | null
@@ -814,6 +877,14 @@ export type Database = {
       msg_status: "sent" | "delivered" | "read" | "failed"
       msg_type: "text" | "audio" | "image" | "document" | "template" | "video"
       user_status: "online" | "busy" | "away" | "offline"
+      wa_template_category: "MARKETING" | "UTILITY" | "AUTHENTICATION"
+      wa_template_status:
+        | "draft"
+        | "pending"
+        | "approved"
+        | "rejected"
+        | "paused"
+        | "disabled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -957,6 +1028,15 @@ export const Constants = {
       msg_status: ["sent", "delivered", "read", "failed"],
       msg_type: ["text", "audio", "image", "document", "template", "video"],
       user_status: ["online", "busy", "away", "offline"],
+      wa_template_category: ["MARKETING", "UTILITY", "AUTHENTICATION"],
+      wa_template_status: [
+        "draft",
+        "pending",
+        "approved",
+        "rejected",
+        "paused",
+        "disabled",
+      ],
     },
   },
 } as const
