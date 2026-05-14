@@ -310,6 +310,20 @@ function SettingsPage() {
                 <ChevronRight className="size-4 text-muted-foreground" />
               </Link>
               <Link
+                to="/settings/wa-templates"
+                className="flex items-center justify-between rounded-md border p-3 hover:bg-accent transition-colors"
+              >
+                <div>
+                  <p className="text-sm font-medium flex items-center gap-2">
+                    <MessageCircle className="size-3.5" /> Templates WhatsApp (Meta)
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Cadastre templates e envie para aprovação da Meta automaticamente
+                  </p>
+                </div>
+                <ChevronRight className="size-4 text-muted-foreground" />
+              </Link>
+              <Link
                 to="/settings/tags"
                 className="flex items-center justify-between rounded-md border p-3 hover:bg-accent transition-colors"
               >
