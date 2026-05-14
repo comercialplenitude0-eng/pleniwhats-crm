@@ -336,6 +336,8 @@ function SettingsPage() {
             </CardContent>
           </Card>
 
+          <TransferConversationsCard members={members} onDone={() => void load()} />
+
           <Card>
             <CardHeader>
               <CardTitle className="text-sm flex items-center gap-2">
