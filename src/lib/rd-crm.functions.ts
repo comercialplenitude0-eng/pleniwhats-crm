@@ -221,9 +221,67 @@ function parseCustomFieldDef(raw: any): RdCustomFieldDef | null {
 export const listRdDealCustomFields = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
-    const data = await rdCrm("/custom_fields", { query: { for: "deal" } });
-    const list = (Array.isArray(data) ? data : data?.custom_fields ?? data?.items ?? []) as any[];
-    const fields = list.map(parseCustomFieldDef).filter((x): x is RdCustomFieldDef => !!x);
+    // Tenta vários endpoints/queries — o RD CRM tem variações por conta
+    const tryPaths: Array<{ path: string; query?: Record<string, string> }> = [
+      { path: "/custom_fields", query: { for: "deal" } },
+      { path: "/custom_fields/deal" },
+      { path: "/custom_fields", query: { _for: "deal" } },
+      { path: "/custom_fields" },
+    ];
+    let list: any[] = [];
+    let rawSample: any = null;
+    for (const t of tryPaths) {
+      try {
+        const data = await rdCrm(t.path, { query: t.query });
+        const items = (Array.isArray(data) ? data : data?.custom_fields ?? data?.items ?? []) as any[];
+        if (items.length > 0) {
+          list = items;
+          rawSample = items[0];
+          break;
+        }
+      } catch (e) {
+        // tenta o próximo
+      }
+    }
+
+    // Filtra para deals (quando o endpoint é genérico)
+    const dealFields = list.filter((f) => {
+      const scope = String(f?.for ?? f?.applicable_for ?? f?.entity ?? "").toLowerCase();
+      return !scope || scope === "deal" || scope === "deals";
+    });
+    const useList = dealFields.length > 0 ? dealFields : list;
+
+    const fields = useList.map(parseCustomFieldDef).filter((x): x is RdCustomFieldDef => !!x);
+
+    // Se algum campo tipado como lista veio sem opções, busca individualmente
+    for (const f of fields) {
+      const t = f.type.toLowerCase();
+      const looksList =
+        t.includes("list") ||
+        t.includes("select") ||
+        t.includes("choice") ||
+        t.includes("dropdown") ||
+        t.includes("radio") ||
+        t.includes("multi");
+      if (looksList && f.options.length === 0) {
+        try {
+          const d = await rdCrm(`/custom_fields/${encodeURIComponent(f.id)}`);
+          const opts = (d?.custom_field_options ?? d?.options ?? []) as any[];
+          f.options = opts
+            .map((o) => ({
+              id: String(o?._id ?? o?.id ?? o?.value ?? ""),
+              label: String(o?.label ?? o?.name ?? o?.value ?? ""),
+            }))
+            .filter((o) => o.id || o.label);
+        } catch {
+          // mantém vazio
+        }
+      }
+    }
+
+    console.log("[RD CRM] custom fields sample raw:", JSON.stringify(rawSample)?.slice(0, 800));
+    console.log("[RD CRM] parsed fields:", fields.map((f) => ({ label: f.label, type: f.type, options: f.options.length })));
+
     return { fields };
   });
 
