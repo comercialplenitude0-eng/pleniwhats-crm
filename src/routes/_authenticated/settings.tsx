@@ -302,6 +302,18 @@ function SettingsPage() {
                 </div>
                 <ChevronRight className="size-4 text-muted-foreground" />
               </Link>
+              <Link
+                to="/settings/media-retention"
+                className="flex items-center justify-between rounded-md border p-3 hover:bg-accent transition-colors"
+              >
+                <div>
+                  <p className="text-sm font-medium">Retenção de mídia</p>
+                  <p className="text-xs text-muted-foreground">
+                    Apaga áudios/vídeos antigos automaticamente para conter o storage
+                  </p>
+                </div>
+                <ChevronRight className="size-4 text-muted-foreground" />
+              </Link>
             </CardContent>
           </Card>
 
