@@ -28,6 +28,7 @@ import { Route as AuthenticatedSettingsWhatsappRouteImport } from './routes/_aut
 import { Route as AuthenticatedSettingsWaTemplatesRouteImport } from './routes/_authenticated/settings_.wa-templates'
 import { Route as AuthenticatedSettingsTagsRouteImport } from './routes/_authenticated/settings_.tags'
 import { Route as AuthenticatedSettingsMediaRetentionRouteImport } from './routes/_authenticated/settings_.media-retention'
+import { Route as AuthenticatedSettingsLogsRouteImport } from './routes/_authenticated/settings_.logs'
 import { Route as AuthenticatedContactsPhoneRouteImport } from './routes/_authenticated/contacts.$phone'
 import { Route as ApiPublicHooksWhatsappRouteImport } from './routes/api/public/hooks/whatsapp'
 import { Route as ApiPublicHooksProcessWebhookQueueRouteImport } from './routes/api/public/hooks/process-webhook-queue'
@@ -136,6 +137,12 @@ const AuthenticatedSettingsMediaRetentionRoute =
     path: '/settings/media-retention',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedSettingsLogsRoute =
+  AuthenticatedSettingsLogsRouteImport.update({
+    id: '/settings_/logs',
+    path: '/settings/logs',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedContactsPhoneRoute =
   AuthenticatedContactsPhoneRouteImport.update({
     id: '/$phone',
@@ -192,6 +199,7 @@ export interface FileRoutesByFullPath {
   '/team': typeof AuthenticatedTeamRoute
   '/templates': typeof AuthenticatedTemplatesRoute
   '/contacts/$phone': typeof AuthenticatedContactsPhoneRoute
+  '/settings/logs': typeof AuthenticatedSettingsLogsRoute
   '/settings/media-retention': typeof AuthenticatedSettingsMediaRetentionRoute
   '/settings/tags': typeof AuthenticatedSettingsTagsRoute
   '/settings/wa-templates': typeof AuthenticatedSettingsWaTemplatesRoute
@@ -219,6 +227,7 @@ export interface FileRoutesByTo {
   '/team': typeof AuthenticatedTeamRoute
   '/templates': typeof AuthenticatedTemplatesRoute
   '/contacts/$phone': typeof AuthenticatedContactsPhoneRoute
+  '/settings/logs': typeof AuthenticatedSettingsLogsRoute
   '/settings/media-retention': typeof AuthenticatedSettingsMediaRetentionRoute
   '/settings/tags': typeof AuthenticatedSettingsTagsRoute
   '/settings/wa-templates': typeof AuthenticatedSettingsWaTemplatesRoute
@@ -248,6 +257,7 @@ export interface FileRoutesById {
   '/_authenticated/team': typeof AuthenticatedTeamRoute
   '/_authenticated/templates': typeof AuthenticatedTemplatesRoute
   '/_authenticated/contacts/$phone': typeof AuthenticatedContactsPhoneRoute
+  '/_authenticated/settings_/logs': typeof AuthenticatedSettingsLogsRoute
   '/_authenticated/settings_/media-retention': typeof AuthenticatedSettingsMediaRetentionRoute
   '/_authenticated/settings_/tags': typeof AuthenticatedSettingsTagsRoute
   '/_authenticated/settings_/wa-templates': typeof AuthenticatedSettingsWaTemplatesRoute
@@ -277,6 +287,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/templates'
     | '/contacts/$phone'
+    | '/settings/logs'
     | '/settings/media-retention'
     | '/settings/tags'
     | '/settings/wa-templates'
@@ -304,6 +315,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/templates'
     | '/contacts/$phone'
+    | '/settings/logs'
     | '/settings/media-retention'
     | '/settings/tags'
     | '/settings/wa-templates'
@@ -332,6 +344,7 @@ export interface FileRouteTypes {
     | '/_authenticated/team'
     | '/_authenticated/templates'
     | '/_authenticated/contacts/$phone'
+    | '/_authenticated/settings_/logs'
     | '/_authenticated/settings_/media-retention'
     | '/_authenticated/settings_/tags'
     | '/_authenticated/settings_/wa-templates'
@@ -493,6 +506,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsMediaRetentionRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/settings_/logs': {
+      id: '/_authenticated/settings_/logs'
+      path: '/settings/logs'
+      fullPath: '/settings/logs'
+      preLoaderRoute: typeof AuthenticatedSettingsLogsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/contacts/$phone': {
       id: '/_authenticated/contacts/$phone'
       path: '/$phone'
@@ -569,6 +589,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
   AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRoute
+  AuthenticatedSettingsLogsRoute: typeof AuthenticatedSettingsLogsRoute
   AuthenticatedSettingsMediaRetentionRoute: typeof AuthenticatedSettingsMediaRetentionRoute
   AuthenticatedSettingsTagsRoute: typeof AuthenticatedSettingsTagsRoute
   AuthenticatedSettingsWaTemplatesRoute: typeof AuthenticatedSettingsWaTemplatesRoute
@@ -588,6 +609,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedTeamRoute: AuthenticatedTeamRoute,
   AuthenticatedTemplatesRoute: AuthenticatedTemplatesRoute,
+  AuthenticatedSettingsLogsRoute: AuthenticatedSettingsLogsRoute,
   AuthenticatedSettingsMediaRetentionRoute:
     AuthenticatedSettingsMediaRetentionRoute,
   AuthenticatedSettingsTagsRoute: AuthenticatedSettingsTagsRoute,
@@ -618,3 +640,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
