@@ -8,6 +8,32 @@ async function ensureManager(supabase: any, userId: string) {
   if (!data) throw new Error("Apenas Admin/Gestor podem editar contatos.");
 }
 
+/**
+ * Normaliza telefone para formato canônico E.164 brasileiro: +55DDDNUMERO.
+ * Aceita: "(11) 94945-4546", "11949454546", "5511949454546", "+55 11 94945-4546" etc.
+ * Se não tiver DDI 55, assume Brasil. Se já tiver outro DDI, preserva.
+ */
+export function canonicalizePhone(raw: string): string {
+  const digits = (raw || "").replace(/\D+/g, "");
+  if (!digits) return "";
+  // Já tem 55 + DDD (2) + número (8 ou 9) → 12 ou 13 dígitos
+  if ((digits.length === 12 || digits.length === 13) && digits.startsWith("55")) {
+    return `+${digits}`;
+  }
+  // DDD + número (10 ou 11 dígitos) → adiciona 55
+  if (digits.length === 10 || digits.length === 11) {
+    return `+55${digits}`;
+  }
+  // Outros formatos (internacionais, curtos): preserva com +
+  return `+${digits}`;
+}
+
+/** Últimos 8 dígitos para matching aproximado entre formatos. */
+function phoneTail(raw: string): string {
+  const d = (raw || "").replace(/\D+/g, "");
+  return d.slice(-8);
+}
+
 export const listContacts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -64,8 +90,31 @@ export const upsertContact = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
     await ensureManager(supabase, userId);
+
+    const canonical = canonicalizePhone(data.phone);
+    if (!canonical) throw new Error("Telefone inválido.");
+    const tail = phoneTail(canonical);
+
+    // Detecta duplicado pelos últimos 8 dígitos (cobre variações de formato)
+    if (tail.length === 8) {
+      const { data: existing, error: dupErr } = await supabase
+        .from("contacts")
+        .select("id, phone, name")
+        .ilike("phone", `%${tail}`);
+      if (dupErr) throw new Error(dupErr.message);
+      const conflict = (existing ?? []).find(
+        (c: { id: string; phone: string }) =>
+          c.phone.replace(/\D+/g, "").slice(-8) === tail && c.id !== data.id,
+      );
+      if (conflict) {
+        throw new Error(
+          `Já existe um contato com esse telefone: ${conflict.name} (${conflict.phone}).`,
+        );
+      }
+    }
+
     const payload = {
-      phone: data.phone.trim(),
+      phone: canonical,
       name: data.name.trim(),
       email: data.email?.trim() || null,
       avatar_url: data.avatar_url?.trim() || null,
