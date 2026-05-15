@@ -54,7 +54,7 @@ export const FlowNode = memo(({ id, data, selected }: NodeProps) => {
   return (
     <div
       className={cn(
-        "group rounded-lg border bg-card min-w-[240px] transition-all shadow-sm hover:shadow-md relative",
+        "group rounded-lg border min-w-[240px] transition-all shadow-sm hover:shadow-md relative",
         meta.accent,
         selected && meta.ring,
       )}
