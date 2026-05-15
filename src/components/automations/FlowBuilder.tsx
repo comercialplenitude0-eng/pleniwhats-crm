@@ -368,7 +368,7 @@ function Inner({
             <NodeConfigPanel
               data={selectedNode.data as unknown as FlowNodeData}
               onChange={(next) => updateNodeData(selectedNode.id, next)}
-              onDelete={() => deleteNode(selectedNode.id)}
+              onDelete={() => requestDelete(selectedNode.id)}
               canDelete={
                 (selectedNode.data as unknown as FlowNodeData).kind !== "trigger" ||
                 nodes.filter((n) => (n.data as unknown as FlowNodeData).kind === "trigger").length > 1
@@ -393,7 +393,7 @@ function Inner({
           <NodeConfigPanel
             data={selectedNode.data as unknown as FlowNodeData}
             onChange={(next) => updateNodeData(selectedNode.id, next)}
-            onDelete={() => deleteNode(selectedNode.id)}
+            onDelete={() => requestDelete(selectedNode.id)}
             canDelete={
               (selectedNode.data as unknown as FlowNodeData).kind !== "trigger" ||
               nodes.filter((n) => (n.data as unknown as FlowNodeData).kind === "trigger").length > 1
