@@ -17,6 +17,7 @@ import {
 import { initials, LABEL_META, STATUS_LABEL, type Conversation, type ConvLabel, type ConvStatus, type Message } from "@/lib/inbox-types";
 import { toast } from "sonner";
 import { AlertsPanel } from "@/components/dashboard/AlertsPanel";
+import { SystemHealthCard } from "@/components/dashboard/SystemHealthCard";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
   BarChart, Bar, PieChart, Pie, Cell, Legend,
