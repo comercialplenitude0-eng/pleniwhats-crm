@@ -67,33 +67,33 @@ export const NODE_META: Record<
     name: "Gatilho",
     emoji: "",
     accent:
-      "bg-[oklch(0.96_0.02_240)] dark:bg-[oklch(0.22_0.04_240)] border-[oklch(0.85_0.06_240)] dark:border-[oklch(0.40_0.08_240)] text-card-foreground",
-    ring: "shadow-[0_0_0_1.5px_oklch(0.78_0.12_240)]",
-    dot: "bg-[oklch(0.78_0.12_240)]",
+      "bg-[oklch(0.96_0.05_75)] dark:bg-[oklch(0.24_0.06_75)] border-[oklch(0.78_0.13_75)] dark:border-[oklch(0.50_0.12_75)] text-card-foreground",
+    ring: "shadow-[0_0_0_1.5px_oklch(0.72_0.16_75)]",
+    dot: "bg-[oklch(0.72_0.16_75)]",
   },
   wait: {
     name: "Espera",
     emoji: "",
     accent:
-      "bg-[oklch(0.95_0.04_235)] dark:bg-[oklch(0.24_0.06_235)] border-[oklch(0.78_0.09_235)] dark:border-[oklch(0.45_0.10_235)] text-card-foreground",
-    ring: "shadow-[0_0_0_1.5px_oklch(0.68_0.13_235)]",
-    dot: "bg-[oklch(0.68_0.13_235)]",
+      "bg-[oklch(0.95_0.05_220)] dark:bg-[oklch(0.24_0.06_220)] border-[oklch(0.75_0.10_220)] dark:border-[oklch(0.48_0.10_220)] text-card-foreground",
+    ring: "shadow-[0_0_0_1.5px_oklch(0.65_0.14_220)]",
+    dot: "bg-[oklch(0.65_0.14_220)]",
   },
   condition: {
     name: "Condição",
     emoji: "",
     accent:
-      "bg-[oklch(0.93_0.06_255)] dark:bg-[oklch(0.26_0.08_255)] border-[oklch(0.70_0.12_255)] dark:border-[oklch(0.50_0.12_255)] text-card-foreground",
-    ring: "shadow-[0_0_0_1.5px_oklch(0.55_0.16_255)]",
-    dot: "bg-[oklch(0.55_0.16_255)]",
+      "bg-[oklch(0.94_0.05_300)] dark:bg-[oklch(0.26_0.07_300)] border-[oklch(0.72_0.13_300)] dark:border-[oklch(0.50_0.13_300)] text-card-foreground",
+    ring: "shadow-[0_0_0_1.5px_oklch(0.60_0.18_300)]",
+    dot: "bg-[oklch(0.60_0.18_300)]",
   },
   action: {
     name: "Ação",
     emoji: "",
     accent:
-      "bg-[oklch(0.91_0.08_265)] dark:bg-[oklch(0.28_0.10_265)] border-[oklch(0.62_0.14_265)] dark:border-[oklch(0.55_0.14_265)] text-card-foreground",
-    ring: "shadow-[0_0_0_1.5px_oklch(0.42_0.18_265)]",
-    dot: "bg-[oklch(0.42_0.18_265)]",
+      "bg-[oklch(0.94_0.06_155)] dark:bg-[oklch(0.25_0.07_155)] border-[oklch(0.70_0.13_155)] dark:border-[oklch(0.48_0.12_155)] text-card-foreground",
+    ring: "shadow-[0_0_0_1.5px_oklch(0.60_0.16_155)]",
+    dot: "bg-[oklch(0.60_0.16_155)]",
   },
 };
 
