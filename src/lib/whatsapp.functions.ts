@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequestHost } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
@@ -80,6 +81,20 @@ export const sendWhatsappMessage = createServerFn({ method: "POST" })
         .update({ status: "failed" })
         .eq("id", msg.id);
       throw new Error(qErr.message);
+    }
+
+    // 3) Fire-and-forget: aciona o processador imediatamente para latência ~300ms.
+    //    Se falhar, o cron de 1 min cobre.
+    try {
+      const host = getRequestHost();
+      if (host) {
+        void fetch(`https://${host}/api/public/hooks/process-outbound-queue`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        }).catch(() => {});
+      }
+    } catch {
+      // ignore
     }
 
     return { ok: true, messageId: msg.id };

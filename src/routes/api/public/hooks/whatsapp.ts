@@ -57,6 +57,18 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp")({
           // Logamos para investigar.
         }
 
+        // Fire-and-forget: dispara o processamento imediatamente, sem esperar.
+        // Se falhar, o cron de 1 min processa depois.
+        try {
+          const origin = new URL(request.url).origin;
+          void fetch(`${origin}/api/public/hooks/process-webhook-queue`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+          }).catch(() => {});
+        } catch {
+          // ignore
+        }
+
         return new Response("ok", { status: 200 });
       },
     },
