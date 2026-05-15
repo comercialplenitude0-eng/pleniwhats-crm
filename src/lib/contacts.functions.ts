@@ -16,15 +16,12 @@ async function ensureManager(supabase: any, userId: string) {
 export function canonicalizePhone(raw: string): string {
   const digits = (raw || "").replace(/\D+/g, "");
   if (!digits) return "";
-  // Já tem 55 + DDD (2) + número (8 ou 9) → 12 ou 13 dígitos
   if ((digits.length === 12 || digits.length === 13) && digits.startsWith("55")) {
     return `+${digits}`;
   }
-  // DDD + número (10 ou 11 dígitos) → adiciona 55
   if (digits.length === 10 || digits.length === 11) {
     return `+55${digits}`;
   }
-  // Outros formatos (internacionais, curtos): preserva com +
   return `+${digits}`;
 }
 
