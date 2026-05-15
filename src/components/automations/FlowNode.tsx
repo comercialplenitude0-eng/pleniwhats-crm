@@ -1,5 +1,6 @@
 import { memo } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
+import { Copy, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   NODE_META,
@@ -8,6 +9,10 @@ import {
   type FlowNodeData,
 } from "./flow-types";
 import { LABEL_META, STATUS_LABEL, type ConvLabel, type ConvStatus } from "@/lib/inbox-types";
+
+function emit(action: "duplicate" | "delete", id: string) {
+  window.dispatchEvent(new CustomEvent("flow-node-action", { detail: { action, id } }));
+}
 
 function summarize(data: FlowNodeData): string {
   switch (data.kind) {
@@ -40,7 +45,7 @@ function summarize(data: FlowNodeData): string {
   }
 }
 
-export const FlowNode = memo(({ data, selected }: NodeProps) => {
+export const FlowNode = memo(({ id, data, selected }: NodeProps) => {
   const d = data as unknown as FlowNodeData;
   const meta = NODE_META[d.kind];
   const isCondition = d.kind === "condition";
@@ -49,7 +54,7 @@ export const FlowNode = memo(({ data, selected }: NodeProps) => {
   return (
     <div
       className={cn(
-        "rounded-lg border bg-card min-w-[240px] transition-all shadow-sm hover:shadow-md",
+        "group rounded-lg border bg-card min-w-[240px] transition-all shadow-sm hover:shadow-md relative",
         meta.accent,
         selected && meta.ring,
       )}
@@ -65,6 +70,31 @@ export const FlowNode = memo(({ data, selected }: NodeProps) => {
       <div className="px-4 pt-3 pb-1.5 flex items-center gap-2">
         <span className={cn("size-1.5 rounded-full", meta.dot)} />
         <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">{meta.name}</span>
+        <div
+          className={cn(
+            "ml-auto flex items-center gap-0.5 transition-opacity nodrag nopan",
+            selected ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+          )}
+        >
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); emit("duplicate", id); }}
+            className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/60 transition"
+            title="Duplicar"
+          >
+            <Copy className="size-3" />
+          </button>
+          {!isTrigger && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); emit("delete", id); }}
+              className="p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition"
+              title="Excluir"
+            >
+              <Trash2 className="size-3" />
+            </button>
+          )}
+        </div>
       </div>
       <div className="px-4 pb-3 text-sm font-normal text-foreground">{summarize(d)}</div>
 

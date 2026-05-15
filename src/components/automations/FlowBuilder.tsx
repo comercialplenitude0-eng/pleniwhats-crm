@@ -19,6 +19,16 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Save, Plus } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { FlowNode } from "./FlowNode";
 import { NodeConfigPanel } from "./NodeConfigPanel";
@@ -170,8 +180,69 @@ function Inner({
   const deleteNode = (id: string) => {
     setNodes((ns) => ns.filter((n) => n.id !== id));
     setEdges((es) => es.filter((e) => e.source !== id && e.target !== id));
-    setSelectedId(null);
+    setSelectedId((s) => (s === id ? null : s));
   };
+
+  const duplicateNode = (id: string) => {
+    setNodes((ns) => {
+      const src = ns.find((n) => n.id === id);
+      if (!src) return ns;
+      const kind = (src.data as unknown as FlowNodeData).kind;
+      if (kind === "trigger") {
+        toast.error("Gatilho não pode ser duplicado");
+        return ns;
+      }
+      const newId = `${kind}-${Date.now()}-${++idRef.current}`;
+      const clone: Node = {
+        ...src,
+        id: newId,
+        position: { x: src.position.x + 40, y: src.position.y + 40 },
+        data: JSON.parse(JSON.stringify(src.data)),
+        selected: false,
+      };
+      return [...ns, clone];
+    });
+  };
+
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
+  const requestDelete = useCallback(
+    (id: string) => {
+      const node = nodes.find((n) => n.id === id);
+      if (!node) return;
+      if ((node.data as unknown as FlowNodeData).kind === "trigger") {
+        toast.error("O nó de Gatilho não pode ser excluído");
+        return;
+      }
+      setConfirmDeleteId(id);
+    },
+    [nodes],
+  );
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ action: "delete" | "duplicate"; id: string }>).detail;
+      if (!detail) return;
+      if (detail.action === "delete") requestDelete(detail.id);
+      else if (detail.action === "duplicate") duplicateNode(detail.id);
+    };
+    window.addEventListener("flow-node-action", handler);
+    return () => window.removeEventListener("flow-node-action", handler);
+  }, [requestDelete]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!selectedId) return;
+      const tag = (e.target as HTMLElement | null)?.tagName?.toLowerCase();
+      if (tag === "input" || tag === "textarea" || (e.target as HTMLElement)?.isContentEditable) return;
+      if (e.key === "Delete" || e.key === "Backspace") {
+        e.preventDefault();
+        requestDelete(selectedId);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selectedId, requestDelete]);
 
   async function handleSave() {
     if (!name.trim()) return toast.error("Dê um nome ao fluxo");
@@ -297,7 +368,7 @@ function Inner({
             <NodeConfigPanel
               data={selectedNode.data as unknown as FlowNodeData}
               onChange={(next) => updateNodeData(selectedNode.id, next)}
-              onDelete={() => deleteNode(selectedNode.id)}
+              onDelete={() => requestDelete(selectedNode.id)}
               canDelete={
                 (selectedNode.data as unknown as FlowNodeData).kind !== "trigger" ||
                 nodes.filter((n) => (n.data as unknown as FlowNodeData).kind === "trigger").length > 1
@@ -322,7 +393,7 @@ function Inner({
           <NodeConfigPanel
             data={selectedNode.data as unknown as FlowNodeData}
             onChange={(next) => updateNodeData(selectedNode.id, next)}
-            onDelete={() => deleteNode(selectedNode.id)}
+            onDelete={() => requestDelete(selectedNode.id)}
             canDelete={
               (selectedNode.data as unknown as FlowNodeData).kind !== "trigger" ||
               nodes.filter((n) => (n.data as unknown as FlowNodeData).kind === "trigger").length > 1
@@ -332,6 +403,29 @@ function Inner({
           />
         </div>
       )}
+
+      <AlertDialog open={!!confirmDeleteId} onOpenChange={(o) => !o && setConfirmDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir este nó?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O nó e suas conexões serão removidos do fluxo. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmDeleteId) deleteNode(confirmDeleteId);
+                setConfirmDeleteId(null);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
