@@ -2,83 +2,10 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-
-const GRAPH_VERSION = "v21.0";
-
-function normalizePhone(p: string) {
-  return (p ?? "").replace(/\D/g, "");
-}
-
-type MetaPayload = Record<string, unknown> & { to: string; type: string };
-
-async function getCredsForAccount(accountId: string | null): Promise<{
-  token: string;
-  phoneId: string;
-}> {
-  // 1) Tenta pela conta específica
-  if (accountId) {
-    const { data: acc } = await supabaseAdmin
-      .from("whatsapp_accounts")
-      .select("access_token, phone_number_id, enabled")
-      .eq("id", accountId)
-      .maybeSingle();
-    if (acc?.enabled === false) {
-      throw new Error("Esta conta WhatsApp está desativada.");
-    }
-    if (acc?.access_token && acc?.phone_number_id) {
-      return { token: acc.access_token, phoneId: acc.phone_number_id };
-    }
-  }
-  // 2) Fallback: primeira conta habilitada
-  const { data: any1 } = await supabaseAdmin
-    .from("whatsapp_accounts")
-    .select("access_token, phone_number_id")
-    .eq("enabled", true)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-  if (any1?.access_token && any1?.phone_number_id) {
-    return { token: any1.access_token, phoneId: any1.phone_number_id };
-  }
-  // 3) Último fallback: legado whatsapp_settings
-  const { data: cfg } = await supabaseAdmin
-    .from("whatsapp_settings")
-    .select("access_token, phone_number_id")
-    .eq("id", true)
-    .maybeSingle();
-  const token = cfg?.access_token || process.env.WHATSAPP_ACCESS_TOKEN;
-  const phoneId = cfg?.phone_number_id || process.env.WHATSAPP_PHONE_NUMBER_ID;
-  if (!token || !phoneId) {
-    throw new Error(
-      "Nenhuma conta WhatsApp configurada. Cadastre uma em Configurações → Contas WhatsApp.",
-    );
-  }
-  return { token, phoneId };
-}
-
-async function sendToMeta(
-  payload: MetaPayload,
-  accountId: string | null,
-): Promise<string | null> {
-  const { token, phoneId } = await getCredsForAccount(accountId);
-  const res = await fetch(
-    `https://graph.facebook.com/${GRAPH_VERSION}/${phoneId}/messages`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ messaging_product: "whatsapp", ...payload }),
-    },
-  );
-  const json = await res.json().catch(() => ({} as { messages?: Array<{ id?: string }>; error?: { message?: string } }));
-  if (!res.ok) {
-    const msg = json?.error?.message ?? `Meta API ${res.status}`;
-    throw new Error(msg);
-  }
-  return json?.messages?.[0]?.id ?? null;
-}
+import {
+  buildMetaPayload,
+  normalizePhone,
+} from "@/lib/whatsapp-send.server";
 
 const SendInput = z.object({
   conversationId: z.string().uuid(),
@@ -88,6 +15,15 @@ const SendInput = z.object({
   filename: z.string().nullable().optional(),
 });
 
+/**
+ * Enfileira uma mensagem para envio. NÃO chama a Meta na request do usuário —
+ * o cron `process-outbound-queue` faz isso com retry/backoff.
+ *
+ * Fluxo:
+ *  1) Cria a `messages` com status='queued' (UI já mostra como "enviando")
+ *  2) Insere `outbound_queue` com payload pronto
+ *  3) Retorna 200 imediato. UX <100ms mesmo quando a Meta está lenta.
+ */
 export const sendWhatsappMessage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => SendInput.parse(input))
@@ -104,53 +40,47 @@ export const sendWhatsappMessage = createServerFn({ method: "POST" })
     const to = normalizePhone(conv.contact_phone);
     if (!to) throw new Error("Telefone do contato inválido");
 
-    let payload: MetaPayload;
-    if (data.type === "text") {
-      payload = { to, type: "text", text: { body: data.content ?? "" } };
-    } else if (data.type === "image") {
-      if (!data.mediaUrl) throw new Error("mediaUrl obrigatório para imagem");
-      payload = {
-        to,
-        type: "image",
-        image: { link: data.mediaUrl, caption: data.content ?? undefined },
-      };
-    } else if (data.type === "audio") {
-      if (!data.mediaUrl) throw new Error("mediaUrl obrigatório para áudio");
-      payload = { to, type: "audio", audio: { link: data.mediaUrl } };
-    } else {
-      if (!data.mediaUrl) throw new Error("mediaUrl obrigatório para documento");
-      payload = {
-        to,
-        type: "document",
-        document: {
-          link: data.mediaUrl,
-          filename: data.filename ?? data.content ?? "arquivo",
-        },
-      };
-    }
+    // Valida formato do payload antes de enfileirar
+    const payload = buildMetaPayload(
+      to,
+      data.type,
+      data.content,
+      data.mediaUrl,
+      data.filename,
+    );
 
-    let wamid: string | null = null;
-    let status: "sent" | "failed" = "sent";
-    let sendError: string | null = null;
-    try {
-      wamid = await sendToMeta(payload, conv.account_id ?? null);
-    } catch (e) {
-      status = "failed";
-      sendError = (e as Error).message ?? String(e);
-    }
+    // 1) Cria a mensagem outbound em estado 'queued'
+    const { data: msg, error: insErr } = await supabaseAdmin
+      .from("messages")
+      .insert({
+        conversation_id: data.conversationId,
+        account_id: conv.account_id ?? null,
+        direction: "outbound",
+        type: data.type,
+        content: data.content ?? null,
+        media_url: data.mediaUrl ?? null,
+        sender_id: userId,
+        status: "queued",
+      })
+      .select("id")
+      .single();
+    if (insErr || !msg) throw new Error(insErr?.message ?? "Falha ao criar mensagem");
 
-    const { error: insErr } = await supabaseAdmin.from("messages").insert({
+    // 2) Enfileira o envio
+    const { error: qErr } = await supabaseAdmin.from("outbound_queue").insert({
+      message_id: msg.id,
       conversation_id: data.conversationId,
       account_id: conv.account_id ?? null,
-      direction: "outbound",
-      type: data.type,
-      content: data.content ?? null,
-      media_url: data.mediaUrl ?? null,
-      sender_id: userId,
-      status,
-      wamid,
+      payload: payload as never,
     });
-    if (insErr) throw new Error(insErr.message);
-    if (sendError) throw new Error(sendError);
-    return { ok: true, wamid };
+    if (qErr) {
+      // Rollback do status da mensagem
+      await supabaseAdmin
+        .from("messages")
+        .update({ status: "failed" })
+        .eq("id", msg.id);
+      throw new Error(qErr.message);
+    }
+
+    return { ok: true, messageId: msg.id };
   });

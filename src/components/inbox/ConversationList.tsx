@@ -41,6 +41,9 @@ type Props = {
   selectedId: string | null;
   onSelect: (id: string) => void;
   onSeeded: () => void;
+  onLoadMore?: () => void;
+  hasMore?: boolean;
+  loadingMore?: boolean;
 };
 
 type Profile = { id: string; name: string };
@@ -63,6 +66,9 @@ export function ConversationList({
   selectedId,
   onSelect,
   onSeeded,
+  onLoadMore,
+  hasMore,
+  loadingMore,
 }: Props) {
   const { profile, role, signOut } = useAuth();
   const [query, setQuery] = useState("");
@@ -523,6 +529,18 @@ export function ConversationList({
               );
             })}
           </ul>
+        )}
+        {hasMore && filtered.length > 0 && (
+          <div className="p-3 text-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onLoadMore}
+              disabled={loadingMore}
+            >
+              {loadingMore ? "Carregando…" : "Carregar mais"}
+            </Button>
+          </div>
         )}
       </ScrollArea>
     </aside>
