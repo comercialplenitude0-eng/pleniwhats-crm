@@ -14,12 +14,12 @@ export const listAppLogs = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => FilterSchema.parse(input))
   .handler(async ({ data, context }) => {
-    // Verify caller is admin
+    // Verify caller is admin or gestor
     const { data: roleRow } = await context.supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", context.userId)
-      .eq("role", "admin")
+      .in("role", ["admin", "gestor"])
       .maybeSingle();
     if (!roleRow) throw new Error("Acesso negado");
 

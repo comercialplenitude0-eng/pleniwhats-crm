@@ -46,8 +46,8 @@ function LogsPage() {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    if (role && role !== "admin") {
-      toast.error("Acesso restrito a administradores");
+    if (role && role !== "admin" && role !== "gestor") {
+      toast.error("Acesso restrito a gestores");
       navigate({ to: "/settings" });
     }
   }, [role, navigate]);
