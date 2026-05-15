@@ -1,8 +1,8 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { listAppLogs } from "@/lib/app-logs.functions";
-import { useAuth } from "@/lib/auth";
+import { useAuth, isManagerRole } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, RefreshCw, FileText } from "lucide-react";
+import { Loader2, RefreshCw, FileText, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/settings_/logs")({
@@ -35,8 +35,7 @@ const LEVEL_COLOR: Record<string, string> = {
 };
 
 function LogsPage() {
-  const { role } = useAuth();
-  const navigate = useNavigate();
+  const { role, loading: authLoading } = useAuth();
   const fetchLogs = useServerFn(listAppLogs);
 
   const [rows, setRows] = useState<Row[]>([]);
@@ -45,14 +44,10 @@ function LogsPage() {
   const [source, setSource] = useState("");
   const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    if (role && role !== "admin" && role !== "gestor") {
-      toast.error("Acesso restrito a gestores");
-      navigate({ to: "/settings" });
-    }
-  }, [role, navigate]);
+  const allowed = isManagerRole(role);
 
   async function load() {
+    if (!allowed) return;
     setLoading(true);
     try {
       const res = await fetchLogs({
@@ -71,7 +66,52 @@ function LogsPage() {
     }
   }
 
-  useEffect(() => { void load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+  useEffect(() => {
+    if (allowed) void load();
+    else setLoading(false);
+     
+  }, [allowed]);
+
+  if (authLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <Loader2 className="size-5 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!allowed) {
+    return (
+      <div className="flex-1 min-w-0 flex flex-col">
+        <header className="px-4 sm:px-6 py-4 border-b bg-card">
+          <h1 className="text-lg sm:text-xl font-semibold flex items-center gap-2">
+            <FileText className="size-5 text-primary shrink-0" />
+            <span className="truncate">Logs do sistema</span>
+          </h1>
+        </header>
+        <div className="flex-1 flex items-center justify-center p-6">
+          <Card className="max-w-md w-full">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <ShieldAlert className="size-5 text-amber-600" />
+                Acesso restrito
+              </CardTitle>
+              <CardDescription>
+                Apenas usuários com perfil <strong>Gestor</strong> ou <strong>Admin</strong> podem
+                visualizar os logs do sistema. Seu perfil atual é <strong>{role ?? "—"}</strong>.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link to="/settings">
+                <Button variant="outline" size="sm">Voltar para configurações</Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
 
   return (
     <div className="flex-1 min-w-0 flex flex-col">
