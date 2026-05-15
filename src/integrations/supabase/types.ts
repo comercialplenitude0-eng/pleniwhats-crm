@@ -50,6 +50,33 @@ export type Database = {
         }
         Relationships: []
       }
+      app_logs: {
+        Row: {
+          created_at: string
+          id: string
+          level: string
+          message: string
+          meta: Json
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          level?: string
+          message: string
+          meta?: Json
+          source: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          level?: string
+          message?: string
+          meta?: Json
+          source?: string
+        }
+        Relationships: []
+      }
       automation_rules: {
         Row: {
           action: Database["public"]["Enums"]["automation_action"]
@@ -392,6 +419,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      media_download_queue: {
+        Row: {
+          account_id: string | null
+          attempts: number
+          created_at: string
+          downloaded_at: string | null
+          id: string
+          last_error: string | null
+          media_id: string
+          media_type: string
+          message_id: string
+          next_attempt_at: string
+          status: string
+        }
+        Insert: {
+          account_id?: string | null
+          attempts?: number
+          created_at?: string
+          downloaded_at?: string | null
+          id?: string
+          last_error?: string | null
+          media_id: string
+          media_type: string
+          message_id: string
+          next_attempt_at?: string
+          status?: string
+        }
+        Update: {
+          account_id?: string | null
+          attempts?: number
+          created_at?: string
+          downloaded_at?: string | null
+          id?: string
+          last_error?: string | null
+          media_id?: string
+          media_type?: string
+          message_id?: string
+          next_attempt_at?: string
+          status?: string
+        }
+        Relationships: []
       }
       media_retention_settings: {
         Row: {
