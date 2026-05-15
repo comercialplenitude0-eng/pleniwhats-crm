@@ -530,6 +530,18 @@ export function ConversationList({
             })}
           </ul>
         )}
+        {hasMore && filtered.length > 0 && (
+          <div className="p-3 text-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onLoadMore}
+              disabled={loadingMore}
+            >
+              {loadingMore ? "Carregando…" : "Carregar mais"}
+            </Button>
+          </div>
+        )}
       </ScrollArea>
     </aside>
   );
