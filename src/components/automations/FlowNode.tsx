@@ -49,7 +49,7 @@ export const FlowNode = memo(({ data, selected }: NodeProps) => {
   return (
     <div
       className={cn(
-        "rounded-xl border bg-card backdrop-blur-sm min-w-[220px] transition-all shadow-md",
+        "rounded-lg border bg-card min-w-[240px] transition-all shadow-sm hover:shadow-md",
         meta.accent,
         selected && meta.ring,
       )}
@@ -59,20 +59,19 @@ export const FlowNode = memo(({ data, selected }: NodeProps) => {
           type="target"
           position={Position.Top}
           isConnectable
-          className="!w-5 !h-5 !bg-primary !border-2 !border-background hover:!scale-125 transition-transform"
+          className="!w-2.5 !h-2.5 !bg-primary !border !border-background"
         />
       )}
-      <div className="px-3 py-2 border-b border-border flex items-center gap-2">
-        <span className={cn("size-2 rounded-full", meta.dot)} />
-        <span className="text-base leading-none">{meta.emoji}</span>
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{meta.name}</span>
+      <div className="px-4 pt-3 pb-1.5 flex items-center gap-2">
+        <span className={cn("size-1.5 rounded-full", meta.dot)} />
+        <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">{meta.name}</span>
       </div>
-      <div className="px-3 py-2.5 text-sm text-foreground">{summarize(d)}</div>
+      <div className="px-4 pb-3 text-sm font-normal text-foreground">{summarize(d)}</div>
 
       {isCondition ? (
-        <div className="px-3 pb-2 flex items-center justify-between gap-2 text-[10px] font-medium">
-          <span className="text-emerald-300">✓ Sim</span>
-          <span className="text-rose-300">✗ Não</span>
+        <div className="px-4 pb-2.5 flex items-center justify-between gap-2 text-[10px] font-medium tracking-wide">
+          <span className="text-[oklch(0.78_0.12_240)]">Sim</span>
+          <span className="text-muted-foreground">Não</span>
         </div>
       ) : null}
 
@@ -84,7 +83,7 @@ export const FlowNode = memo(({ data, selected }: NodeProps) => {
             position={Position.Bottom}
             isConnectable
             style={{ left: "25%" }}
-            className="!w-5 !h-5 !bg-emerald-400 !border-2 !border-background hover:!scale-125 transition-transform"
+            className="!w-2.5 !h-2.5 !bg-[oklch(0.78_0.12_240)] !border !border-background"
           />
           <Handle
             id="no"
@@ -92,7 +91,7 @@ export const FlowNode = memo(({ data, selected }: NodeProps) => {
             position={Position.Bottom}
             isConnectable
             style={{ left: "75%" }}
-            className="!w-5 !h-5 !bg-rose-400 !border-2 !border-background hover:!scale-125 transition-transform"
+            className="!w-2.5 !h-2.5 !bg-muted-foreground !border !border-background"
           />
         </>
       ) : (
@@ -100,7 +99,7 @@ export const FlowNode = memo(({ data, selected }: NodeProps) => {
           type="source"
           position={Position.Bottom}
           isConnectable
-          className="!w-5 !h-5 !bg-primary !border-2 !border-background hover:!scale-125 transition-transform"
+          className="!w-2.5 !h-2.5 !bg-primary !border !border-background"
         />
       )}
     </div>
