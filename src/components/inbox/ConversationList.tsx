@@ -66,6 +66,9 @@ export function ConversationList({
   selectedId,
   onSelect,
   onSeeded,
+  onLoadMore,
+  hasMore,
+  loadingMore,
 }: Props) {
   const { profile, role, signOut } = useAuth();
   const [query, setQuery] = useState("");
