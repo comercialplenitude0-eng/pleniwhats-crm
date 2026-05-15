@@ -112,26 +112,6 @@ function LogsPage() {
     );
   }
 
-  async function load() {
-    setLoading(true);
-    try {
-      const res = await fetchLogs({
-        data: {
-          level,
-          source: source.trim() || undefined,
-          search: search.trim() || undefined,
-          limit: 200,
-        },
-      });
-      setRows(res.rows as Row[]);
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => { void load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
 
   return (
     <div className="flex-1 min-w-0 flex flex-col">
