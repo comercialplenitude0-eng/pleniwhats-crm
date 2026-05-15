@@ -17,7 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { getRdDealContact, findRdDealByPhone } from "@/lib/rd-crm.functions";
-import { canonicalizePhone } from "@/lib/contacts.functions";
+import { canonicalizePhone } from "@/lib/phone";
 
 type Step = "phone" | "details";
 
