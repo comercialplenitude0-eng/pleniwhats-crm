@@ -90,8 +90,31 @@ export const upsertContact = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as { supabase: any; userId: string };
     await ensureManager(supabase, userId);
+
+    const canonical = canonicalizePhone(data.phone);
+    if (!canonical) throw new Error("Telefone inválido.");
+    const tail = phoneTail(canonical);
+
+    // Detecta duplicado pelos últimos 8 dígitos (cobre variações de formato)
+    if (tail.length === 8) {
+      const { data: existing, error: dupErr } = await supabase
+        .from("contacts")
+        .select("id, phone, name")
+        .ilike("phone", `%${tail}`);
+      if (dupErr) throw new Error(dupErr.message);
+      const conflict = (existing ?? []).find(
+        (c: { id: string; phone: string }) =>
+          c.phone.replace(/\D+/g, "").slice(-8) === tail && c.id !== data.id,
+      );
+      if (conflict) {
+        throw new Error(
+          `Já existe um contato com esse telefone: ${conflict.name} (${conflict.phone}).`,
+        );
+      }
+    }
+
     const payload = {
-      phone: data.phone.trim(),
+      phone: canonical,
       name: data.name.trim(),
       email: data.email?.trim() || null,
       avatar_url: data.avatar_url?.trim() || null,
