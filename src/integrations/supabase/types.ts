@@ -470,6 +470,8 @@ export type Database = {
           created_at: string
           direction: Database["public"]["Enums"]["msg_direction"]
           id: string
+          media_id: string | null
+          media_status: string
           media_url: string | null
           sender_id: string | null
           status: Database["public"]["Enums"]["msg_status"]
@@ -483,6 +485,8 @@ export type Database = {
           created_at?: string
           direction: Database["public"]["Enums"]["msg_direction"]
           id?: string
+          media_id?: string | null
+          media_status?: string
           media_url?: string | null
           sender_id?: string | null
           status?: Database["public"]["Enums"]["msg_status"]
@@ -496,6 +500,8 @@ export type Database = {
           created_at?: string
           direction?: Database["public"]["Enums"]["msg_direction"]
           id?: string
+          media_id?: string | null
+          media_status?: string
           media_url?: string | null
           sender_id?: string | null
           status?: Database["public"]["Enums"]["msg_status"]
@@ -525,6 +531,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      outbound_queue: {
+        Row: {
+          account_id: string | null
+          attempts: number
+          conversation_id: string
+          created_at: string
+          id: string
+          last_error: string | null
+          message_id: string
+          next_attempt_at: string
+          payload: Json
+          sent_at: string | null
+          status: string
+          wamid: string | null
+        }
+        Insert: {
+          account_id?: string | null
+          attempts?: number
+          conversation_id: string
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          message_id: string
+          next_attempt_at?: string
+          payload: Json
+          sent_at?: string | null
+          status?: string
+          wamid?: string | null
+        }
+        Update: {
+          account_id?: string | null
+          attempts?: number
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          message_id?: string
+          next_attempt_at?: string
+          payload?: Json
+          sent_at?: string | null
+          status?: string
+          wamid?: string | null
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -919,7 +970,7 @@ export type Database = {
       conv_label: "hot" | "warm" | "cold" | "new" | "closed"
       conv_status: "aguardando" | "em_atendimento" | "encerrada"
       msg_direction: "inbound" | "outbound"
-      msg_status: "sent" | "delivered" | "read" | "failed"
+      msg_status: "sent" | "delivered" | "read" | "failed" | "queued"
       msg_type: "text" | "audio" | "image" | "document" | "template" | "video"
       user_status: "online" | "busy" | "away" | "offline"
       wa_template_category: "MARKETING" | "UTILITY" | "AUTHENTICATION"
@@ -1070,7 +1121,7 @@ export const Constants = {
       conv_label: ["hot", "warm", "cold", "new", "closed"],
       conv_status: ["aguardando", "em_atendimento", "encerrada"],
       msg_direction: ["inbound", "outbound"],
-      msg_status: ["sent", "delivered", "read", "failed"],
+      msg_status: ["sent", "delivered", "read", "failed", "queued"],
       msg_type: ["text", "audio", "image", "document", "template", "video"],
       user_status: ["online", "busy", "away", "offline"],
       wa_template_category: ["MARKETING", "UTILITY", "AUTHENTICATION"],
