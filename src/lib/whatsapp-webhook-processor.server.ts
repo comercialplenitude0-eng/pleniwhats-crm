@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { logEvent } from "@/lib/app-logger.server";
 
 const GRAPH_VERSION = "v21.0";
 
