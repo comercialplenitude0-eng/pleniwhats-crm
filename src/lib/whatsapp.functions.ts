@@ -71,7 +71,7 @@ export const sendWhatsappMessage = createServerFn({ method: "POST" })
       message_id: msg.id,
       conversation_id: data.conversationId,
       account_id: conv.account_id ?? null,
-      payload: payload as unknown as Record<string, unknown>,
+      payload: payload as never,
     });
     if (qErr) {
       // Rollback do status da mensagem
