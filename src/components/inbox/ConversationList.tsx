@@ -41,6 +41,9 @@ type Props = {
   selectedId: string | null;
   onSelect: (id: string) => void;
   onSeeded: () => void;
+  onLoadMore?: () => void;
+  hasMore?: boolean;
+  loadingMore?: boolean;
 };
 
 type Profile = { id: string; name: string };
