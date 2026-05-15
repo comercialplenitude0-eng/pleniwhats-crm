@@ -32,6 +32,7 @@ import { Route as AuthenticatedContactsPhoneRouteImport } from './routes/_authen
 import { Route as ApiPublicHooksWhatsappRouteImport } from './routes/api/public/hooks/whatsapp'
 import { Route as ApiPublicHooksProcessWebhookQueueRouteImport } from './routes/api/public/hooks/process-webhook-queue'
 import { Route as ApiPublicHooksProcessOutboundQueueRouteImport } from './routes/api/public/hooks/process-outbound-queue'
+import { Route as ApiPublicHooksProcessMediaQueueRouteImport } from './routes/api/public/hooks/process-media-queue'
 import { Route as ApiPublicHooksCrmAutoNotesRouteImport } from './routes/api/public/hooks/crm-auto-notes'
 import { Route as ApiPublicHooksCleanupMediaRouteImport } from './routes/api/public/hooks/cleanup-media'
 
@@ -158,6 +159,12 @@ const ApiPublicHooksProcessOutboundQueueRoute =
     path: '/api/public/hooks/process-outbound-queue',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksProcessMediaQueueRoute =
+  ApiPublicHooksProcessMediaQueueRouteImport.update({
+    id: '/api/public/hooks/process-media-queue',
+    path: '/api/public/hooks/process-media-queue',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksCrmAutoNotesRoute =
   ApiPublicHooksCrmAutoNotesRouteImport.update({
     id: '/api/public/hooks/crm-auto-notes',
@@ -193,6 +200,7 @@ export interface FileRoutesByFullPath {
   '/team/$userId': typeof AuthenticatedTeamUserIdRoute
   '/api/public/hooks/cleanup-media': typeof ApiPublicHooksCleanupMediaRoute
   '/api/public/hooks/crm-auto-notes': typeof ApiPublicHooksCrmAutoNotesRoute
+  '/api/public/hooks/process-media-queue': typeof ApiPublicHooksProcessMediaQueueRoute
   '/api/public/hooks/process-outbound-queue': typeof ApiPublicHooksProcessOutboundQueueRoute
   '/api/public/hooks/process-webhook-queue': typeof ApiPublicHooksProcessWebhookQueueRoute
   '/api/public/hooks/whatsapp': typeof ApiPublicHooksWhatsappRoute
@@ -219,6 +227,7 @@ export interface FileRoutesByTo {
   '/team/$userId': typeof AuthenticatedTeamUserIdRoute
   '/api/public/hooks/cleanup-media': typeof ApiPublicHooksCleanupMediaRoute
   '/api/public/hooks/crm-auto-notes': typeof ApiPublicHooksCrmAutoNotesRoute
+  '/api/public/hooks/process-media-queue': typeof ApiPublicHooksProcessMediaQueueRoute
   '/api/public/hooks/process-outbound-queue': typeof ApiPublicHooksProcessOutboundQueueRoute
   '/api/public/hooks/process-webhook-queue': typeof ApiPublicHooksProcessWebhookQueueRoute
   '/api/public/hooks/whatsapp': typeof ApiPublicHooksWhatsappRoute
@@ -247,6 +256,7 @@ export interface FileRoutesById {
   '/_authenticated/team_/$userId': typeof AuthenticatedTeamUserIdRoute
   '/api/public/hooks/cleanup-media': typeof ApiPublicHooksCleanupMediaRoute
   '/api/public/hooks/crm-auto-notes': typeof ApiPublicHooksCrmAutoNotesRoute
+  '/api/public/hooks/process-media-queue': typeof ApiPublicHooksProcessMediaQueueRoute
   '/api/public/hooks/process-outbound-queue': typeof ApiPublicHooksProcessOutboundQueueRoute
   '/api/public/hooks/process-webhook-queue': typeof ApiPublicHooksProcessWebhookQueueRoute
   '/api/public/hooks/whatsapp': typeof ApiPublicHooksWhatsappRoute
@@ -275,6 +285,7 @@ export interface FileRouteTypes {
     | '/team/$userId'
     | '/api/public/hooks/cleanup-media'
     | '/api/public/hooks/crm-auto-notes'
+    | '/api/public/hooks/process-media-queue'
     | '/api/public/hooks/process-outbound-queue'
     | '/api/public/hooks/process-webhook-queue'
     | '/api/public/hooks/whatsapp'
@@ -301,6 +312,7 @@ export interface FileRouteTypes {
     | '/team/$userId'
     | '/api/public/hooks/cleanup-media'
     | '/api/public/hooks/crm-auto-notes'
+    | '/api/public/hooks/process-media-queue'
     | '/api/public/hooks/process-outbound-queue'
     | '/api/public/hooks/process-webhook-queue'
     | '/api/public/hooks/whatsapp'
@@ -328,6 +340,7 @@ export interface FileRouteTypes {
     | '/_authenticated/team_/$userId'
     | '/api/public/hooks/cleanup-media'
     | '/api/public/hooks/crm-auto-notes'
+    | '/api/public/hooks/process-media-queue'
     | '/api/public/hooks/process-outbound-queue'
     | '/api/public/hooks/process-webhook-queue'
     | '/api/public/hooks/whatsapp'
@@ -339,6 +352,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ApiPublicHooksCleanupMediaRoute: typeof ApiPublicHooksCleanupMediaRoute
   ApiPublicHooksCrmAutoNotesRoute: typeof ApiPublicHooksCrmAutoNotesRoute
+  ApiPublicHooksProcessMediaQueueRoute: typeof ApiPublicHooksProcessMediaQueueRoute
   ApiPublicHooksProcessOutboundQueueRoute: typeof ApiPublicHooksProcessOutboundQueueRoute
   ApiPublicHooksProcessWebhookQueueRoute: typeof ApiPublicHooksProcessWebhookQueueRoute
   ApiPublicHooksWhatsappRoute: typeof ApiPublicHooksWhatsappRoute
@@ -507,6 +521,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksProcessOutboundQueueRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/process-media-queue': {
+      id: '/api/public/hooks/process-media-queue'
+      path: '/api/public/hooks/process-media-queue'
+      fullPath: '/api/public/hooks/process-media-queue'
+      preLoaderRoute: typeof ApiPublicHooksProcessMediaQueueRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/crm-auto-notes': {
       id: '/api/public/hooks/crm-auto-notes'
       path: '/api/public/hooks/crm-auto-notes'
@@ -587,6 +608,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ApiPublicHooksCleanupMediaRoute: ApiPublicHooksCleanupMediaRoute,
   ApiPublicHooksCrmAutoNotesRoute: ApiPublicHooksCrmAutoNotesRoute,
+  ApiPublicHooksProcessMediaQueueRoute: ApiPublicHooksProcessMediaQueueRoute,
   ApiPublicHooksProcessOutboundQueueRoute:
     ApiPublicHooksProcessOutboundQueueRoute,
   ApiPublicHooksProcessWebhookQueueRoute:
@@ -596,3 +618,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
