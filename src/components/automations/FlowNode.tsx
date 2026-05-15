@@ -1,5 +1,6 @@
 import { memo } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
+import { Copy, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   NODE_META,
@@ -8,6 +9,10 @@ import {
   type FlowNodeData,
 } from "./flow-types";
 import { LABEL_META, STATUS_LABEL, type ConvLabel, type ConvStatus } from "@/lib/inbox-types";
+
+function emit(action: "duplicate" | "delete", id: string) {
+  window.dispatchEvent(new CustomEvent("flow-node-action", { detail: { action, id } }));
+}
 
 function summarize(data: FlowNodeData): string {
   switch (data.kind) {
