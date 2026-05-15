@@ -253,6 +253,8 @@ function DashboardPage() {
             }}
           />
 
+          {isManagerRole(role) && <SystemHealthCard />}
+
           {/* Volume chart */}
           <Card>
             <CardHeader className="pb-3">
