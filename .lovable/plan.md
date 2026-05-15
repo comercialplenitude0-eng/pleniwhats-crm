@@ -1,84 +1,100 @@
-# Plano: alinhar sistema ao documento técnico
+# Plano de escalabilidade — 10 frentes
 
-São 4 mudanças arquiteturais grandes. Vou entregar uma fase por vez, cada uma estável e testável antes de seguir. Você aprova esse plano e eu começo pela Fase 1; ao final de cada fase eu paro, te mostro o que ficou e só sigo pra próxima com seu OK.
-
----
-
-## Fase 1 — Multi-conta WhatsApp
-
-**Objetivo:** suportar N números da Meta no mesmo workspace, cada vendedor vinculado a um ou mais números.
-
-### Banco
-- Nova tabela `whatsapp_accounts` (`id`, `display_name`, `phone_number`, `phone_number_id`, `business_account_id`, `access_token`, `app_secret`, `verify_token`, `enabled`).
-- Nova tabela `user_whatsapp_access` (`user_id`, `account_id`) — N:N.
-- `conversations` e `messages` ganham `account_id` (FK para `whatsapp_accounts`). Migration popula com a primeira conta migrada de `whatsapp_settings`.
-- `whatsapp_settings` vira legado (mantida só para não quebrar nada já em produção, depois descontinuada).
-- RLS atualizada: vendedor só vê conversas de contas em `user_whatsapp_access` (ou atribuídas a ele); gestor vê tudo.
-
-### App
-- Tela **Configurações → Contas WhatsApp**: lista, criar, editar, desativar conta. Cada conta tem seu próprio webhook URL exibido.
-- Tela **Equipe**: ao editar usuário, multiselect de contas que ele acessa.
-- **Inbox**: filtro de conta no topo da lista (chip "Todas / Conta X / Conta Y").
-- **Webhook** `/api/public/hooks/whatsapp` passa a rotear pelo `phone_number_id` do payload → resolve `account_id`.
-- Funções de envio (`sendText`, `sendTemplate`, `sendMedia`) recebem `account_id` e usam o token da conta.
+Entrega em **5 fases**, cada uma estável e testável. Ao fim de cada fase eu paro, te mostro o que mudou e só sigo com seu OK.
 
 ---
 
-## Fase 2 — Roles Admin / Gestor / Comercial / CS
+## Fase 1 — Webhook resiliente (itens 1 + 10a)
 
-**Objetivo:** trocar o enum `app_role` (`gestor`/`vendedor`) por 4 níveis, sem quebrar autorização.
+**Problema:** `/api/public/hooks/whatsapp` processa tudo síncrono. Se a Meta não receber 200 em ~5s, ela reenvia → mensagem duplicada. `findOrCreateConversation` faz scan completo.
 
-- Migration: adicionar valores `admin`, `comercial`, `cs` ao enum `app_role`. Mapear `vendedor` → `comercial` via update.
-- Helpers: `is_manager_role()` retorna true para `admin` e `gestor` (substitui `has_role(_, 'gestor')` em massa nas RLS).
-- Tela **Equipe**: dropdown de role com 4 opções, badges com cores distintas.
-- Telas restritas a gestor passam a aceitar admin também (Configurações, Campanhas, Automações, Equipe).
-
----
-
-## Fase 3 — Tags editáveis com sync Meta
-
-**Objetivo:** substituir o enum fixo `conv_label` por tabela editável, com cor e `meta_tag_id` para sincronização.
-
-- Nova tabela `tags` (`id`, `name`, `color`, `meta_tag_id`, `account_id` opcional).
-- Nova tabela `conversation_tags` (N:N entre `conversations` e `tags`).
-- `conv_label` mantido por compatibilidade; UI passa a usar a nova tabela.
-- Tela **Configurações → Tags**: CRUD com preview de cor.
-- Inbox: filtro por tags multiseleção; chips coloridos no card da conversa.
-- Função (server) `syncTagsFromMeta(account_id)` busca labels via Graph API e faz upsert por `meta_tag_id`.
+**O que entra:**
+- Tabela `webhook_events` (`id`, `provider`, `payload jsonb`, `received_at`, `status` [`pending|processing|done|failed`], `attempts`, `last_error`, `wamid`).
+- Webhook só valida assinatura, faz `INSERT` e responde **200 OK** em <500ms.
+- Cron de 1 min chama `/api/public/hooks/process-webhook-queue` que processa lote `pending` com `FOR UPDATE SKIP LOCKED`.
+- Índice único em `messages(wamid)` para idempotência (ignora duplicatas).
+- `findOrCreateConversation` passa a usar índice `conversations(account_id, contact_phone)`.
 
 ---
 
-## Fase 4 — Tabela `contacts` unificada
+## Fase 2 — Índices e hot-path do banco (item 2)
 
-**Objetivo:** 1 contato (telefone) → N conversas em N contas, sem duplicar `contact_name` em cada linha.
+**Problema:** queries do inbox e realtime fazem seq scan em tabelas que vão crescer rápido.
 
-- Nova tabela `contacts` (`id`, `phone`, `name`, `avatar`, `crm_id`).
-- `conversations.contact_id` (FK), com migration que cria contatos a partir dos `contact_phone` distintos.
-- Colunas `contact_name`/`contact_phone`/`contact_avatar` mantidas como cache durante transição, depois removidas.
-- Tela **Contatos**: passa a ler de `contacts`, mostrando todas as conversas (em todas as contas) de cada contato.
+**O que entra:**
+- `CREATE INDEX messages_conv_created_idx ON messages(conversation_id, created_at DESC)`
+- `CREATE UNIQUE INDEX messages_wamid_uidx ON messages(wamid) WHERE wamid IS NOT NULL`
+- `CREATE INDEX conversations_account_last_idx ON conversations(account_id, last_message_at DESC)`
+- `CREATE INDEX conversations_assigned_idx ON conversations(assigned_to) WHERE assigned_to IS NOT NULL`
+- `CREATE INDEX conversation_tags_conv_idx ON conversation_tags(conversation_id)`
+- `CREATE INDEX conversation_tags_tag_idx ON conversation_tags(tag_id)`
+- `CREATE INDEX contacts_phone_idx ON contacts(phone)`
+- Trigger `bump_conversation` ganha proteção: só atualiza se `last_message_at` mudou >2s (debounce simples).
+
+---
+
+## Fase 3 — Inbox em tempo real otimizado (item 3)
+
+**Problema:** `inbox.tsx` faz `load()` (SELECT * sem limite) a cada evento realtime. Com 1000+ conversas, trava o navegador.
+
+**O que entra (somente frontend):**
+- Realtime filtrado por `account_id` quando vendedor tem só 1 conta, ou por `assigned_to` para vendedor.
+- Patch incremental: ao receber UPDATE/INSERT, atualiza só a conversa afetada no estado local (sem refetch).
+- Paginação: carrega 50 conversas iniciais, scroll infinito carrega mais.
+- Debounce de 300ms em refetch quando vários eventos chegam juntos.
+
+---
+
+## Fase 4 — Fila de envio + mídia lazy (itens 4 + 5)
+
+**Problema:** `sendText/Template/Media` chama Graph API direto na request do usuário. Se a Meta retornar 429/5xx, perde a mensagem. Mídias são baixadas sempre, mesmo que ninguém abra.
+
+**O que entra:**
+- Tabela `outbound_queue` (`id`, `conversation_id`, `account_id`, `payload jsonb`, `status` [`queued|sending|sent|failed`], `attempts`, `next_attempt_at`, `last_error`, `wamid`).
+- `sendText/Template/Media` insere na fila e responde 200 imediato; UI mostra "enviando".
+- Cron de 30s processa fila com backoff exponencial (1s, 5s, 30s, 2min, 10min, então `failed`).
+- Mídia inbound: salva só `media_id` no webhook; download real vai pra fila separada `media_download_queue` e roda em background.
+- UI de chat: clicar no anexo dispara download sob demanda se ainda não baixado.
+
+---
+
+## Fase 5 — Observabilidade + race conditions (itens 8 + 10b)
+
+**Problema:** sem logs estruturados não dá pra saber por que uma mensagem sumiu. `claim_gestor_if_none` tem race em signups simultâneos.
+
+**O que entra:**
+- Tabela `app_logs` (`level`, `source`, `message`, `meta jsonb`, `created_at`) com retenção de 30 dias.
+- Helper `logEvent()` chamado em pontos críticos (webhook recv, queue process, send fail, RD CRM call).
+- Página **Configurações → Logs** (só admin) com filtro por nível/fonte e busca.
+- `claim_gestor_if_none` ganha `LOCK TABLE user_roles IN EXCLUSIVE MODE` no início (evita 2 admins criados ao mesmo tempo).
+- Dashboard ganha card "Saúde do sistema" mostrando: fila pendente, falhas última hora, último webhook recebido.
+
+---
+
+## Itens fora do plano técnico
+
+- **Item 6 — Particionar `messages`:** só faz sentido com >5M linhas. Fica registrado, executo quando o volume justificar.
+- **Item 7 — RLS expensive:** vou rodar `supabase--linter` ao fim de cada fase e otimizar o que aparecer. Sem mudança preventiva.
+- **Item 9 — Upgrade compute:** decisão de billing, não de código. Te aviso quando o Postgres estiver perto do teto.
 
 ---
 
 ## Detalhes técnicos
 
-### Ordem obrigatória
-Fase 1 vem primeiro porque tudo depois (roles, tags por conta, contacts cross-account) faz mais sentido com `account_id` no schema. Cada fase é uma migration + um conjunto de telas. Sem mudar várias coisas no mesmo PR.
+### Ordem
+Fase 1 destrava o gargalo mais crítico (perda/duplicação de mensagens). Fase 2 dá performance de leitura imediata. Fase 3 melhora UX percebida. Fase 4 protege envios. Fase 5 fecha o ciclo com visibilidade.
 
 ### Compatibilidade
-Toda migration faz **backfill** dos dados existentes antes de aplicar `NOT NULL`. Nenhuma conversa atual será perdida. As colunas legadas (`whatsapp_settings`, `conv_label`, `contact_name`) ficam por algumas fases para garantir rollback.
+Toda fase tem migration reversível. Fila e webhook_events começam vazios; código antigo continua funcionando até o cron entrar em ação. Nenhum dado existente é alterado.
 
-### RLS
-Cada fase reescreve as policies afetadas usando `SECURITY DEFINER` helpers para evitar recursão. Vou rodar o linter de RLS depois de cada migration.
-
-### Fora de escopo (por enquanto)
-- Não vou tocar no builder de automações nem em campanhas — já estão prontos e melhores que o spec.
-- Painel CRM (RD Station) também fica como está.
-- Foto de perfil WhatsApp: doc explicitamente diz que fica no Meta Business, então nada a fazer.
+### Custo no banco
+Cada cron novo é 1 chamada/min via `pg_net`. Carga insignificante. Índices custam ~10-15% mais em INSERT, ganho em SELECT é >10x.
 
 ### Estimativa
-- Fase 1: ~8 arquivos novos/editados + migration grande
-- Fase 2: ~4 arquivos + migration
-- Fase 3: ~5 arquivos + migration
-- Fase 4: ~6 arquivos + migration
+- Fase 1: 1 migration grande + 3 arquivos
+- Fase 2: 1 migration de índices
+- Fase 3: 2 arquivos (inbox.tsx + ConversationList.tsx)
+- Fase 4: 1 migration + 4 arquivos
+- Fase 5: 1 migration + 3 arquivos + 1 página nova
 
-Aprove esse plano e eu começo pela Fase 1 (multi-conta WhatsApp).
+Aprove e eu começo pela **Fase 1**.
