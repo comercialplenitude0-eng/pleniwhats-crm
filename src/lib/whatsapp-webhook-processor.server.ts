@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { logEvent } from "@/lib/app-logger.server";
 
 const GRAPH_VERSION = "v21.0";
 
@@ -164,7 +165,8 @@ export async function processWhatsappPayload(payload: AnyObj): Promise<void> {
 
         let type: "text" | "image" | "audio" | "document" = "text";
         let content: string | null = null;
-        let mediaUrl: string | null = null;
+        let mediaId: string | null = null;
+        let mediaKind: string | null = null;
         const mtype = msg.type as string;
 
         if (mtype === "text") {
@@ -172,26 +174,26 @@ export async function processWhatsappPayload(payload: AnyObj): Promise<void> {
         } else if (mtype === "image" && msg.image?.id) {
           type = "image";
           content = msg.image?.caption ?? null;
-          const r = await downloadMediaToBucket(msg.image.id, convoId, accessToken);
-          mediaUrl = r.url;
+          mediaId = msg.image.id;
+          mediaKind = "image";
         } else if (mtype === "audio" && msg.audio?.id) {
           type = "audio";
-          const r = await downloadMediaToBucket(msg.audio.id, convoId, accessToken);
-          mediaUrl = r.url;
+          mediaId = msg.audio.id;
+          mediaKind = "audio";
         } else if (mtype === "voice" && msg.voice?.id) {
           type = "audio";
-          const r = await downloadMediaToBucket(msg.voice.id, convoId, accessToken);
-          mediaUrl = r.url;
+          mediaId = msg.voice.id;
+          mediaKind = "audio";
         } else if (mtype === "document" && msg.document?.id) {
           type = "document";
           content = msg.document?.filename ?? null;
-          const r = await downloadMediaToBucket(msg.document.id, convoId, accessToken);
-          mediaUrl = r.url;
+          mediaId = msg.document.id;
+          mediaKind = "document";
         } else if (mtype === "video" && msg.video?.id) {
           type = "document";
           content = "vídeo recebido";
-          const r = await downloadMediaToBucket(msg.video.id, convoId, accessToken);
-          mediaUrl = r.url;
+          mediaId = msg.video.id;
+          mediaKind = "video";
         } else if (mtype === "button") {
           content = msg.button?.text ?? null;
         } else if (mtype === "interactive") {
@@ -203,18 +205,37 @@ export async function processWhatsappPayload(payload: AnyObj): Promise<void> {
           content = `[${mtype}]`;
         }
 
-        const { error: insErr } = await supabaseAdmin.from("messages").insert({
-          conversation_id: convoId,
-          account_id: accountId,
-          direction: "inbound",
-          type,
-          content,
-          media_url: mediaUrl,
-          wamid: msg.id ?? null,
-          status: "delivered",
-        });
+        const { data: inserted, error: insErr } = await supabaseAdmin
+          .from("messages")
+          .insert({
+            conversation_id: convoId,
+            account_id: accountId,
+            direction: "inbound",
+            type,
+            content,
+            media_id: mediaId,
+            media_status: mediaId ? "pending" : "none",
+            wamid: msg.id ?? null,
+            status: "delivered",
+          })
+          .select("id")
+          .maybeSingle();
         if (insErr && !/duplicate key/i.test(insErr.message)) {
           console.error("[whatsapp processor] insert msg:", insErr.message);
+          await logEvent("error", "webhook-processor", "insert message failed", {
+            wamid: msg.id,
+            error: insErr.message,
+          });
+        }
+
+        // Lazy media: enfileira download em background (sem bloquear webhook)
+        if (mediaId && inserted?.id) {
+          await supabaseAdmin.from("media_download_queue").insert({
+            message_id: inserted.id,
+            account_id: accountId,
+            media_id: mediaId,
+            media_type: mediaKind ?? "unknown",
+          });
         }
       }
 

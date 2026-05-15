@@ -98,3 +98,13 @@ Cada cron novo é 1 chamada/min via `pg_net`. Carga insignificante. Índices cus
 - Fase 5: 1 migration + 3 arquivos + 1 página nova
 
 Aprove e eu começo pela **Fase 1**.
+
+---
+
+## Status de execução
+
+- [x] Fase 1 — Webhook resiliente
+- [x] Fase 2 — Índices e debounce
+- [x] Fase 3 — Inbox otimizado
+- [x] Fase 4 — Fila de envio + esquema lazy de mídia
+- [x] Fase 5 — Observabilidade + race condition + download lazy de mídia em background

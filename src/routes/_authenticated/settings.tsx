@@ -347,6 +347,20 @@ function SettingsPage() {
                 </div>
                 <ChevronRight className="size-4 text-muted-foreground" />
               </Link>
+              {role === "admin" && (
+                <Link
+                  to="/settings/logs"
+                  className="flex items-center justify-between rounded-md border p-3 hover:bg-accent transition-colors"
+                >
+                  <div>
+                    <p className="text-sm font-medium">Logs do sistema</p>
+                    <p className="text-xs text-muted-foreground">
+                      Eventos recentes (webhook, fila de envio, downloads de mídia, erros)
+                    </p>
+                  </div>
+                  <ChevronRight className="size-4 text-muted-foreground" />
+                </Link>
+              )}
             </CardContent>
           </Card>
 
