@@ -8,6 +8,32 @@ async function ensureManager(supabase: any, userId: string) {
   if (!data) throw new Error("Apenas Admin/Gestor podem editar contatos.");
 }
 
+/**
+ * Normaliza telefone para formato canônico E.164 brasileiro: +55DDDNUMERO.
+ * Aceita: "(11) 94945-4546", "11949454546", "5511949454546", "+55 11 94945-4546" etc.
+ * Se não tiver DDI 55, assume Brasil. Se já tiver outro DDI, preserva.
+ */
+export function canonicalizePhone(raw: string): string {
+  const digits = (raw || "").replace(/\D+/g, "");
+  if (!digits) return "";
+  // Já tem 55 + DDD (2) + número (8 ou 9) → 12 ou 13 dígitos
+  if ((digits.length === 12 || digits.length === 13) && digits.startsWith("55")) {
+    return `+${digits}`;
+  }
+  // DDD + número (10 ou 11 dígitos) → adiciona 55
+  if (digits.length === 10 || digits.length === 11) {
+    return `+55${digits}`;
+  }
+  // Outros formatos (internacionais, curtos): preserva com +
+  return `+${digits}`;
+}
+
+/** Últimos 8 dígitos para matching aproximado entre formatos. */
+function phoneTail(raw: string): string {
+  const d = (raw || "").replace(/\D+/g, "");
+  return d.slice(-8);
+}
+
 export const listContacts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
