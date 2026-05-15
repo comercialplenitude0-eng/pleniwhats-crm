@@ -222,6 +222,10 @@ export async function processWhatsappPayload(payload: AnyObj): Promise<void> {
           .maybeSingle();
         if (insErr && !/duplicate key/i.test(insErr.message)) {
           console.error("[whatsapp processor] insert msg:", insErr.message);
+          await logEvent("error", "webhook-processor", "insert message failed", {
+            wamid: msg.id,
+            error: insErr.message,
+          });
         }
 
         // Lazy media: enfileira download em background (sem bloquear webhook)
