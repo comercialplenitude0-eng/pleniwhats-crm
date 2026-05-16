@@ -67,6 +67,7 @@ function WhatsappAccountsPage() {
   const [form, setForm] = useState<Form>(emptyForm());
   const [saving, setSaving] = useState(false);
   const [testingId, setTestingId] = useState<string | null>(null);
+  const [tokenStatus, setTokenStatus] = useState<Record<string, "ok" | "expired" | "error">>({});
 
   useEffect(() => {
     if (role && !isManagerRole(role)) navigate({ to: "/inbox" });
@@ -76,6 +77,18 @@ function WhatsappAccountsPage() {
     try {
       const data = await fetchList();
       setAccounts(data);
+      // Verifica status do token de cada conta em paralelo (silencioso)
+      void Promise.all(
+        data.filter((a) => a.hasAccessToken).map(async (a) => {
+          try {
+            const r = await testFn({ data: { id: a.id } });
+            const expired = !r.ok && /expired|session has expired|token/i.test(r.message ?? "");
+            setTokenStatus((s) => ({ ...s, [a.id]: r.ok ? "ok" : expired ? "expired" : "error" }));
+          } catch {
+            setTokenStatus((s) => ({ ...s, [a.id]: "error" }));
+          }
+        }),
+      );
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -161,9 +174,12 @@ function WhatsappAccountsPage() {
     setTestingId(a.id);
     try {
       const r = await testFn({ data: { id: a.id } });
+      const expired = !r.ok && /expired|session has expired|token/i.test(r.message ?? "");
+      setTokenStatus((s) => ({ ...s, [a.id]: r.ok ? "ok" : expired ? "expired" : "error" }));
       if (r.ok) toast.success(`${r.message}${r.phone ? ` · ${r.phone}` : ""}`);
       else toast.error(r.message);
     } catch (e) {
+      setTokenStatus((s) => ({ ...s, [a.id]: "error" }));
       toast.error((e as Error).message);
     } finally {
       setTestingId(null);
@@ -250,13 +266,23 @@ function WhatsappAccountsPage() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-sm font-semibold truncate">{a.display_name}</span>
                         {!a.enabled && <Badge variant="secondary">Desativada</Badge>}
-                        {a.hasAccessToken
-                          ? <Badge variant="outline" className="gap-1 text-emerald-600 border-emerald-500/30 bg-emerald-500/10">
-                              <CheckCircle2 className="size-3" /> Token
-                            </Badge>
-                          : <Badge variant="outline" className="gap-1 text-destructive border-destructive/30">
-                              <XCircle className="size-3" /> Sem token
-                            </Badge>}
+                        {!a.hasAccessToken ? (
+                          <Badge variant="outline" className="gap-1 text-destructive border-destructive/30">
+                            <XCircle className="size-3" /> Sem token
+                          </Badge>
+                        ) : tokenStatus[a.id] === "expired" ? (
+                          <Badge variant="outline" className="gap-1 text-destructive border-destructive/40 bg-destructive/10">
+                            <XCircle className="size-3" /> Token expirado
+                          </Badge>
+                        ) : tokenStatus[a.id] === "error" ? (
+                          <Badge variant="outline" className="gap-1 text-amber-600 border-amber-500/30 bg-amber-500/10">
+                            <XCircle className="size-3" /> Falha no token
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="gap-1 text-emerald-600 border-emerald-500/30 bg-emerald-500/10">
+                            <CheckCircle2 className="size-3" /> Token
+                          </Badge>
+                        )}
                       </div>
                       <div className="text-xs text-muted-foreground truncate">
                         {a.phone_number ?? "—"} · ID: <span className="font-mono">{a.phone_number_id}</span>
