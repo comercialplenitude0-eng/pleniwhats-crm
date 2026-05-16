@@ -174,9 +174,12 @@ function WhatsappAccountsPage() {
     setTestingId(a.id);
     try {
       const r = await testFn({ data: { id: a.id } });
+      const expired = !r.ok && /expired|session has expired|token/i.test(r.message ?? "");
+      setTokenStatus((s) => ({ ...s, [a.id]: r.ok ? "ok" : expired ? "expired" : "error" }));
       if (r.ok) toast.success(`${r.message}${r.phone ? ` · ${r.phone}` : ""}`);
       else toast.error(r.message);
     } catch (e) {
+      setTokenStatus((s) => ({ ...s, [a.id]: "error" }));
       toast.error((e as Error).message);
     } finally {
       setTestingId(null);
