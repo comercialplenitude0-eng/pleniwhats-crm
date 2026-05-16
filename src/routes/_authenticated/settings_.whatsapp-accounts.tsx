@@ -67,6 +67,7 @@ function WhatsappAccountsPage() {
   const [form, setForm] = useState<Form>(emptyForm());
   const [saving, setSaving] = useState(false);
   const [testingId, setTestingId] = useState<string | null>(null);
+  const [tokenStatus, setTokenStatus] = useState<Record<string, "ok" | "expired" | "error">>({});
 
   useEffect(() => {
     if (role && !isManagerRole(role)) navigate({ to: "/inbox" });
