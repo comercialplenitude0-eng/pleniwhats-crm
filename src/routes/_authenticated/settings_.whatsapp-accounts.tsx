@@ -77,6 +77,18 @@ function WhatsappAccountsPage() {
     try {
       const data = await fetchList();
       setAccounts(data);
+      // Verifica status do token de cada conta em paralelo (silencioso)
+      void Promise.all(
+        data.filter((a) => a.hasAccessToken).map(async (a) => {
+          try {
+            const r = await testFn({ data: { id: a.id } });
+            const expired = !r.ok && /expired|session has expired|token/i.test(r.message ?? "");
+            setTokenStatus((s) => ({ ...s, [a.id]: r.ok ? "ok" : expired ? "expired" : "error" }));
+          } catch {
+            setTokenStatus((s) => ({ ...s, [a.id]: "error" }));
+          }
+        }),
+      );
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
